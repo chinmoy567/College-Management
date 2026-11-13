@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.28 |
+| **Document Version** | 2.29 |
 | **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -42,6 +42,7 @@
 | 2.26 | 14 Nov 2026 | Removed Section 10 (Release Plan / phases) and the phase notes in 5.9, 5.10 and 5.20. |
 | 2.27 | 14 Nov 2026 | Stack changed to Next.js + Express.js + PostgreSQL on Supabase (Storage for files); details in `tech.stack.md` (§9). |
 | 2.28 | 14 Nov 2026 | Hosting is free only: Next.js + Express as one service on Render free, Supabase free, free subdomain (§9); book PDF max 50 MB (Supabase free file limit) and backups by `pg_dump` (§8). |
+| 2.29 | 14 Nov 2026 | Added the health check and keep-awake ping: `GET /api/health` called every 10 minutes by a free uptime monitor (§9). |
 
 ---
 
@@ -763,3 +764,4 @@ Full details, libraries and setup: **`tech.stack.md`**. Kept simple and **free**
 | **Payments** | None in this version (placeholder **Pay** button). A gateway can be plugged in later. |
 | **AI** | Groq API free tier (open model, e.g. Llama 70B-class), called server-side only; provider and model configurable. |
 | **Hosting** | **Free only.** Next.js and Express run as one Node service (Express passes non-API requests to Next.js, so there is one address and the login cookie is first-party) on Render's free plan, with a free `onrender.com` subdomain (no domain to buy). Database and files on Supabase's free plan. Free-plan limits and the free path for the real launch: `tech.stack.md` §7. |
+| **Health check & keep-awake** | The API has a public `GET /api/health` route (no login, returns only `ok`, no data) that also runs one tiny database query (`SELECT 1`). A free uptime monitor (UptimeRobot or cron-job.org) calls it **every 10 minutes**, so the free Render service never sleeps, background jobs keep running, and the free Supabase project never pauses for inactivity. The whole app stays **one** Render service, because the 750 free hours a month cover exactly one always-on service. If the monitor stops, the site only goes back to sleeping and wakes on the next visit. |
