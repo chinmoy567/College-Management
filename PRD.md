@@ -3,10 +3,10 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.16 |
+| **Document Version** | 2.17 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
-| **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **all students are 18 or older** (confirmed by the client) |
+| **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
 | **User Roles** | Admin, Teacher (Course Teacher and/or Section Mentor), Student |
 
 ### Revision History
@@ -30,6 +30,7 @@
 | 2.14 | 14 Nov 2026 | Adding students: Admin adds students from the session page (system gives a Student ID + password) and can create sections there. **Each section holds at most 30 students**; when full, the Admin creates another section. Enrollment keeps history (status, dates), and attendance/exam records store the student's section, so moving a student keeps old data correct. |
 | 2.15 | 14 Nov 2026 | Single Admin confirmed by design (no second Admin). Routine period times and rooms are typed by the Admin on each routine slot (no Period/Room tables). Public profile of passed-out/deactivated users defined. Student ID removed from the public profile. Decision #13 reworded. |
 | 2.16 | 14 Nov 2026 | **Admin Schedule Manager** (5.17.1): Admin adds/edits/deletes periods, rooms, routine slots, holidays and any single day or class; Period and Room tables added (replaces the v2.15 free-text rule). Exam scoring simplified: right = marks, wrong/unanswered = 0, no negative marking, no partial marks. Correct answers shown only after the exam window ends; exam time capped at window end; question snapshot at publish. Admin can edit any attendance record (logged). Timezone Asia/Dhaka. SMTP via free Google account with a rate-limited queue. Phases: §10 is the single source. Student age comes from profile DOB. |
+| 2.17 | 14 Nov 2026 | Client corrected the age rule: students are **up to 18 years old and may be minors** (replaces the v2.13 "18+" statement). **Groq** stays as the AI provider (its terms allow apps used by minors; the college is responsible). Student age comes from the **date of birth in the profile**, and a student who edits the profile also updates the DOB. 1-to-1 chat stays open as listed, with block/report from every chat. |
 
 ---
 
@@ -118,7 +119,7 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 - Belongs to exactly one session, one group and one section at any time.
 - Automatically enrolled in every course offering of their section.
 - Cannot log in after being marked **Passed Out**.
-- Every student is **18 or older** (confirmed by the client); the portal has no under-18 users. Where an age is needed, it is calculated from the date of birth in the student's profile; no age checks or blocks are built.
+- Students are **up to 18 years old and may be under 18** (stated by the client). Where an age is needed, it is calculated from the date of birth in the student's profile. When a student edits their profile, they also keep their **date of birth** up to date. No age checks or blocks are built.
 
 ---
 
@@ -354,7 +355,7 @@ All of these work only within the teacher's assigned course offerings:
 - Text, emoji, images, links, PDF attachments.
 - Real-time delivery (WebSockets), typing indicator, unread counts, seen status.
 - Block / report a user from every chat. Admin can review reported conversations only.
-- All users are adults (18+), so 1-to-1 chat is open to everyone as listed above; no extra minor-protection rules are needed.
+- Students may be under 18. The client chose to keep 1-to-1 chat open to everyone as listed above, with block/report on every chat, banned-word filtering and Admin warn/mute; no extra age-based chat rules are built.
 - Passed-out students are removed from group/section chats automatically.
 
 ### 5.9 Notices
@@ -586,7 +587,7 @@ Roll  Name             Status
 - A chat assistant for **students only**, available from the menu and as a floating button.
 - **Purpose:** explain concepts, solve and explain problems step by step, summarize topics, generate practice questions, and help with English/Bangla writing. It is scoped to academic help, and off-topic or harmful requests are politely declined.
 - **Zero cost: powered by the free tier of the Groq API** (GroqCloud Free plan; a payment method is only needed to upgrade). Use an open model that is on the free tier at build time (e.g. a Llama 70B-class model); the model name is a setting so it can be changed without code changes.
-- **Why Groq:** Groq does not use API inputs or outputs for training, and its free tier is enough for a daily per-student limit. All students are 18+, so there is no age restriction issue. The Groq account is owned by the college/developer.
+- **Why Groq:** Groq does not use API inputs or outputs for training, and its free tier is enough for a daily per-student limit. Students may be under 18; Groq's terms allow apps used by minors, and the college is responsible for that use. The Groq account (not Gemini, whose terms forbid under-18 users) is owned by the college/developer.
 - **Free-tier limits to plan around:** Groq caps free requests and tokens per minute and per day for the **whole account** (shared by all students, not per student), and the numbers change from time to time (check the Groq console before launch and run a short load test). So:
   - Admin sets a **daily message limit per student** (e.g. 15–20) so a few students cannot use up the whole day's quota.
   - When the free quota is used up, students see *"The AI assistant is busy, please try again later"* instead of an error.
@@ -752,7 +753,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 14. **Google Meet's 60-minute limit on free calls is acceptable** for live classes.
 15. **Posts show the author's session, group and section**, and any logged-in user can view the author's public profile (private details stay hidden) (Section 5.7.1).
 16. **Exam ranks are by section only.** Exams are created by the course teacher; results and ranks are computed among that section's students (Section 5.15).
-17. **All students are 18 or older.** There are no minors on the portal (v2.13).
+17. **Students are up to 18 years old and may be minors** (v2.17, replaces v2.13). Age comes from the profile date of birth; Groq is used because its terms allow minors.
 18. **The Admin decides the academic calendar:** when classes run, holidays and the routine (Sections 5.17, 5.18).
 19. **Students are added by the Admin** from the session page with a Student ID and password the Admin gives to the student; **a section holds at most 30 students**, and the Admin creates as many sections as needed (Section 3.1.1).
 20. **Only one Admin account**, by design. The client keeps the Admin login email safe; no second Admin or recovery path is built (Section 2.2).

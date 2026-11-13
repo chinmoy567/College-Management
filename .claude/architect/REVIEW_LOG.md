@@ -17,7 +17,7 @@
 | ARC-008 | Class 11/12 stored in two places             | Medium   | PRD §6 StudentProfile             | 2026-11-13 | Open                          |
 | ARC-009 | Enrollment meaning is contradictory          | Medium   | PRD §2.4 vs §6                    | 2026-11-13 | Fixed (v2.14)                 |
 | ARC-010 | Section Mentor scope unclear                 | Medium   | PRD §2.1                          | 2026-11-13 | Open                          |
-| ARC-011 | Child safety in 1-to-1 messaging             | High     | PRD §5.8                          | 2026-11-13 | Closed (all users 18+, v2.13) |
+| ARC-011 | Child safety in 1-to-1 messaging             | High     | PRD §5.8                          | 2026-11-13 | Closed (client-decided, v2.17) |
 | ARC-012 | Decision #13 cites numbers that don't exist  | Low      | PRD §11                           | 2026-11-13 | Fixed (v2.15)                 |
 | ARC-013 | Repo hygiene                                 | Medium   | repo root                         | 2026-11-13 | Open                          |
 | ARC-014 | PRD not in git                               | Critical | commit 6482bc2                    | 2026-11-13 | Fixed (f566d54)               |
@@ -54,6 +54,8 @@
 | ARC-048 | Google SMTP rate limit enforcement           | Low      | PRD §5.9                          | 2026-11-14 | Open                              |
 | ARC-049 | ExamQuestion.question_id missing from schema | Medium   | PRD §6 ExamQuestion               | 2026-11-14 | Fixed (v2.16)                 |
 | ARC-050 | Online class and extra class field rules     | Low      | PRD §6 ClassMeeting               | 2026-11-14 | Open                              |
+| ARC-051 | Minors: no consent/privacy rule for chat, AI | Medium   | PRD §1 header, §5.10, §5.19, §3.1 | 2026-11-14 | NEW                               |
+| ARC-052 | DOB self-editable; age use and limit vague   | Low      | PRD §3.1, §5.6, §6 StudentProfile | 2026-11-14 | NEW                               |
 
 ---
 
@@ -61,11 +63,12 @@
 
 ### 🔴 Critical
 
-**ARC-017 — Gemini API terms forbid under-18 users** · PRD §5.20, §9, Decision #9 · Fixed (v2.13)
+**ARC-017 — Gemini API terms forbid under-18 users** · PRD §5.20, §9, Decision #9 · Fixed (v2.17)
 
 - **Problem:** The Gemini API Additional Terms say users must be 18 or older, and the API must not be used in an app "directed towards or likely to be accessed by" people under 18. HSC Class 11–12 students are mostly 16–18.
 - **Fix applied in v2.11:** Switched to Groq free tier. Groq does not train on inputs, and its terms allow apps used by minors (college responsible).
 - **Client confirmation in v2.13:** Client confirmed all students are 18+, so Groq stays. Open question 1 removed from §11. See ARC-041 for age claim verification.
+- **Client correction in v2.17:** Students are up to 18 years old and may be minors. Gemini stays rejected; Groq stays because its terms allow minors (college responsible). PRD §5.20 and Decision #9/#17 reworded.
 
 **ARC-014 — PRD not in git** · commit 6482bc2 · Fixed (f566d54)
 
@@ -92,10 +95,11 @@
 - **Problem:** No rule for: partial marks on multi-correct MCQs; how negative marking works with multi-correct; which attempt counts (best, last or first) when a quiz allows several attempts.
 - **Fix applied in v2.13:** Single-correct: full marks if correct, negative marks if set, 0 if unanswered. Multi-correct: all-or-nothing (full marks only if exactly all correct options selected and no wrong ones), no negative marks. Student total never goes below 0. Quizzes with multiple attempts: best attempt counts for progress and rank.
 
-**ARC-011 — Child safety in 1-to-1 messaging** · PRD §5.8 · Fixed (v2.13)
+**ARC-011 — Child safety in 1-to-1 messaging** · PRD §5.8 · Closed (client-decided, v2.17)
 
 - **Problem:** Students and teachers can message minors 1-to-1 freely, and the Admin can only see chats that someone reports.
 - **Fix applied in v2.13:** Client confirmed all students are 18 or older; no minors on the portal. §5.8 now states "All users are adults (18+), so 1-to-1 chat is open to everyone as listed above; no extra minor-protection rules are needed." Block/report available from every chat. See ARC-041 for age claim verification.
+- **Client correction in v2.17:** Students may be under 18. The client kept 1-to-1 chat open to everyone; §5.8 now says so, relying on block/report, banned-word filter and Admin warn/mute. No extra age-based chat rules are built. Residual risk accepted by the client.
 
 **ARC-018 — Privacy rule contradicts itself** · PRD §8 vs §5.3.1 · Fixed (v2.13)
 
@@ -117,11 +121,12 @@
 - **Problem:** "Show correct answers after submission" lets the first student who submits see the answers and share them while others are still taking the exam.
 - **Fix applied in v2.16:** §5.14.1 now says "Correct answers are shown only after the exam window has ended (`end_at` passed), never right after one student submits, so answers cannot be shared while others are still taking the exam."
 
-**ARC-041 — HSC age claim conflicts with typical ages** · PRD §1 · Closed (client-decided, v2.16)
+**ARC-041 — HSC age claim conflicts with typical ages** · PRD §1 · Closed (client-decided, v2.17)
 
 - **Problem:** v2.13 says "all students are 18 or older (confirmed by the client)" but HSC Class 11-12 students are typically ages 16-17 in Bangladesh. Class 11 starts after SSC (age ~16), Class 12 ends at ~17-18.
 - **Why it matters:** This is either (1) an adult HSC program (distance learning, second-chance education), or (2) a factual error. If it is a standard HSC college, the age claim is false, and the Groq/privacy decisions based on it are invalid.
-- **Client decision in v2.16:** §1 clarifies "Where an age is needed, it is calculated from the date of birth in the student's profile; no age checks or blocks are built." The client has confirmed all students are 18+, so the portal is built on that assumption with no enforcement. If this is later found to be incorrect, privacy rules and AI provider terms must be reviewed.
+- **Client correction in v2.17:** The client now says students are up to 18 and may be minors. PRD §1 and Decision #17 updated; age is calculated from the DOB in the profile, which the student keeps updated when editing the profile. Groq stays (terms allow minors). No age checks or blocks are built.
+- **Earlier client decision in v2.16:** §1 clarifies "Where an age is needed, it is calculated from the date of birth in the student's profile; no age checks or blocks are built." The client has confirmed all students are 18+, so the portal is built on that assumption with no enforcement. If this is later found to be incorrect, privacy rules and AI provider terms must be reviewed.
 
 ### 🟡 Medium
 
@@ -236,7 +241,7 @@
 - **ARC-005** — 9 missing entities added (Settings, AIUsage, AuditLog, LoginHistory, UserSanction, Block, BannedWord, RecordingProgress, MaterialView) in v2.12; Holiday/Period/Room still missing but documented in other issues.
 - **ARC-014** — PRD.md restored to root and committed (f566d54).
 - **ARC-015** — .gitignore rewritten: removes `.claude` ignore (so agents/ and architect/ are committed), keeps .env ignored, adds .env.example, ignores only settings.local.json, plus proper ignores for node_modules/.next/dist/build/coverage/uploads/*.log (v2.12).
-- **ARC-017** — AI switched from Gemini to Groq (allows minors, no training on data); client confirmed Groq and 18+ claim (v2.13).
+- **ARC-017** — AI switched from Gemini to Groq (allows minors, no training on data); Groq stays with students up to 18 / minors allowed (v2.17).
 - **ARC-023** — "Pin this post" switch, on by default; pin audience fixed at creation (v2.9).
 - **ARC-031** — Seen = at least half the post on screen for 1 second; client sends event, server saves PostView (v2.9).
 - **ARC-032** — Extending a pin does not re-pin for users who already saw it (v2.9).
@@ -265,7 +270,8 @@
 ### 🔒 Closed by design
 
 - **ARC-026** — Single Admin with no recovery path confirmed by client as acceptable risk; documented in §2.2 and Decision #20 (v2.15).
-- **ARC-041** — Client confirmed all students 18+; age from DOB, no checks built; if later found incorrect, privacy and AI terms must be reviewed (v2.16).
+- **ARC-011** — Students may be minors; client keeps 1-to-1 chat open, no extra age rules (v2.17).
+- **ARC-041** — Client says students are up to 18 (may be minors); age from profile DOB, no checks built; Groq allows minors (v2.17).
 
 ---
 
@@ -284,3 +290,4 @@
 - **2026-11-14 · Review #10** — PRD v2.16 uncommitted changes. **Major additions:** Admin Schedule Manager (§5.17.1) with Period/Room tables (reverses v2.15 design), SpecialDay entity for whole-day changes, simplified exam scoring (right = marks, wrong = 0, no negative/partial), correct answers only after exam end_at, exam time capped at window end, question snapshot in ExamQuestion, Admin can edit any attendance (logged), Asia/Dhaka timezone, Google SMTP with rate-limited queue, §10 as single source for phases. **Fixed:** ARC-002, 004, 021, 022, 024, 025, 027 (7 issues). **Closed:** ARC-041 (client-decided: all students 18+, age from DOB, no checks). **New:** ARC-042 (Period/Room deletion cascade), ARC-043 (SpecialDay interaction with routine), ARC-044 (exam editing after publish), ARC-045 (ClassMeeting.period_id nullability), ARC-046 (AttendanceEdit scope), ARC-047 (SpecialDay periods_json format), ARC-048 (SMTP rate limit enforcement), ARC-049 (ExamQuestion.question_id missing from schema), ARC-050 (online/extra class field rules). All new issues are low/medium clarifications; no critical problems. The Admin Schedule Manager is well-designed. Ready to commit.
 
 - **2026-11-14 · Review #11** — PRD v2.16 (re-check, no new PRD change; only system-architect.md changed). **Fixed:** ARC-042, 043, 044, 047, 049 (details moved to Fixed (short)). **Still open (Low, re-checked):** ARC-045, 046, 048, 050. **New:** 0. Log cleaned: detail blocks synced with table, history format fixed.
+- **2026-11-14 · Review #12** — PRD v2.17 (age rule corrected: students up to 18, may be minors; Groq stays; chat stays open). No leftover 18+/adult wording outside history rows (v2.13 row is history). ARC-014 untouched. **Fixed:** 0. **New:** ARC-051 (Medium), ARC-052 (Low). **Open:** ARC-045, 046, 048, 050.
