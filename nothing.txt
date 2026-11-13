@@ -1,2 +1,0 @@
-❯ run the architecture agent and find that any kind of problem are here or not, and update it in the review 
-  log.md.

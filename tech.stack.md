@@ -14,7 +14,7 @@ Language everywhere: **TypeScript**.
 | **ORM** | **Prisma** | Typed queries; every schema change is a migration in the repo. |
 
 ```
-Browser ──HTTPS──> one free web service (e.g. cms-demo.onrender.com)
+Browser ──HTTPS──> one free web service (e.g.  cms-demo.onrender.com)
                     Express (one Node process)
                     ├── /api, /socket.io → Express routes + Socket.IO
                     └── everything else  → Next.js (rendered inside the same process)
@@ -39,10 +39,24 @@ Express is the server and hands every non-API request to Next.js (`next({ dev })
 | Charts | Recharts |
 | Dates | date-fns + date-fns-tz (show everything in **Asia/Dhaka**) |
 | PWA | Web app manifest + a small service worker ("add to home screen") |
+| Animation | **Motion** (formerly Framer Motion) for page, sheet and list transitions; `tailwindcss-animate` and plain CSS transitions for small effects |
+| Icons | lucide-react |
+| Other UI helpers | Any small, well-maintained CSS/UI library the team needs (e.g. `sonner` toasts, `vaul` bottom sheets, `embla-carousel`), as long as it is free, works well on phones and is added to the repo as a normal dependency |
 
 Rules:
 - Next.js **never talks to the database or Supabase directly.** It only calls the Express API.
 - Do **not** use `supabase-js` in the browser.
+
+**Mobile first (about 95% of users are on phones):** design every screen for a phone first, then enlarge for tablet and desktop.
+- Write Tailwind classes for the small screen first and add `sm:` / `md:` / `lg:` only to enlarge. Design for a 360 px wide screen; no horizontal page scroll.
+- Touch targets at least 44×44 px; body text at least 16 px (smaller text makes iOS zoom into inputs).
+- Navigation is a bottom tab bar or drawer on phones, not a wide top menu. Dialogs become full-screen sheets on phones.
+- Tables turn into stacked cards on phones (attendance, student lists, results, routine). The routine is a day-by-day list, not a wide grid.
+- Use the right keyboard (`inputmode`, `type="tel"`, `type="email"`) and keep forms short, one column.
+- Chat, exam taking, attendance marking and the PDF reader must work one-handed on a phone. The exam timer stays visible.
+- Keep pages light for slow mobile data: lazy-load images and heavy libraries (react-pdf, Recharts), resize images on upload (sharp).
+- Test every feature at phone width before it is done.
+- **Animation is welcome but light:** use short (about 150-300 ms) transforms and opacity only, respect `prefers-reduced-motion`, and never animate inside the exam page or long lists in a way that slows low-end phones. Check the size of any new library before adding it.
 
 ## 3. Backend: Express.js
 
