@@ -1,6 +1,6 @@
 # Plan 11 · Background Jobs, Configuration, Deployment & Quality (M0 base, M12 launch)
 
-Spec: `docs/spec/11-jobs-ops.md` · PRD §8, §9, tech.stack §3, §7–9. Agents: `realtime-builder` (jobs), `deploy-engineer`. Skills: `cms-realtime-jobs`, `cms-deploy-cloud`, `cms-performance-pwa`.
+Spec: `docs/spec/11-jobs-ops.md` · PRD §8, §9, tech.stack §3, §7–9. Agents: `realtime-builder` (jobs), `deploy-engineer`. Skills: `cms-realtime-jobs`, `cms-deploy-cloud`, `cms-performance-pwa`, `cms-load-test` (§5 load checks).
 
 ## 1. What is built when
 

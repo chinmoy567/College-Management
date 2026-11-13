@@ -52,6 +52,8 @@ The spec milestones are clean on paper, but several helpers are needed before th
 
 ## How each milestone is run (the loop)
 
+Run it with the `/milestone <M#>` skill (`.claude/skills/milestone`), which follows these steps.
+
 1. **Read** the spec and its PRD sections again. List the Acceptance IDs.
 2. **Shared first:** Zod schemas + constants in `packages/shared`, then Prisma changes (if any) as a migration.
 3. **Service layer with unit tests** (pure logic: grading, %, generator, permissions) — test-first for anything with rules.
