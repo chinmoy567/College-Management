@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.8 |
+| **Document Version** | 2.10 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC) |
@@ -22,7 +22,8 @@
 | 2.6 | 13 Nov 2026 | "Batch Coordinator" renamed **Section Mentor**; one Section Mentor per section (not per group); substitutes and class cancellations decided by the Admin only. |
 | 2.7 | 13 Nov 2026 | Every post shows the author's session, group and section; any logged-in user can open the author's public profile. Exam ranks are **section-only** (exams are created by the course teacher for one section); group rank removed. |
 | 2.8 | 14 Nov 2026 | Pinned posts are **seen-once**: an Admin/Section Mentor post stays at the top for each user only until that user has seen it once, for at most 7 days. Mentor pins target one section (`pin_section_id`). Added PostView entity. |
-| 2.9 | 14 Nov 2026 | Routine changes apply to future classes only; the Admin is responsible for a correct, conflict-free routine. Class Meeting courses moved to a ClassMeetingOffering table (no duplicates). |
+| 2.9 | 14 Nov 2026 | Defined "seen" (at least half of the post on screen for 1 second); one seen record covers feed and dashboard; extending a pin does not re-pin for users who already saw it; Admin/Mentor get a **Pin this post** switch (on by default). |
+| 2.10 | 14 Nov 2026 | Routine changes apply to future classes only; the Admin is responsible for a correct, conflict-free routine. Class Meeting courses moved to a ClassMeetingOffering table (no duplicates). |
 
 ---
 
@@ -245,7 +246,7 @@ Session (2024–25)
 | **Teachers / Students** | Add, bulk import, edit, deactivate, delete, reset password (Section 4.4). |
 | **Section Mentors** | Exactly one per section (e.g. Science-A, Science-B, Science-C → 3); change at any time; auto-joins the section chat and the group chat. |
 | **Central Notices** | Section 5.9. |
-| **Community** | Create/edit own posts (pinned until seen, max 7 days), delete any post/comment, review reports, mute a user from posting (temporary). |
+| **Community** | Create/edit own posts (pinned by default with the "Pin this post" switch; until seen, max 7 days), delete any post/comment, review reports, mute a user from posting (temporary). |
 | **Book Shop** | Section 5.19. |
 | **Previous Questions / Recorded Classes** | College-wide uploads (Sections 5.12, 5.16). |
 | **Reports** | Export students, results, attendance and book purchases as CSV/PDF. |
@@ -274,7 +275,7 @@ Session (2024–25)
 - View all students and course offerings of the section.
 - View the **class routine** of the section (only the Admin can change it).
 - Publish **section notices** (to all students of the section).
-- Create **pinned posts** for students of their section (shown at the top until each student has seen it, max 7 days).
+- Create posts for students of their section, **pinned by default** ("Pin this post" switch; shown at the top until each student has seen it, max 7 days). Can switch it off for a normal post.
 - Monitor the section: exam results, attendance summaries, inactive students.
 - Message any student individually; post announcements in the section chat.
 - Cannot assign teachers, substitutes, cancel classes or change the routine; these are decided by the Admin only.
@@ -307,15 +308,19 @@ All of these work only within the teacher's assigned course offerings:
 
 #### 5.7.2 Admin & Section Mentor Pinned Posts
 - Admin can **create, edit and delete** posts like any user; Admin can additionally **delete any post or comment**.
-- A post created by the **Admin** or a **Section Mentor** is automatically **pinned** so that nobody misses it, even a student who logs in a few days later:
+- A post created by the **Admin** or a **Section Mentor** is **pinned** so that nobody misses it, even a student who logs in a few days later. The create form has a **"Pin this post"** switch, **on by default**; turning it off makes a normal post. Pinning can only be chosen when the post is created (the Admin can still unpin or extend later).
   - Admin posts are pinned for **everyone**.
   - Section Mentor posts are pinned for **students of that mentor's section** (each section has exactly one mentor). Everyone else sees them only in the normal feed.
-- **Seen once, then it leaves the top.** The pinned post stays at the top of the feed/dashboard **for each user until that user has seen it once**. A post counts as seen when it has been shown on the user's screen. The next time the user opens or refreshes the feed, the post is no longer at the top; it is only in the normal timeline at its original date. (It does not jump away while the user is still looking at it.)
+- **Seen once, then it leaves the top.** The pinned post stays at the top of the feed/dashboard **for each user until that user has seen it once**.
+  - **Seen** = at least half of the post was visible on the user's screen for at least 1 second (feed or dashboard). The browser then tells the server, which saves one PostView record. Being in a loaded page but scrolled out of view, or collapsed under "Show N more announcements", does **not** count.
+  - One PostView record covers **both** the feed and the dashboard: seen in one place means it leaves the top in both.
+  - The next time the user opens or refreshes the feed/dashboard, the post is no longer at the top; it is only in the normal timeline at its original date. (It does not jump away while the user is still looking at it.)
 - **7-day limit.** A pin lasts at most **7 days from creation**. After 7 days it is no longer shown at the top for anyone, even users who never saw it. The post itself is **not deleted**; it stays in the normal timeline.
 - Pinned posts carry a badge: **"📌 Admin"** or **"📌 Section Mentor · 2024–25 Science-A"**.
 - **Feed order:** (1) pinned Admin posts the user has not seen yet, newest first → (2) pinned Section Mentor posts the user has not seen yet, newest first → (3) all other posts, newest first.
 - **If there is no unseen Admin/Section Mentor post from the last 7 days, nothing is pinned**, and the feed starts directly with regular posts.
-- Admin can **unpin early** or **extend** a pin. Editing a post does not restart the 7-day timer.
+- Admin can **unpin early** (removed from the top for everyone) or **extend** a pin. Extending only gives more time to users who **have not seen it yet**; users who already saw it do not get it at the top again. Editing a post does not restart the 7-day timer and does not re-pin it for anyone.
+- The pin audience is saved when the post is created. If the section later gets a different mentor, the old mentor's pins stay valid for that section until they expire.
 - At most **5 pinned posts** are shown expanded; any more collapse into "Show N more announcements".
 - Creating a pinned post sends a notification to its audience.
 
@@ -356,7 +361,7 @@ All of these work only within the teacher's assigned course offerings:
 | Online class scheduled / starting in 15 min | ✅ | ✅ |
 | New recording / notes uploaded in my course | ✅ | – |
 | Exam/quiz published, starting soon, result published | ✅ | – |
-| New pinned Admin/Section Mentor post | ✅ | ✅ (Admin) |
+| New pinned Admin/Section Mentor post (an unpinned post is a normal post and sends no notification) | ✅ | ✅ (Admin) |
 | Reaction / comment on my post, new message | ✅ | ✅ |
 | Course assignment changed | – | ✅ |
 
@@ -596,7 +601,7 @@ Create session "2025–26" → Science/Commerce/Arts auto-created → add sectio
 Login with ID + password → complete profile (email, mobile, new password) → dashboard with pinned posts, today's routine, upcoming exams → auto-member of group and section chats.
 
 **Flow C – Admin pinned post**
-Admin → Feed → *Create post* → published with 📌 Admin badge → everyone notified → each user sees it at the top of their feed until they have seen it once → after that (or after 7 days for users who never logged in) it is only in the normal timeline.
+Admin → Feed → *Create post* ("Pin this post" on by default) → published with 📌 Admin badge → everyone notified → each user sees it at the top of their feed until they have seen it once → after that (or after 7 days for users who never logged in) it is only in the normal timeline.
 
 **Flow D – Teacher runs a live class**
 Teacher creates a free Google Meet link → My Courses → *Physics 1st – Science A* → Classes → *Schedule* (Sun 10:00) and pastes the link → students notified → students click *Join* (opens Meet in a new tab, click logged) → class ends → teacher reviews pre-filled attendance → later the teacher uploads their own recording to YouTube and adds the link under Recordings → students see it automatically.
