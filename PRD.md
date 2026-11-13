@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.24 |
+| **Document Version** | 2.25 |
 | **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -38,6 +38,7 @@
 | 2.22 | 14 Nov 2026 | Logins use server-side sessions in PostgreSQL (instantly revocable); no Redis (§4.6, §6, §9). |
 | 2.23 | 14 Nov 2026 | Pre-development review: exam examples use a preset (45 min); one in-progress attempt per student; exam clock keeps running while offline; correct answers never sent to the browser before the window ends; attendance % counted per student; an online class in a routine period uses the existing Class Meeting; Class Meetings generated 14 days ahead and Admin-deleted meetings are kept as `removed`; permanent delete anonymises the user and the AuditLog holds no personal data; banned words blocked in chat; message/user reports; upload limits; WebSocket session checks; PostgreSQL job queue. Data model: ExamQuestion id, ExamAttempt deadline/attempt number, Answer → ExamQuestion, OnlineClassOffering, ConversationMember read state, NoticeRead, Comment replies, unique keys; student class/session/group come from the section. Attendance moved to Phase 1; auth email in Phase 1. Every student has an email. |
 | 2.24 | 14 Nov 2026 | Senior review fixes (kept simple): combined classes in the routine (RoutineSlotOffering); routine slots soft-deleted; a course-teacher change updates future meetings; one link between online class and meeting; Chapter table; shuffled order saved per attempt; teacher can fix a wrong answer key (regrade) and give one student extra time; email verification no longer blocks first login; overall course rank defined; ranks and per-question results only after the window ends; mute scope; AI chats private to the student; Admin two-step login; all uploads private; questions never sent before start; book preview as a separate file; attendance draft kept on the device; stack chosen (one Next.js app); Phase 1 build order. |
+| 2.25 | 14 Nov 2026 | Removed Section 11 (Decisions & Open Questions); every decision is already written in its own section. |
 
 ---
 
@@ -773,39 +774,3 @@ Kept simple on purpose: **one codebase, one Node.js app, one PostgreSQL database
 **Phase 1 build order** (each step is usable on its own before the next starts): (1) auth & accounts → (2) sessions, groups, sections, courses, assignments → (3) routine, Schedule Manager & attendance → (4) notices & in-app notifications → (5) community feed & pinned posts → (6) messaging.
 
 **Section 10 is the single source for phases.** If another section mentions a phase, this table wins. In Phase 1 the dashboards **hide the widgets** (exams, results) for features that are not built yet.
-
----
-
-## 11. Decisions & Open Questions
-
-**Confirmed by the client (13 Nov 2026):**
-1. "Seasons" means academic **sessions** of HSC students, e.g. 2024–25, 2025–26, 2027–28.
-2. The Admin creates sessions; each new session automatically gets its own 3 groups (**Science, Arts, Commerce**); each group is split into one or more **sections** by the Admin, **at most 30 students per section**, e.g. 90 Science students → Science-A, B, C with 30 each (Section 3.1).
-3. Section Mentor posts are pinned only for students of their own section; Admin posts are pinned for everyone. A pin stays at the top for each user only until they have seen it once, for at most 7 days (Section 5.7.2).
-4. Admin can edit **own** posts and delete **any** post; Admin does not edit other users' posts.
-5. Book shop sells **digital PDF books only**. No printed books, delivery or cash on delivery (Section 5.19).
-6. **No payment gateway** in this version: the **Pay** button unlocks the PDF immediately (Section 5.19).
-7. **Recorded classes:** the portal does not record. Teachers record themselves, upload to YouTube and share the link; students see it automatically (Section 5.12).
-8. **Live classes** must cost nothing: teachers use free Google Meet or Jitsi Meet links (Section 5.11).
-9. **AI chatbox** must cost nothing: free **Groq** API tier with per-student daily limits (Section 5.20). Confirmed by the client (v2.13).
-10. **Exam ranks are shown to students** (Section 5.15).
-11. **Sessions are closed only by the Admin, manually** (never automatically). The Admin sees each session's status (Active / Closed) on the Sessions page (Section 4.5).
-
-12. **Online exams and quizzes are text-based MCQ only**, all auto-graded. No written answers and no file/image uploads (Section 5.14).
-13. Some items in the client's original requirements list were **removed by the client on purpose**. No features are missing.
-14. **Google Meet's 60-minute limit on free calls is acceptable** for live classes.
-15. **Posts show the author's session, group and section**, and any logged-in user can view the author's public profile (private details stay hidden) (Section 5.7.1).
-16. **Exam ranks are by section only.** Exams are created by the course teacher; results and ranks are computed among that section's students (Section 5.15).
-17. **Students are up to 18 years old and may be minors** (v2.17, replaces v2.13). Age comes from the profile date of birth; Groq is used because its terms allow minors.
-18. **The Admin decides the academic calendar:** when classes run, holidays and the routine (Sections 5.17, 5.18).
-19. **Students are added by the Admin** from the session page with a Student ID and password the Admin gives to the student; **a section holds at most 30 students**, and the Admin creates as many sections as needed (Section 3.1.1).
-20. **Only one Admin account**, by design. The client keeps the Admin login email safe; no second Admin or recovery path is built (Section 2.2).
-21. **The Admin manages periods, rooms, routine, holidays and any single day or class** in the Schedule Manager: add, edit and delete everything (Section 5.17.1). Replaces the earlier free-text rule.
-22. **The Student ID is not shown on the public profile**; only the student, their teachers and the Admin see it (Section 5.7.1).
-23. **Exam scoring is simple:** right = marks, wrong = 0, no negative or partial marks (Section 5.14.1).
-24. **Email uses a free Google SMTP account** with a rate-limited queue (Section 5.9).
-25. **Every student has an email address**, entered by the Admin when adding the student. A verification link is sent at first login; verifying does not block the dashboard (a reminder banner shows until verified) (Sections 3.1.1, 4.2).
-
-**Open questions (to confirm with the client; the PRD already follows the default shown):**
-1. **AI chat privacy:** AI chats are private to the student; the Admin sees only usage counts (Section 5.20). Should the Admin be able to read students' AI chats instead (students may be minors)?
-2. **Admin two-step login:** every Admin login needs the password plus an authenticator-app code; if the phone is lost, only the printed backup codes restore access (Section 2.2). The client must keep the backup codes safe. Confirm.
