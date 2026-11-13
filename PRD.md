@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.25 |
+| **Document Version** | 2.26 |
 | **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -39,6 +39,7 @@
 | 2.23 | 14 Nov 2026 | Pre-development review: exam examples use a preset (45 min); one in-progress attempt per student; exam clock keeps running while offline; correct answers never sent to the browser before the window ends; attendance % counted per student; an online class in a routine period uses the existing Class Meeting; Class Meetings generated 14 days ahead and Admin-deleted meetings are kept as `removed`; permanent delete anonymises the user and the AuditLog holds no personal data; banned words blocked in chat; message/user reports; upload limits; WebSocket session checks; PostgreSQL job queue. Data model: ExamQuestion id, ExamAttempt deadline/attempt number, Answer → ExamQuestion, OnlineClassOffering, ConversationMember read state, NoticeRead, Comment replies, unique keys; student class/session/group come from the section. Attendance moved to Phase 1; auth email in Phase 1. Every student has an email. |
 | 2.24 | 14 Nov 2026 | Senior review fixes (kept simple): combined classes in the routine (RoutineSlotOffering); routine slots soft-deleted; a course-teacher change updates future meetings; one link between online class and meeting; Chapter table; shuffled order saved per attempt; teacher can fix a wrong answer key (regrade) and give one student extra time; email verification no longer blocks first login; overall course rank defined; ranks and per-question results only after the window ends; mute scope; AI chats private to the student; Admin two-step login; all uploads private; questions never sent before start; book preview as a separate file; attendance draft kept on the device; stack chosen (one Next.js app); Phase 1 build order. |
 | 2.25 | 14 Nov 2026 | Removed Section 11 (Decisions & Open Questions); every decision is already written in its own section. |
+| 2.26 | 14 Nov 2026 | Removed Section 10 (Release Plan / phases) and the phase notes in 5.9, 5.10 and 5.20. |
 
 ---
 
@@ -382,13 +383,13 @@ All of these work only within the teacher's assigned course offerings:
 | Extras | Show on public landing page (optional), publish now or schedule, expiry date | Publish now or schedule, expiry date |
 
 - Students see a unified **Notices** page with filters (Central / My Classes) and an unread indicator.
-- *Important* and *Urgent* notices also trigger an **email** (from Phase 3, Section 10); *Urgent* notices appear as a banner on the dashboard until read.
+- *Important* and *Urgent* notices also trigger an **email**; *Urgent* notices appear as a banner on the dashboard until read.
 - **Email sending:** SMTP through a **free Google account** (no paid service). Emails go through a **queue with rate limiting** that stays under Google's daily sending limit (about 500/day for a personal Gmail; the Admin sets the limit in Settings). If more emails are waiting than the limit allows, the rest are sent the next day; in-app notifications are never delayed. Password-reset and verification emails go first.
 
 ### 5.10 Notifications
 - **In-app notification center** (bell icon with unread count), delivered in real time over WebSockets.
 - **Email** for important events (configurable per user, except for urgent notices).
-- **Browser push notifications** (Phase 3).
+- **Browser push notifications**.
 
 | Event | Student | Teacher |
 |---|:-:|:-:|
@@ -626,7 +627,7 @@ Roll  Name             Status
 - **AI chats are private to the student.** Teachers and the Admin cannot read them (they are not in Student 360°; the Admin sees only usage counts). The student can delete a chat at any time; all AI chats are deleted when the account is permanently deleted.
 - **Safety:** server-side calls only (key never exposed), no access to other students' data, disclaimer "AI may make mistakes, verify with your teacher".
 - **During a live exam, the AI chatbox is disabled** for students taking that exam.
-- **Phase 3 (Section 10):** answers grounded in the college's own uploaded notes (course-aware assistant).
+- **Course-aware answers:** answers grounded in the college's own uploaded notes.
 
 ---
 
@@ -760,17 +761,3 @@ Kept simple on purpose: **one codebase, one Node.js app, one PostgreSQL database
 | **Payments** | None in this version (placeholder **Pay** button). A gateway can be plugged in later. |
 | **AI** | Groq API free tier (open model, e.g. Llama 70B-class), called server-side only; provider and model configurable. |
 | **Hosting** | One VPS (e.g. DigitalOcean / AWS, about 2 vCPU / 4 GB RAM) with Docker Compose (app + PostgreSQL) behind a reverse proxy with HTTPS (e.g. Caddy); daily backups. App errors are written to log files. |
-
----
-
-## 10. Release Plan (Phases)
-
-| Phase | Features |
-|---|---|
-| **Phase 1 – Core** | Auth & accounts (including auth emails: password reset, email verification, email change), sessions/groups/sections, course & teacher assignment, separate dashboards, profile, community feed with pinned posts & moderation, messaging, central & class-wise notices, in-app notifications, routine and Admin Schedule Manager (periods, rooms, holidays, daily schedule), **attendance** (it runs on the routine and is used every day). |
-| **Phase 2 – Learning** | Online classes, recorded classes, notes & materials, previous-year questions, online exams & quizzes, exam progress, Student 360° view. |
-| **Phase 3 – Extras** | Digital book shop (placeholder Pay button), free AI chatbox, notice/notification emails and browser push, the Admin **Reports** area, AI grounded in college notes. (Exports inside a feature, e.g. the attendance register or exam report CSV/PDF, ship with that feature.) |
-
-**Phase 1 build order** (each step is usable on its own before the next starts): (1) auth & accounts → (2) sessions, groups, sections, courses, assignments → (3) routine, Schedule Manager & attendance → (4) notices & in-app notifications → (5) community feed & pinned posts → (6) messaging.
-
-**Section 10 is the single source for phases.** If another section mentions a phase, this table wins. In Phase 1 the dashboards **hide the widgets** (exams, results) for features that are not built yet.
