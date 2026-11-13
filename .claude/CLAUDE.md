@@ -3,7 +3,7 @@
 - Source of truth for requirements: `docs/PRD.md`. Do not build features that contradict it or are listed as out of scope.
 
 ## Client decisions: never reopen or report as issues
-- Students are up to 18 years old and may be minors (client, v2.17). Age comes from the profile DOB. Groq (not Gemini) is the AI provider because its terms allow minors. No extra age-based rules.
+- Students are up to 18 years old and may be minors (client). Age comes from the profile DOB. Groq (not Gemini) is the AI provider because its terms allow minors. No extra age-based rules.
 - Groq is the AI provider. Gemini is not used.
 - The Admin decides everything about enrollment and schedule: rooms, periods, routine, holidays, cancelled or re-created meetings, conflicts.
 - One Admin account only, by design.

@@ -3,47 +3,10 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.30 |
 | **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
 | **User Roles** | Admin, Teacher (Course Teacher and/or Section Mentor), Student |
-
-### Revision History
-| Version | Date | Changes |
-|---|---|---|
-| 1.0 | 13 Nov 2026 | Initial PRD: accounts, sessions/groups, community feed, messaging, routine, class links, book PDFs. |
-| 2.0 | 13 Nov 2026 | Added sections & course-teacher assignment, pinned Admin/Coordinator posts, separate dashboards, online classes, recorded classes, online exams & quizzes, exam progress, previous-year questions, notices (central & class-wise), notifications, book shop, AI chatbox, attendance (placeholder). |
-| 2.1 | 13 Nov 2026 | Full per-period attendance design (5.18) and Admin "Student 360°" one-click student view (5.3.1). |
-| 2.2 | 13 Nov 2026 | Client answers applied: book shop is digital PDF only with a placeholder **Pay** button (no payment gateway); live classes via free external links (Google Meet / Jitsi); recorded classes are teacher-made YouTube links only; AI chatbox on the free Google Gemini API tier; exam ranks always shown to students. |
-| 2.3 | 13 Nov 2026 | Sessions closed manually by Admin only; exams are MCQ-only with automatic grading; all open questions resolved. |
-| 2.4 | 13 Nov 2026 | Attendance is mainly taken by teachers in the physical classroom (select session, group, section, course); Admin allocates the routine for every session. |
-| 2.5 | 13 Nov 2026 | Routine is created and changed by the Admin only; Batch Coordinators can only view it. |
-| 2.6 | 13 Nov 2026 | "Batch Coordinator" renamed **Section Mentor**; one Section Mentor per section (not per group); substitutes and class cancellations decided by the Admin only. |
-| 2.7 | 13 Nov 2026 | Every post shows the author's session, group and section; any logged-in user can open the author's public profile. Exam ranks are **section-only** (exams are created by the course teacher for one section); group rank removed. |
-| 2.8 | 14 Nov 2026 | Pinned posts are **seen-once**: an Admin/Section Mentor post stays at the top for each user only until that user has seen it once, for at most 7 days. Mentor pins target one section (`pin_section_id`). Added PostView entity. |
-| 2.9 | 14 Nov 2026 | Defined "seen" (at least half of the post on screen for 1 second); one seen record covers feed and dashboard; extending a pin does not re-pin for users who already saw it; Admin/Mentor get a **Pin this post** switch (on by default). |
-| 2.10 | 14 Nov 2026 | Routine changes apply to future classes only; the Admin is responsible for a correct, conflict-free routine. Class Meeting courses moved to a ClassMeetingOffering table (no duplicates). |
-| 2.11 | 14 Nov 2026 | AI chatbox moved from Google Gemini to the **Groq** free tier: Gemini's API terms do not allow apps used by under-18s; Groq's terms allow them (the college is responsible) and Groq does not train on inputs. Client confirmation added as an open question. |
-| 2.12 | 14 Nov 2026 | Data model: added Settings, AIUsage, AuditLog, LoginHistory, UserSanction (warn/mute), Block, BannedWord, RecordingProgress and MaterialView. |
-| 2.13 | 14 Nov 2026 | Client confirmed **all students are 18+** (no minors); Groq stays as the AI provider. Exam scoring rules (multi-correct all-or-nothing, best quiz attempt counts). Private details visible only to the student and the Admin. Admin manages the academic calendar (holidays); attendance rules for "not taken" meetings and "N/A". Added Holiday entity. |
-| 2.14 | 14 Nov 2026 | Adding students: Admin adds students from the session page (system gives a Student ID + password) and can create sections there. **Each section holds at most 30 students**; when full, the Admin creates another section. Enrollment keeps history (status, dates), and attendance/exam records store the student's section, so moving a student keeps old data correct. |
-| 2.15 | 14 Nov 2026 | Single Admin confirmed by design (no second Admin). Routine period times and rooms are typed by the Admin on each routine slot (no Period/Room tables). Public profile of passed-out/deactivated users defined. Student ID removed from the public profile. Decision #13 reworded. |
-| 2.16 | 14 Nov 2026 | **Admin Schedule Manager** (5.17.1): Admin adds/edits/deletes periods, rooms, routine slots, holidays and any single day or class; Period and Room tables added (replaces the v2.15 free-text rule). Exam scoring simplified: right = marks, wrong/unanswered = 0, no negative marking, no partial marks. Correct answers shown only after the exam window ends; exam time capped at window end; question snapshot at publish. Admin can edit any attendance record (logged). Timezone Asia/Dhaka. SMTP via free Google account with a rate-limited queue. Phases: §10 is the single source. Student age comes from profile DOB. |
-| 2.17 | 14 Nov 2026 | Client corrected the age rule: students are **up to 18 years old and may be minors** (replaces the v2.13 "18+" statement). **Groq** stays as the AI provider (its terms allow apps used by minors; the college is responsible). Student age comes from the **date of birth in the profile**, and a student who edits the profile also updates the DOB. 1-to-1 chat stays open as listed, with block/report from every chat. |
-| 2.18 | 14 Nov 2026 | Client request: the Admin updates the routine, schedule, classrooms and holidays from one portal. Added the **Schedule Manager** to the Admin Panel table (5.3), a **calendar view** with inline add/edit/delete, and a room-availability warning (5.17.1). |
-| 2.19 | 14 Nov 2026 | Added UNIQUE(routine_slot_id, date) on ClassMeeting (closes ARC-006). |
-| 2.20 | 14 Nov 2026 | Exam duration is chosen from fixed presets; the server enforces the exam deadline (§5.14.1). |
-| 2.21 | 14 Nov 2026 | Class 11 → 12 is a manual Admin move into a Class 12 section; Section now has a class (§4.4, §6). |
-| 2.22 | 14 Nov 2026 | Logins use server-side sessions in PostgreSQL (instantly revocable); no Redis (§4.6, §6, §9). |
-| 2.23 | 14 Nov 2026 | Pre-development review: exam examples use a preset (45 min); one in-progress attempt per student; exam clock keeps running while offline; correct answers never sent to the browser before the window ends; attendance % counted per student; an online class in a routine period uses the existing Class Meeting; Class Meetings generated 14 days ahead and Admin-deleted meetings are kept as `removed`; permanent delete anonymises the user and the AuditLog holds no personal data; banned words blocked in chat; message/user reports; upload limits; WebSocket session checks; PostgreSQL job queue. Data model: ExamQuestion id, ExamAttempt deadline/attempt number, Answer → ExamQuestion, OnlineClassOffering, ConversationMember read state, NoticeRead, Comment replies, unique keys; student class/session/group come from the section. Attendance moved to Phase 1; auth email in Phase 1. Every student has an email. |
-| 2.24 | 14 Nov 2026 | Senior review fixes (kept simple): combined classes in the routine (RoutineSlotOffering); routine slots soft-deleted; a course-teacher change updates future meetings; one link between online class and meeting; Chapter table; shuffled order saved per attempt; teacher can fix a wrong answer key (regrade) and give one student extra time; email verification no longer blocks first login; overall course rank defined; ranks and per-question results only after the window ends; mute scope; AI chats private to the student; Admin two-step login; all uploads private; questions never sent before start; book preview as a separate file; attendance draft kept on the device; stack chosen (one Next.js app); Phase 1 build order. |
-| 2.25 | 14 Nov 2026 | Removed Section 11 (Decisions & Open Questions); every decision is already written in its own section. |
-| 2.26 | 14 Nov 2026 | Removed Section 10 (Release Plan / phases) and the phase notes in 5.9, 5.10 and 5.20. |
-| 2.27 | 14 Nov 2026 | Stack changed to Next.js + Express.js + PostgreSQL on Supabase (Storage for files); details in `tech.stack.md` (§9). |
-| 2.28 | 14 Nov 2026 | Hosting is free only: Next.js + Express as one service on Render free, Supabase free, free subdomain (§9); book PDF max 50 MB (Supabase free file limit) and backups by `pg_dump` (§8). |
-| 2.29 | 14 Nov 2026 | Added the health check and keep-awake ping: `GET /api/health` called every 10 minutes by a free uptime monitor (§9). |
-| 2.30 | 14 Nov 2026 | Landing page: added Student / Teacher / Admin login buttons that open one shared login form; the server still decides the role (§4.1, §5.1); detail in `landing-page.md`. |
 
 ---
 
