@@ -94,4 +94,18 @@ SUPABASE_PRIVATE_BUCKET=private
 | E2E | Playwright, 360 × 740 | landing → login → complete profile; teacher takes attendance; student takes exam to auto-submit; chat send/receive; book unlock |
 | Security | custom tests | RLS enabled on all tables; no `correct` in exam payloads before reveal; no private fields in public/teacher views; CSRF header required |
 
-CI (GitHub Actions, free): install, typecheck, lint, test (with a Postgres service container), build.
+CI (GitHub Actions, free): install, typecheck, lint, test (with a Postgres service container), `spec:check --strict` for finished milestones, build.
+
+## 8. Acceptance
+
+- **OPS-01** `GET /api/health` needs no login, runs `SELECT 1` and returns only `ok`.
+- **OPS-02** The server refuses to start with a clear message when a required env var is missing.
+- **OPS-03** Every job handler is idempotent (running it twice changes nothing) and works when run late.
+- **OPS-04** Security headers and CSP are set as in §3; only `NEXT_PUBLIC_*` values reach the browser.
+- **OPS-05** Load: 500 students taking an exam → p95 answer save under 300 ms with no errors.
+- **OPS-06** Load: 200 chat sockets → p95 delivery under 1 s.
+- **OPS-07** Feed first page loads in under 2 s on throttled 4G (Lighthouse mobile).
+- **OPS-08** The backup script creates a dump, removes dumps older than 30 days, and a restore into an empty DB works.
+- **OPS-09** CI runs typecheck, lint, tests, spec-check and build on every push.
+- **OPS-10** PDF exports render Bangla text correctly.
+- **OPS-11** The purge job deletes storage objects 30 days after delete and never before.

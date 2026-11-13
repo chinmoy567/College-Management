@@ -93,13 +93,19 @@ Old `RateLimitHit` rows are purged nightly.
 
 No age rule is applied anywhere (client decision); `age` can be computed from `dob` for display.
 
-## 8. Tests
+## 8. Acceptance
 
-- Same error and similar timing for unknown ID vs wrong password.
-- Passed-out / inactive users cannot log in; message only after correct password.
-- Deactivate → existing session gets 401 on next request and socket is disconnected.
-- First-login user cannot call other APIs.
-- Admin cannot reach any Admin API before TOTP; backup code works once; same TOTP step rejected twice.
-- Reset token: expired, reused, wrong purpose all fail; reset revokes sessions.
-- Unverified email gets no reset email.
-- Missing `X-Requested-With` on POST → 403.
+- **AUTH-01** Unknown ID and wrong password return the same error with similar timing.
+- **AUTH-02** Passed-out and inactive users cannot log in; their specific message appears only after a correct password.
+- **AUTH-03** Deactivating a user makes their existing session get 401 on the next request and disconnects their socket.
+- **AUTH-04** A first-login user can call only auth routes and complete-profile.
+- **AUTH-05** The Admin reaches no Admin API before TOTP; a backup code works once; the same TOTP time-step is rejected twice; 5 wrong codes revoke the session.
+- **AUTH-06** Reset tokens that are expired, reused or for the wrong purpose fail; a reset revokes all sessions.
+- **AUTH-07** An unverified email receives no reset email, and the response is the same as for a verified one.
+- **AUTH-08** A state-changing request without `X-Requested-With: cms` gets 403.
+- **AUTH-09** 5 failed logins for one identifier in 15 minutes give 429.
+- **AUTH-10** Complete-profile enforces the password policy and Bangladesh mobile format, sends the verification email, and unlocks the dashboard with a "verify your email" banner.
+- **AUTH-11** Email change sends the link to the new email; verifying swaps the email and revokes other sessions.
+- **AUTH-12** Session cookie is `httpOnly; Secure; SameSite=Lax`; only the token hash is in the database.
+- **AUTH-13** Profile: a student cannot change a locked name or any read-only field; teachers cannot edit designation or subjects.
+- **AUTH-14** (UI) Login form at 360 px: role buttons pre-select the label, role mismatch shows the notice and still lands on the real dashboard, Admin gets the code step, first login goes to Complete Your Profile.

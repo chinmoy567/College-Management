@@ -68,7 +68,19 @@ Answers rendered with a Markdown renderer (no raw HTML) + KaTeX for math + code 
 ### 2.8 Privacy
 AI chats are private to the student: not in Student 360°, not visible to teachers or the Admin. Deleted with the account (03 §5.5).
 
-## 3. Tests
+## 3. Acceptance
 
-- Full PDF URL denied without a purchase; preview only contains the chosen pages; pay is idempotent.
-- AI: non-student 403; daily limit exact (concurrent requests can't exceed it); blocked during an in-progress attempt; provider error → `AI_BUSY` and count refunded; prompt contains no name/ID (assert on the built prompt); grounding only from the student's courses; Admin cannot read chats.
+- **BOOK-01** The full PDF URL is denied without a purchase.
+- **BOOK-02** The preview PDF contains only the chosen pages.
+- **BOOK-03** Pay is idempotent and stores the price at that moment; no payment gateway is called.
+- **BOOK-04** Only the Admin manages the catalog; archived books stay readable for students who unlocked them.
+- **BOOK-05** (UI) At 360 px: browse → book → Pay → confirm → the reader opens and the book is in My Books.
+- **AI-01** Non-students get 403.
+- **AI-02** The daily limit is exact even with concurrent requests (Asia/Dhaka date).
+- **AI-03** The AI is blocked while the student has an in-progress exam attempt.
+- **AI-04** Provider errors show "The AI assistant is busy, please try again later." and refund the count.
+- **AI-05** The prompt sent to the provider contains no name, ID, phone or section (assert on the built prompt).
+- **AI-06** Grounding uses only materials from the student's own courses.
+- **AI-07** Teachers and the Admin cannot read AI chats; the Admin sees usage counts only.
+- **AI-08** Provider and model are read from Settings; the API key never reaches the browser.
+- **AI-09** (UI) Answers stream in, math renders, the disclaimer is visible, past chats can be opened and deleted.

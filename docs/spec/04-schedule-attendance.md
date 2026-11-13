@@ -126,13 +126,22 @@ Calendar day colour: all present / partly absent / absent / no class.
 - Teacher: `GET /api/schedule/me/week` built from all offerings they teach + substitute meetings.
 - Mentor: section routine read-only via `GET /api/schedule/routine?sectionId=`.
 
-## 9. Tests
+## 9. Acceptance
 
-- Generator: skips holidays, respects special-day period lists, never duplicates (run twice), never recreates removed/moved meetings, does not touch meetings with attendance or past dates.
-- Routine change updates future meetings only; teacher change reassigns only future, untaken meetings.
-- Combined slot → one meeting with two offerings, no teacher conflict warning.
-- Deleting a used period without replacement → 409.
-- Attendance permission: other teacher denied, substitute allowed, mentor allowed for own section, student denied.
-- Duplicate submit idempotent; edits logged.
-- % formula: excused excluded, late counts present, cancelled not counted, N/A when 0, student moved mid-term measured only on own records.
-- Online class attaches to an overlapping routine meeting instead of creating a second one.
+- **SCH-01** The generator skips holidays and creates only the listed periods on a special day.
+- **SCH-02** Running the generator twice creates no duplicates; it never recreates removed or moved meetings and never touches past meetings or meetings with attendance.
+- **SCH-03** A routine change updates future meetings only; past meetings and attendance stay unchanged.
+- **SCH-04** A combined slot creates one meeting covering all its offerings and gives no teacher double-booking warning.
+- **SCH-05** Teacher and room double-bookings return warnings and never block the save.
+- **SCH-06** Deleting a used period or room without a replacement → 409; with a replacement the slots move; deletes are soft.
+- **SCH-07** Deleting a future meeting with attendance → 409 (cancel instead); without attendance it becomes `removed`.
+- **SCH-08** Only the Admin can change periods, rooms, routine, holidays, special days and single classes; everyone else gets 403.
+- **SCH-09** Attendance: another teacher is denied, the substitute is allowed, the mentor is allowed for their section, the Admin is allowed, a student is denied.
+- **SCH-10** Re-submitting the same sheet is idempotent; changes create AttendanceEdit rows (and AuditLog for the Admin).
+- **SCH-11** % formula: late counts as present, excused is excluded, cancelled meetings are not counted, "N/A" when nothing counts, a student who moved is measured only on their own records.
+- **SCH-12** The roster lists only students whose enrollment was active on the meeting date; optional courses list only enrolled students.
+- **SCH-13** An online class at a routine time attaches to that meeting instead of creating a second one.
+- **SCH-14** Absent students are notified; the below-75% notification fires only when the % crosses below the threshold.
+- **SCH-15** (UI) Attendance sheet at 360 px: everyone Present by default, tap cycles status, Submit is sticky, a failed submit keeps the draft and shows "Not sent, retry".
+- **SCH-16** (UI) Student attendance card shows overall and per-course % with correct colours; the calendar colours days and shows periods on tap.
+- **SCH-17** (UI) Admin Schedule Manager: add a holiday and an extra class from the calendar, see them on the student routine.

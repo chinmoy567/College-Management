@@ -49,10 +49,15 @@ Free book PDFs from v1.0 live here as `scope=college` materials (PRD §5.19).
 | `GET /api/materials/previous-questions/:id/files/:fileId` | same | Signed URL (as §3). |
 | `PATCH/DELETE` | uploader, Admin | Soft delete. |
 
-## 5. Tests
+## 5. Acceptance
 
-- Non-enrolled student never receives `joinUrl`; Join outside the 10-minute window rejected; join logged.
-- Online class at a routine time attaches to that meeting (no duplicate meeting).
-- Recording URL parser: valid YouTube/Drive forms accepted, others rejected; chapter from another course rejected.
-- Student cannot list or open materials of another section's offering; signed URL only after the check; view/download counted.
-- File type checked by content (a `.pdf` that is really an EXE is rejected).
+- **LRN-01** A student not enrolled in the class's offerings never receives `joinUrl`.
+- **LRN-02** Join works only from 10 minutes before start until the end; each click is logged.
+- **LRN-03** Rescheduling or cancelling an online class notifies students and re-links or detaches Class Meetings.
+- **LRN-04** The recording URL parser accepts YouTube and Drive links and rejects others; a chapter from another course is rejected.
+- **LRN-05** A student cannot list or open materials of another section's offering; signed URLs are issued only after the check; views and downloads are counted.
+- **LRN-06** File types are checked by content (a renamed EXE as `.pdf` is rejected); size limits hold.
+- **LRN-07** College-wide recordings and materials are visible to all students; section ones only to that section.
+- **LRN-08** New recordings and materials notify the enrolled students.
+- **LRN-09** Previous questions can be filtered by course, year and exam type; uploads are limited to the roles in PRD §2.1.
+- **LRN-10** (UI) A recording plays in the embedded player at 360 px and shows as "watched" afterwards; Join opens the meeting in a new tab.

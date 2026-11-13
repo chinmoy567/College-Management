@@ -118,14 +118,21 @@ Transaction:
 - `GET /api/admin/students/:id/360.pdf` – full report (pdfkit), streamed, not stored.
 - Teachers and mentors get `GET /api/users/students/:id` limited view: name, photo, loginId, roll, section, their course data. **No mobile, address, DOB, guardian** (PRD §8 Privacy).
 
-## 8. Tests
+## 8. Acceptance
 
-- Session create makes exactly 3 groups + default sections; duplicate name rejected.
-- 30-limit: create, import, move; concurrent creates for the last place → only one succeeds; inactive/passed-out not counted.
-- Import with one bad row imports nothing.
-- Move ends old enrollments, creates new, keeps historical `sectionId` on attendance/attempts.
-- Teacher change reassigns only future meetings without attendance.
-- Mentor uniqueness; chat membership sync on mentor/teacher change.
-- Anonymise erases personal fields and AI chats, keeps posts as "Deleted user".
-- Pass-out blocks login, removes from chats, auto-submits running attempts.
-- Teacher cannot see private student fields; non-Admin gets 403/404 on 360°.
+- **ACAD-01** Creating a session makes exactly 3 groups, each with a default Section A; a duplicate session name is rejected.
+- **ACAD-02** The 30-student limit holds on create, CSV import and move; two concurrent creates for the last place → only one succeeds; inactive, passed-out and deleted students are not counted.
+- **ACAD-03** CSV import with one bad row imports nothing; the dry run lists every row error.
+- **ACAD-04** Moving a student ends old enrollments, creates new ones, and keeps the old `sectionId` on past attendance and exam attempts; promotion 11 → 12 works the same way and the class follows the section.
+- **ACAD-05** Changing an offering's teacher keeps its content and reassigns only future meetings without attendance.
+- **ACAD-06** One mentor per section and one section per mentor; group/section chat membership is synced on mentor and teacher changes.
+- **ACAD-07** Copy assignments copies only course + teacher pairs matching the target's group and class.
+- **ACAD-08** Optional courses enroll only the chosen students (default: all).
+- **ACAD-09** Permanent delete anonymises personal fields, deletes AI chats and keeps posts as "Deleted user".
+- **ACAD-10** Pass-out (session or individual) blocks login, removes students from group/section chats and auto-submits running attempts; nothing passes out automatically.
+- **ACAD-11** Writes into a closed session return 409 `SESSION_CLOSED`.
+- **ACAD-12** Teachers and mentors never receive mobile, address, DOB or guardian info; non-Admins get 404 on Student 360°.
+- **ACAD-13** Every Admin write creates an AuditLog row with no personal data.
+- **ACAD-14** The plain initial password is returned only once (credential slip) and is never stored or retrievable.
+- **ACAD-15** (UI) Admin adds a student at 360 px, sees the credential slip, and can create a new section from the same screen when all are full.
+- **ACAD-16** (UI) Student 360° opens from search by ID, name, roll or phone; every tab loads; the PDF export downloads; no AI chats appear.

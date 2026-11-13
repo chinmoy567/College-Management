@@ -113,13 +113,21 @@ At `publishAt` (immediately if now): resolve audience → insert `NoticeRecipien
 - Service worker shows title + short text + URL; payload never includes message or post content (only "New message from X").
 - 404/410 from the push service → delete the subscription.
 
-## 7. Tests
+## 7. Acceptance
 
-- Socket rejected without valid session; revoked session disconnects; user cannot receive events for a conversation they left.
-- Pair rule for direct chat; block stops direct messages; muted user can't send.
-- Banned word → 422, nothing stored.
-- Membership sync on move / mentor change / teacher change / pass-out.
-- Unread counts and seen status.
-- Notice audience resolution (central filters, class-wise scope limited to the author's offerings).
-- Email quota: 451st email deferred to the next day; reset emails still sent while normal ones wait.
-- Urgent notice email ignores user email pref.
+- **CHAT-01** A socket without a valid session is rejected; a revoked session disconnects; a user gets no events for a conversation they left.
+- **CHAT-02** Direct chat is allowed for student↔student, teacher↔student, teacher↔teacher and Admin↔anyone.
+- **CHAT-03** A blocked user cannot start or send direct messages to the blocker; the blocker no longer sees their group/section messages.
+- **CHAT-04** A muted user cannot send messages.
+- **CHAT-05** A message with a banned word returns 422 "This message contains a blocked word." and nothing is stored.
+- **CHAT-06** Group/section membership syncs on student create, move, pass-out, mentor change and teacher change.
+- **CHAT-07** The Admin is not in group/section chats and sees only the reported message with 10 messages before and after.
+- **CHAT-08** Unread counts and seen status are correct in direct and group chats.
+- **CHAT-09** Notice audiences resolve correctly: central filters by role/session/group; class-wise only for the author's offerings/sections.
+- **CHAT-10** A scheduled notice publishes once at `publishAt`; expired notices are hidden.
+- **CHAT-11** Email quota: emails over the daily limit wait until the next day; reset and verification emails go first.
+- **CHAT-12** Urgent-notice email ignores the user's email preference; important/urgent notices email, normal ones do not.
+- **CHAT-13** Notifications arrive in real time with the unread count, and can be marked read.
+- **CHAT-14** Push payloads never contain message or post text; a 404/410 from the push service deletes the subscription.
+- **CHAT-15** (UI) Two browsers at 360 px: a message arrives in under 1 s, typing indicator and "Seen" show.
+- **CHAT-16** (UI) An urgent notice shows a dashboard banner until read; the Notices page filters Central / My Classes with unread markers.

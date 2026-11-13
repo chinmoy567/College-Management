@@ -118,13 +118,25 @@ Nothing else in a started exam can be edited.
 - Question navigator (answered / marked / empty), one question per screen on phones, big option targets, auto-save on every tap with a "saved" tick; retries queued while offline and dropped once `DEADLINE_PASSED`.
 - Visibility/blur/fullscreen-exit listeners → integrity endpoint (batched every 10 s).
 
-## 9. Tests
+## 9. Acceptance
 
-- Scoring: single right/wrong, multiple exact set only, unanswered 0, cancelled = full marks, no negatives.
-- Deadline: answer at deadline−1 s accepted, +1 s rejected; window end caps deadline (start 9:50, window to 10:00, 45 min → 10:00).
-- Concurrent start → one in-progress attempt; quiz next attempt only after submit; attempt limit.
-- Correct answers absent from every payload before reveal/publish (snapshot test of JSON).
-- Extra time beyond `endAt` delays reveal; reopen keeps answers.
-- Fix key regrades submitted attempts and logs.
-- Ranks: ties 1,2,2,4; section-scoped using attempt `sectionId` after a student moves; missed exam = 0% in overall; quizzes excluded from overall.
-- Admin create exam → 403; other teacher → 404.
+- **EXAM-01** Single-answer question: right = its marks, wrong = 0.
+- **EXAM-02** Multiple-answer question is right only for the exact set; unanswered = 0; a cancelled question gives everyone its marks; a score is never negative or partial.
+- **EXAM-03** An answer 1 s before the deadline is accepted; 1 s after is rejected.
+- **EXAM-04** The window end caps the deadline (window to 10:00, 45 min, start 9:50 → deadline 10:00).
+- **EXAM-05** Concurrent starts give one in-progress attempt; a quiz's next attempt starts only after submit; the attempt limit holds.
+- **EXAM-06** No payload contains correct answers before reveal + results published + `showAnswersAfterEnd` (JSON snapshot test).
+- **EXAM-07** Questions are never sent before the student's own attempt starts.
+- **EXAM-08** Instant mode: only the total score before reveal; per-question results and ranks after reveal.
+- **EXAM-09** Manual mode: nothing until the teacher publishes results.
+- **EXAM-10** Extra time can pass `endAt` and delays reveal for the whole exam; reopening keeps saved answers; every extension is logged.
+- **EXAM-11** Fixing a key or cancelling a question regrades all submitted attempts, is logged and notifies students.
+- **EXAM-12** A started exam cannot be edited except for key fixes/cancellations; editing before start re-copies the snapshot.
+- **EXAM-13** Editing the question bank never changes a published or past exam.
+- **EXAM-14** Ranks use competition ranking (1, 2, 2, 4) within the attempt's section.
+- **EXAM-15** Overall course rank = average % over published Exams with a missed exam as 0%; quizzes excluded; a quiz's own rank uses the best attempt.
+- **EXAM-16** The Admin cannot create exams (403); another teacher gets 404.
+- **EXAM-17** An attempt is auto-submitted at the deadline even with the browser closed (job), and lazily if the job ran late.
+- **EXAM-18** Duration accepts only 15, 30, 45, 60, 90, 120.
+- **EXAM-19** (UI) Exam page at 360 px: timer always visible, answers save with a tick, reload resumes with the same order and answers, no animation.
+- **EXAM-20** (UI) Student progress page shows marks, %, grade, section rank, trend chart and strong/weak chapters.

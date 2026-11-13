@@ -99,13 +99,20 @@ Actions `POST /api/admin/moderation/:targetType/:targetId` `{ action: dismiss | 
 - Deleted: `404`.
 - When the actor is the Admin, the UI links to Student 360° instead.
 
-## 8. Tests
+## 8. Acceptance
 
-- Feed order: Admin unseen pins → mentor unseen pins (own section only) → rest newest first; seen pin drops out on next load; expired pin never on top; empty pins → regular feed.
-- Extend gives time only to unseen users; edit does not reset the timer.
-- Mentor change keeps old pin audience.
-- Non-mentor teacher / student cannot pin.
-- Reply to a reply rejected; one reaction per user, change works.
-- Muted user blocked from post/comment/message but can read.
-- Banned word holds post, rejects chat message.
-- Public profile never contains private fields or loginId (JSON snapshot).
+- **COMM-01** Feed order: unseen Admin pins → unseen mentor pins (own section only) → all other posts, newest first.
+- **COMM-02** A seen pin leaves the top on the next load (not instantly); one PostView covers both feed and dashboard.
+- **COMM-03** A pin older than 7 days is never on top and the post stays in the timeline; with no unseen pins the feed starts with regular posts.
+- **COMM-04** Extending a pin helps only users who have not seen it; editing a post does not reset the timer or re-pin it.
+- **COMM-05** Section pins appear on top only for that section's students; a mentor change keeps the old pin's audience.
+- **COMM-06** Non-mentor teachers and students cannot pin; pinning can be chosen only at creation.
+- **COMM-07** Replies are one level only; one reaction per user per post/comment, changeable and removable.
+- **COMM-08** A muted user cannot post, comment or message but can still read.
+- **COMM-09** A post/comment with a banned word is held for review and visible only to its author and the Admin.
+- **COMM-10** Public profile never contains email, mobile, address, DOB, guardian info or Student ID; inactive users show only photo, name and the note; deleted users give 404.
+- **COMM-11** Moderation actions dismiss / delete / delete & warn / mute work, notify the author, soft-delete for 30 days and are audited.
+- **COMM-12** Posts and comments accept at most 10 images of 5 MB each.
+- **COMM-13** Author line format matches PRD §5.7.1 for student, teacher, mentor, Admin and deleted user.
+- **COMM-14** Creating a pinned post notifies its audience; an unpinned post sends no notification.
+- **COMM-15** (UI) A pin counts as seen only after ≥ 50% is visible for 1 s; collapsed pins are not counted; 5 pins shown expanded with "Show N more announcements".

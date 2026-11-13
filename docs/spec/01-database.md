@@ -933,3 +933,12 @@ A CI test (`db.rls.test.ts`) fails if any table in `public` has `relrowsecurity 
 - The single Admin: `role=admin`, email from `SEED_ADMIN_EMAIL`, password from `SEED_ADMIN_PASSWORD`, `mustChangePassword=true`, no TOTP yet. Idempotent: never creates a second Admin (fails if one exists with a different email).
 - Settings above. Example periods (Period 1 08:00–08:45 …) only when `SEED_DEMO=true`.
 - Demo data script (`seed-demo.ts`, dev only): one session, 3 groups, 2 sections, 5 courses, 3 teachers, 60 students.
+
+## 6. Acceptance
+
+- **DB-01** `prisma migrate deploy` and the seed run cleanly on an empty database, and the seed can run twice without changes.
+- **DB-02** Row Level Security is enabled on every table in `public` (test fails on any table without it).
+- **DB-03** The raw-SQL constraints exist and reject bad data: section class 11/12, unique section name per group + class, one active enrollment per student + offering, one in-progress attempt per student + exam, reaction targets exactly one item, exam window/duration/pass marks, period and holiday ranges, one meeting per routine slot per day.
+- **DB-04** The seed never creates a second Admin.
+- **DB-05** All Settings keys in §4 are seeded with their defaults.
+- **DB-06** Every table and model in PRD §6 exists in the schema (checked by reading the schema against PRD §6).

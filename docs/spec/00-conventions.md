@@ -100,5 +100,25 @@ Modules: `auth, users, academics, schedule, attendance, feed, chat, notices, not
 
 - Vitest for unit + integration (API tests with supertest against a disposable Postgres; `prisma migrate reset` per run).
 - Playwright for a few critical end-to-end paths at 360 × 740 viewport (login, take attendance, take exam, chat send).
-- Required test areas per module are listed in each spec under **Tests**.
-- `npm run typecheck`, `npm run lint`, `npm test` at the root run all workspaces.
+- Every spec ends with an **Acceptance** list of IDs (`AUTH-01`, `SCH-05` …). Each ID needs at least one test whose name starts with the ID in brackets:
+  ```ts
+  it('[AUTH-02] passed-out student cannot log in', ...)        // Vitest
+  test('[SCH-15] attendance sheet works at 360 px', ...)       // Playwright
+  ```
+  An ID marked **(UI)** also needs a Playwright test (or a browser check by `/spec-check`) at 360 × 740.
+- `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e` at the root run all workspaces.
+- `npm run spec:check [-- --spec 04] [-- --strict]` (script `scripts/spec-check.ts`, built in M0): reads every `**PREFIX-NN**` in `docs/spec/*.md`, finds `[PREFIX-NN]` in `**/*.test.ts` and `e2e/**/*.spec.ts`, and prints each ID as covered or missing. `--strict` exits 1 if any ID of the chosen spec is missing (used when a milestone is declared done, and in CI for finished milestones listed in `scripts/spec-check.config.json`).
+- Prefixes: `CONV` 00 · `DB` 01 · `AUTH` 02 · `ACAD` 03 · `SCH` 04 · `EXAM` 05 · `COMM` 06 · `CHAT` 07 · `LRN` 08 · `BOOK`/`AI` 09 · `FE` 10 · `OPS` 11.
+- Verify a spec end to end with the `/spec-check <nn|all>` command (skill `spec-check`, agent `spec-verifier`).
+
+## 10. Acceptance
+
+- **CONV-01** Every error response uses the `{ error: { code, message, fields? } }` shape; 500s never include a stack trace.
+- **CONV-02** Unknown body keys are stripped by Zod (a client cannot set `role`, `status` etc. through any form).
+- **CONV-03** Every list endpoint is cursor-paginated (default 20, max 50).
+- **CONV-04** Private files are reachable only through signed URLs issued after a permission check; the public bucket holds only logo, banner, landing-notice attachments and book covers.
+- **CONV-05** Uploads get random keys and are never overwritten; deleted files are removed from storage only after 30 days.
+- **CONV-06** Logs redact passwords, tokens, cookies, TOTP codes and API keys, and never contain post, message or AI chat text.
+- **CONV-07** Times are stored in UTC and shown in Asia/Dhaka; date-only values use the Dhaka date (test around 18:00 UTC).
+- **CONV-08** Every policy helper in `permissions.ts` has allow and deny tests.
+- **CONV-09** Objects the actor may not see return 404, not 403.

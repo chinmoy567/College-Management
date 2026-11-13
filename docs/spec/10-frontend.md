@@ -105,3 +105,17 @@ Top bar: page title, bell with unread count, avatar. On `lg`, the tab bar become
 - Loading/empty/error states present.
 - Hidden controls match the role, and the API also denies them.
 - Type-check and lint pass.
+
+## 7. Acceptance
+
+- **FE-01** (UI) No page has horizontal scroll at 360 px (Playwright checks `scrollWidth <= clientWidth` on every route in §2).
+- **FE-02** (UI) Touch targets are at least 44 × 44 px and inputs at least 16 px.
+- **FE-03** (UI) Landing page shows every public section and the three role buttons; a logged-in user sees "Open my dashboard"; no private data is on it.
+- **FE-04** (UI) Each role gets its own bottom tab bar on phones and a sidebar on `lg`; the bell shows the unread count.
+- **FE-05** (UI) Every data screen has loading, empty and error states.
+- **FE-06** (UI) Controls a role may not use are hidden, and calling the API directly is still denied.
+- **FE-07** (UI) The 401 and `FIRST_LOGIN_REQUIRED` redirects work.
+- **FE-08** No animation on the exam page; `prefers-reduced-motion` turns animations off.
+- **FE-09** The app is installable as a PWA (manifest + service worker) and the service worker never caches personal API data.
+- **FE-10** Recharts, react-pdf, KaTeX, TipTap and the YouTube iframe are lazy-loaded (not in the first-load bundle).
+- **FE-11** All times on screen are Asia/Dhaka.
