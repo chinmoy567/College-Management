@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.26 |
+| **Document Version** | 2.27 |
 | **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -40,6 +40,7 @@
 | 2.24 | 14 Nov 2026 | Senior review fixes (kept simple): combined classes in the routine (RoutineSlotOffering); routine slots soft-deleted; a course-teacher change updates future meetings; one link between online class and meeting; Chapter table; shuffled order saved per attempt; teacher can fix a wrong answer key (regrade) and give one student extra time; email verification no longer blocks first login; overall course rank defined; ranks and per-question results only after the window ends; mute scope; AI chats private to the student; Admin two-step login; all uploads private; questions never sent before start; book preview as a separate file; attendance draft kept on the device; stack chosen (one Next.js app); Phase 1 build order. |
 | 2.25 | 14 Nov 2026 | Removed Section 11 (Decisions & Open Questions); every decision is already written in its own section. |
 | 2.26 | 14 Nov 2026 | Removed Section 10 (Release Plan / phases) and the phase notes in 5.9, 5.10 and 5.20. |
+| 2.27 | 14 Nov 2026 | Stack changed to Next.js + Express.js + PostgreSQL on Supabase (Storage for files); details in `tech.stack.md` (§9). |
 
 ---
 
@@ -737,7 +738,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 | **Uploads** | Images (JPG/PNG/WebP) max **5 MB** each, resized/compressed on upload; PDF/DOC/DOCX/PPT/PPTX max **20 MB**; book PDFs max **100 MB** (Admin only); max 10 images per post or comment. File type checked by content, not only by extension. |
 | **Security** | HTTPS everywhere, role + assignment-based authorization, input sanitization (XSS), file-type and size validation on uploads, signed URLs for private files, audit log for Admin actions. |
 | **Privacy** | Students' personal details (mobile, address, guardian info, DOB) visible **only to the student and the Admin**. Teachers and Section Mentors see only profile and course data (Section 5.3.1). |
-| **Backups** | Daily automatic database backups, kept 30 days; file storage with versioning. |
+| **Backups** | Daily automatic database backups, kept 30 days. Files are never overwritten (every upload gets a new unique name), and a deleted file is removed from storage only after 30 days. |
 | **Timezone** | All times are shown in **Asia/Dhaka** and stored in **UTC** (routine, exams, attendance, pin expiry, holidays). |
 | **Language** | UI in English; Bangla content supported everywhere (Unicode); Bangla UI can be added later. |
 | **Accessibility** | Readable fonts, sufficient contrast, keyboard navigation for forms and exams. |
@@ -746,18 +747,18 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 
 ## 9. Technical Architecture (chosen)
 
-Kept simple on purpose: **one codebase, one Node.js app, one PostgreSQL database, one server.**
+Full details, libraries and setup: **`tech.stack.md`**. Kept simple: **one repo, Next.js frontend + Express backend, one PostgreSQL database on Supabase.**
 
 | Layer | Choice |
 |---|---|
-| **App** | **One Next.js app (TypeScript)** with Tailwind CSS: pages and the REST API (route handlers) in the same project; responsive, PWA-enabled. It runs on a small custom Node server that also hosts Socket.IO (chat, notifications) and the background job worker, so there is one process to deploy and one cookie domain. |
-| **Database access** | Prisma ORM; every schema change is a Prisma migration in the repo. |
-| **Database** | PostgreSQL only (sessions, rate limits and background jobs are kept in PostgreSQL). **No Redis**; Socket.IO runs on a single server. |
-| **Background jobs** | A PostgreSQL-backed job queue (e.g. pg-boss) for exam auto-submit at the deadline, the email queue, Class Meeting generation, scheduled notices and pin expiry. |
-| **File storage** | S3-compatible object storage (AWS S3 / Cloudflare R2 / DigitalOcean Spaces) for images and PDFs (no videos). |
+| **Frontend** | **Next.js** (TypeScript) + **Tailwind CSS**; responsive, PWA-enabled. Calls only the Express API; never the database directly. |
+| **Backend API** | **Express.js** (TypeScript) REST API, with **Socket.IO** for chat and notifications, on a single server. Login sessions, role and assignment checks live here. |
+| **Database** | **PostgreSQL hosted on Supabase**, accessed with Prisma (every schema change is a migration). Sessions, rate limits and background jobs are kept in PostgreSQL. **No Redis.** Supabase Auth, Realtime and the auto REST API are **not** used (Row Level Security on with no policies, so the public key reads nothing). |
+| **Background jobs** | pg-boss (PostgreSQL job queue) in the Express app: exam auto-submit at the deadline, the email queue, Class Meeting generation, scheduled notices and pin expiry. |
+| **File storage** | **Supabase Storage**: a private bucket for all user files (signed links only) and a small public bucket for logo, landing-page notices and book covers. No videos. |
 | **Live classes** | No integration: teacher pastes a free Google Meet or Jitsi Meet link. |
 | **Recorded video** | Teacher's own YouTube (unlisted) link, shown in an embedded player. No video upload. |
 | **Email** | SMTP through a free Google account, with a background job queue and rate limiting (Section 5.9). |
 | **Payments** | None in this version (placeholder **Pay** button). A gateway can be plugged in later. |
 | **AI** | Groq API free tier (open model, e.g. Llama 70B-class), called server-side only; provider and model configurable. |
-| **Hosting** | One VPS (e.g. DigitalOcean / AWS, about 2 vCPU / 4 GB RAM) with Docker Compose (app + PostgreSQL) behind a reverse proxy with HTTPS (e.g. Caddy); daily backups. App errors are written to log files. |
+| **Hosting** | Next.js and Express on one VPS with Docker Compose behind Caddy (HTTPS, one domain so the login cookie is first-party). Database and files on Supabase (Pro plan for production). Backups: Supabase daily backups plus a nightly `pg_dump` kept 30 days. |
