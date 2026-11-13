@@ -804,7 +804,8 @@ Kept simple on purpose: **one codebase, one Node.js app, one PostgreSQL database
 22. **The Student ID is not shown on the public profile**; only the student, their teachers and the Admin see it (Section 5.7.1).
 23. **Exam scoring is simple:** right = marks, wrong = 0, no negative or partial marks (Section 5.14.1).
 24. **Email uses a free Google SMTP account** with a rate-limited queue (Section 5.9).
-25. **Every student has an email address**, entered by the Admin when adding the student and verified at first login (Sections 3.1.1, 4.2).
+25. **Every student has an email address**, entered by the Admin when adding the student. A verification link is sent at first login; verifying does not block the dashboard (a reminder banner shows until verified) (Sections 3.1.1, 4.2).
 
-**Open questions:**
-None at the moment.
+**Open questions (to confirm with the client; the PRD already follows the default shown):**
+1. **AI chat privacy:** AI chats are private to the student; the Admin sees only usage counts (Section 5.20). Should the Admin be able to read students' AI chats instead (students may be minors)?
+2. **Admin two-step login:** every Admin login needs the password plus an authenticator-app code; if the phone is lost, only the printed backup codes restore access (Section 2.2). The client must keep the backup codes safe. Confirm.
