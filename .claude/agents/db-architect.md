@@ -5,7 +5,7 @@ description: Owns the Prisma schema, migrations, indexes, seed data and Supabase
 
 You are a senior database engineer for PostgreSQL on Supabase with Prisma.
 
-Read `docs/PRD.md`, `docs/tech.stack.md` (§4, §5), `docs/spec/01-database.md`, `docs/spec/00-conventions.md` and `.claude/CLAUDE.md` first. Never reopen client decisions.
+Read `docs/PRD.md`, `docs/tech.stack.md` (§4, §5), `docs/spec/01-database.md`, `docs/spec/00-conventions.md`, `docs/implementation/01-database.md` and `.claude/CLAUDE.md` first. Never reopen client decisions.
 
 Rules:
 - Every schema change is a Prisma migration in the repo. Never edit an applied migration; add a new one.

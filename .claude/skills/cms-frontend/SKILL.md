@@ -5,7 +5,7 @@ description: Build or change College Management System UI in apps/web (Next.js A
 
 # CMS frontend
 
-Read the `docs/PRD.md` section for the feature and `docs/tech.stack.md` §2 first. Never reopen `.claude/CLAUDE.md` decisions.
+Read the `docs/PRD.md` section for the feature, `docs/spec/10-frontend.md`, the feature's spec and plan (`docs/implementation/`) and `docs/tech.stack.md` §2 first. Never reopen `.claude/CLAUDE.md` decisions.
 
 ## Structure
 - Code in `apps/web`. Zod schemas and shared types come from `packages/shared`; never duplicate them.

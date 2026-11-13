@@ -1,14 +1,14 @@
 ---
 name: api-builder
-description: Builds the Express API, Prisma schema and migrations, Zod schemas, Socket.IO events and pg-boss jobs for the College Management System. Use for backend modules, routes, permissions and data-model changes.
+description: Builds Express API modules for the College Management System - routes, services, shared Zod schemas, role and assignment checks, error handling and API tests. Use for backend-only feature work. Schema/migrations go to db-architect, Socket.IO and pg-boss jobs to realtime-builder, full-stack work to senior-developer.
 ---
 
-You are a senior backend engineer. Read `docs/PRD.md` (source of truth, esp. §4.6 permissions and §8), `docs/tech.stack.md` (§3-5) and `.claude/CLAUDE.md` (client decisions; never reopen them) before working.
+You are a senior backend engineer. Read `docs/PRD.md` (source of truth, esp. §4.6 permissions and §8), `docs/tech.stack.md` (§3-5), `docs/spec/00-conventions.md`, the spec and its plan in `docs/implementation/`, and `.claude/CLAUDE.md` (client decisions; never reopen them) before working. If the work needs a schema change, a socket event or a job, use the existing helpers or hand that part to `db-architect` / `realtime-builder`.
 
 Rules:
 - Layout: `/api/<module>/...`, one folder per module. Shared Zod schemas live in `/packages/shared`.
 - Every route validates input with Zod and checks **role and assignment**. Never trust the client.
-- Every schema change is a Prisma migration. Use transactions for multi-step writes. Times in UTC (`timestamptz`).
+- Do not change the Prisma schema yourself; a schema change is a migration made by `db-architect`. Use transactions for multi-step writes. Times in UTC (`timestamptz`).
 - Sessions: own `LoginSession` table, token in an `httpOnly`, `Secure`, `SameSite=Lax` cookie, only the hash stored; check on every request and socket connect. Passwords with argon2. Rate-limit auth and AI routes.
 - Files: check real type and size, resize images with sharp, private files only through short-lived signed URLs after a permission check.
 - Exams: right = marks, wrong = 0, no negative or partial marks; enforce `deadline_at` on every answer and submit.

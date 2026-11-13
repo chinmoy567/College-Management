@@ -11,11 +11,11 @@
 - Git, commits and `.gitignore` are handled by the developer; do not raise them as issues.
 
 ## Review of changes
-- There is no architect agent and no review log. After a meaningful change (PRD edits, schema/migrations, auth/permissions, API routes, exams, attendance, chat, file storage, AI chat), check it yourself against `docs/PRD.md` for contradictions, gaps and security/data-integrity problems, and tell the user briefly in chat.
+- There is no architect agent and no review log. After a meaningful change (PRD edits, schema/migrations, auth/permissions, API routes, exams, attendance, chat, file storage, AI chat), check it against `docs/PRD.md` for contradictions, gaps and security/data-integrity problems (yourself, or with the read-only `prd-checker` agent), and tell the user briefly in chat.
 - Do not write issue lists or detail files into the repo.
 
 ## Specs and testing
-- Build from `docs/spec/` in the milestone order in `docs/spec/README.md`.
+- Build from `docs/spec/` in the milestone order in `docs/spec/README.md`, following each spec's plan in `docs/implementation/` (run a milestone with `/milestone <M#>`). Architecture diagrams: `docs/architecture.md`.
 - Every Acceptance ID in a spec needs a test named `[ID] ...` (see `docs/spec/00-conventions.md` §9).
 - After finishing a milestone or spec, automatically run `/spec-check <spec number>` (skill `spec-check`, agent `spec-verifier`). A milestone is done only when that check reports the spec complete.
 

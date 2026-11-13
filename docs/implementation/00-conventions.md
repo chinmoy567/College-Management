@@ -16,7 +16,7 @@ Goal: a running skeleton where every later module drops in without touching the 
 1. Root `package.json` with npm workspaces: `apps/web`, `apps/api`, `packages/shared`. Node 20 LTS pinned in `engines` and `.nvmrc`.
 2. `tsconfig.base.json` (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` off — too noisy with Prisma). Path alias `@cms/shared`.
 3. ESLint (flat config) + Prettier; `typescript-eslint` strict-type-checked for `apps/api`, Next lint rules for `apps/web`. Rule: no `any` in exported signatures.
-4. Root scripts: `dev`, `build`, `start`, `typecheck`, `lint`, `test`, `test:e2e`, `spec:check`, `db:migrate`, `db:seed`.
+4. Root scripts: `dev`, `build`, `start`, `typecheck`, `lint`, `test`, `test:e2e`, `spec:check`, `db:migrate`, `db:seed`, `db:seed:demo`.
 
 ### 2.2 `packages/shared`
 - `src/constants.ts`: `SECTION_MAX = 30`, `PIN_DAYS_DEFAULT = 7`, `MAX_IMAGES = 10`, `EXAM_DURATIONS = [15,30,45,60,90,120] as const`, upload limits, text limits (00 §6), pagination defaults.

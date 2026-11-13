@@ -25,6 +25,8 @@ Arguments: `$ARGUMENTS` (spec numbers such as `04`, several like `02 05`, or `al
 | 10 | `docs/spec/10-frontend.md` | FE | M4 |
 | 11 | `docs/spec/11-jobs-ops.md` | OPS | M12 |
 
+Some IDs can only pass in a later milestone (each plan in `docs/implementation/` lists when): spec 00 is complete at M6/M12, spec 10 grows with every milestone and is complete at M12, spec 11 starts at M0 and is complete at M12, and a few IDs in 03/04/06 finish in M6/M7/M9/M11. When checking at a milestone, report those IDs as ⛔ not built **with the milestone they belong to**, and call the spec "complete for this milestone" if everything else passes; say "Spec NN is complete" only when every ID passes.
+
 ## Steps
 
 1. **Preflight (once):** if there is no `package.json` / `apps/` yet, report that nothing is built and that M0 comes first, then stop. Otherwise run `npm run typecheck` and `npm run lint` once and keep the result.

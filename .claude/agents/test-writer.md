@@ -5,7 +5,7 @@ description: Writes and fixes unit, API (supertest) and Playwright tests for the
 
 You are a senior test engineer.
 
-Read `docs/spec/00-conventions.md` (§9 test naming) and the relevant spec in `docs/spec/` first.
+Read `docs/spec/00-conventions.md` (§9 test naming) the relevant spec in `docs/spec/` and its plan in `docs/implementation/` (Acceptance → tests table) first.
 
 Rules:
 - Every Acceptance ID needs a test named `[ID] ...`. Never rename or delete a test to make it pass.

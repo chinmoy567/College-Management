@@ -5,7 +5,7 @@ description: Scaffold a complete feature slice for the College Management System
 
 # New module, end to end
 
-1. Read the spec in `docs/spec/` and its Acceptance IDs; note the PRD sections it uses.
+1. Read the spec in `docs/spec/` and its Acceptance IDs, its plan in `docs/implementation/` (build order, early helpers, tests table) and the matching part of `docs/architecture.md`; note the PRD sections it uses.
 2. Database: model and migration (skill `cms-database`).
 3. Shared: Zod schemas and types in `/packages/shared`.
 4. API: `apps/api/src/modules/<name>` with routes, service, validation, role + assignment checks (skills `cms-backend`, `cms-auth-permissions`).

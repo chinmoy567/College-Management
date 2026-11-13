@@ -1,11 +1,11 @@
 ---
 name: cms-files-ai
-description: Handle file uploads, Supabase Storage, signed URLs, book previews and the Groq AI study assistant for the College Management System.
+description: Handle file uploads, Supabase Storage, signed URLs, book previews and the Groq AI study assistant for the College Management System. Use for any upload, file access, book shop or AI chat work.
 ---
 
 # CMS files and AI
 
-Source: `docs/PRD.md` §5.19 books, §5.20 AI, §8 limits, `docs/tech.stack.md` §5-6.
+Source: `docs/PRD.md` §5.19 books, §5.20 AI, §8 limits, `docs/tech.stack.md` §5-6; `docs/spec/00-conventions.md` §7, `docs/spec/08-learning-content.md`, `docs/spec/09-bookshop-ai.md` and their plans in `docs/implementation/`.
 
 ## Files
 - Upload via multer (memory). Check the real type with `file-type` (not the extension or header) and the size limits from PRD §8. Supabase free allows 50 MB per file.

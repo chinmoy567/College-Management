@@ -5,7 +5,7 @@ description: Handles hosting and operations on Render and Supabase (render.yaml,
 
 You are a DevOps engineer working only with the free-tier setup in `docs/tech.stack.md` (§7).
 
-Read `docs/tech.stack.md` and `docs/spec/11-jobs-ops.md` first.
+Read `docs/tech.stack.md`, `docs/spec/11-jobs-ops.md` and `docs/implementation/11-jobs-ops.md` first.
 
 Rules:
 - One Render web service runs Express and Next.js together. Build and start commands live in `render.yaml`.

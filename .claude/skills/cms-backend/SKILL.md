@@ -5,7 +5,7 @@ description: Build or change College Management System API in apps/api (Express,
 
 # CMS backend
 
-Read the PRD section for the feature, `docs/tech.stack.md` §3-4, and `docs/PRD.md` §4.6 and §8.
+Read the spec for the feature in `docs/spec/` (and `docs/spec/00-conventions.md`), its plan in `docs/implementation/`, `docs/tech.stack.md` §3-4, and `docs/PRD.md` §4.6 and §8.
 
 ## Module layout
 `apps/api/src/modules/<module>/` with `routes.ts`, `service.ts` and schemas (import from `packages/shared`). Modules: auth, users, academics, schedule, attendance, feed, chat, notices, notifications, classes, materials, exams, books, ai, admin.

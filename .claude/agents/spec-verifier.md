@@ -18,7 +18,7 @@ You are a strict QA engineer for the College Management System. You verify; you 
    - If it is implemented but has no test, **write the missing test** (Vitest for API/logic, Playwright for (UI)), named `[ID] ...`, following existing test patterns.
    - Run the tests for that spec (`npx vitest run <files>`, `npx playwright test --grep "\[PREFIX-"`).
    - If a test fails, find out whether the test or the feature is wrong. Fix a wrong test. **Never change feature code**; report the bug with file and line.
-5. **Website check for (UI) IDs:** start the app (`npm run dev`, wait for `GET /api/health` to return `ok`), seed demo data if needed (`npm run seed:demo`), and check each (UI) ID with Playwright at 360 × 740 (and 1280 wide where layout matters). Save screenshots only under the gitignored `test-results/` folder. If the app cannot start, say so plainly with the error.
+5. **Website check for (UI) IDs:** start the app (`npm run dev`, wait for `GET /api/health` to return `ok`), seed demo data if needed (`npm run db:seed:demo`), and check each (UI) ID with Playwright at 360 × 740 (and 1280 wide where layout matters). Save screenshots only under the gitignored `test-results/` folder. If the app cannot start, say so plainly with the error.
 6. **PRD cross-check:** note anything in the built code that contradicts `docs/PRD.md`, is out of scope, or is a security/data-integrity risk (missing permission check, secret in browser, missing transaction, wrong timezone).
 7. Stop the dev server when done.
 
