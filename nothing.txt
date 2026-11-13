@@ -1,0 +1,65 @@
+Yes, the PRD still has problems. The architect agent checked it twice: once in full on v2.6, and once on your v2.7 changes. Below are the PRD problems from both reviews.
+  
+  Fixed by v2.7:
+  - ARC-003, group rank: fixed. Ranks are now by section only.
+  - ARC-014, PRD not in git: partly fixed. PRD.md is back at the root, but the v2.7 edits aren't committed yet.
+
+  The v2.7 changes don't conflict with the rest of the PRD.
+
+  🟠 Important: fix before designing the database
+
+  1. Mentor pins (ARC-001): the data model stores pin audience by group, but mentor posts are pinned for one section. It should be section_id.
+  2. Missing tables (ARC-005): the PRD describes these features but has no table for them:
+     - audit log
+     - settings
+     - block and mute
+     - banned words
+     - login history
+     - AI usage
+     - recording and material views
+  3. Class meetings (ARC-006): courses are stored as a list inside one field. That needs its own table with a no-duplicates rule. The PRD also doesn't say what happens to future classes when the Admin changes the routine.
+  4. Moving a student to another section (ARC-020): their old attendance and results history is lost.
+  5. Enrollment (ARC-009): one part says enrollment is "only for optional courses", and another says students are enrolled in every course automatically.
+  6. Class 11 → 12 (ARC-008): the student's class is stored in two places.
+  7. Private details (ARC-018): §8 says teachers can see a student's mobile, address and guardian, but §5.3.1 says they can't.
+  8. Attendance (ARC-019):
+     - There's no holiday calendar.
+     - It doesn't say whether a class with no attendance taken counts as "held".
+     - It doesn't say what to show when the percentage divides by zero.
+  9. Exams:
+     - No scoring rule for questions with several correct answers, or for which quiz attempt counts (ARC-007).
+     - Students who finish first can share the correct answers while others are still taking the exam (ARC-021).
+     - It doesn't say whether a student who starts late gets cut off at the end of the exam window (ARC-022).
+     - Editing a question in the question bank also changes old exams (ARC-022).
+  10. Child safety (ARC-011): anyone can message minors one-to-one, and the Admin sees only chats that someone reports.
+  11. AI chatbox (ARC-017): the agent found that the free Gemini API terms don't allow users under 18. Most HSC students are 16–18.
+
+  🟡 Smaller problems
+
+  - Phases (ARC-004): some features are listed in different phases in different sections, for example push notifications and notice emails.
+  - Admin attendance (ARC-002): one place says "view only", another says "can edit".
+  - Section Mentor scope (ARC-010): the PRD doesn't say whether mentors only see recordings, notes and previous questions for their own section.
+  - Pinned posts (ARC-023): every Admin or Mentor post pins itself, with no option for a normal post.
+  - Timezone (ARC-024): Asia/Dhaka is never stated.
+  - Notice emails (ARC-025): emailing about 3,000 users may hit the mail provider's daily limit.
+  - Unclear wording (ARC-012): Decision #13 refers to requirement numbers that don't exist.
+  - Admin backup (ARC-026): there's only one Admin, with no backup or recovery if their email is lost.
+  - Routine grid (ARC-027): there are no tables for periods or rooms.
+  - From your v2.7 change:
+    - It doesn't say what a passed-out or deactivated student's public profile shows (ARC-029).
+    - Showing the Student ID to everyone might be a privacy risk for minors (ARC-030).
+
+  ❓ Questions to ask the client
+
+  1. What should happen with the AI chatbox, since the free Gemini terms don't allow under-18 users?
+  2. Can teachers see a student's mobile, address and guardian details?
+  3. What are the rules for student-to-student messages, and how long are messages kept?
+  4. How are questions with several correct answers scored, and which quiz attempt counts?
+  5. Who maintains the holiday calendar?
+  6. Can the Admin and Mentors make normal posts that aren't pinned?
+  7. Which email provider will you use?
+  8. Is a public GitHub repo OK?
+  9. What should a passed-out student's profile show?
+  10. Should the Student ID be shown publicly?
+
+  Items 1–9 in the important list don't need the client. I can fix them in the PRD now as v2.8 and commit it together with v2.7. Should I?
