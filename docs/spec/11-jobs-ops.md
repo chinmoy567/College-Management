@@ -48,7 +48,7 @@ SUPABASE_PRIVATE_BUCKET=private
 
 ## 3. Server & deployment
 
-- `apps/api/src/server.ts`: `helmet` (CSP: `default-src 'self'`; `img-src 'self' data: blob: <supabase>`; `frame-src youtube-nocookie.com drive.google.com`; `connect-src 'self' wss: <supabase>`), `express.json({ limit: '1mb' })`, `/api` router, Socket.IO, then `nextApp.getRequestHandler()` for everything else. `trust proxy` = 1 (Render).
+- `apps/api/src/server.ts`: `helmet` (CSP: `default-src 'self'`; `img-src 'self' data: blob: <supabase>`; `frame-src youtube-nocookie.com drive.google.com`; `connect-src 'self' wss: <supabase>`; scripts: `script-src 'self' 'nonce-<per-request>' 'strict-dynamic'` — Express creates a nonce per request and passes it to Next.js in the `x-nonce` request header so Next's inline scripts are allowed; `'unsafe-eval'` only in development), `express.json({ limit: '1mb' })`, `/api` router, Socket.IO, then `nextApp.getRequestHandler()` for everything else. `trust proxy` = 1 (Render).
 - `GET /api/health` → `SELECT 1` → `200 "ok"` (no auth, no data).
 - Render (`render.yaml`): one free web service; build `npm ci && npx prisma migrate deploy && npm run build`; start `node apps/api/dist/server.js`; health check path `/api/health`.
 - UptimeRobot or cron-job.org pings `/api/health` every 10 minutes (keeps Render and Supabase awake).
@@ -82,7 +82,7 @@ SUPABASE_PRIVATE_BUCKET=private
 | Privacy (private fields only to student + Admin) | JSON snapshot tests of teacher/public views |
 | Backups 30 days | §4 script |
 | UTC stored, Asia/Dhaka shown | time utils tests (date boundaries at 18:00 UTC) |
-| Bangla content everywhere | Unicode tests for search, banned words, CSV import, PDF export fonts (embed a Bangla font, e.g. Noto Sans Bengali, in pdfkit) |
+| Bangla content everywhere | Unicode tests for search, banned words, CSV import, PDF export fonts (embed a Bangla font, e.g. Noto Sans Bengali, in pdfkit; check that conjunct letters render correctly — if pdfkit cannot shape them, render that export as HTML and print to PDF in the browser) |
 | Accessibility | keyboard pass on login, forms, exam page; axe check |
 
 ## 7. Test plan summary

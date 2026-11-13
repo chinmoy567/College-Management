@@ -30,9 +30,9 @@ Every module references `User`, `Section`, `CourseOffering`, `StorageObject`. Bu
    - `prisma/seed-demo.ts` (dev/test only): uses factories; 1 session, 3 groups, 2 sections, 5 courses, 3 teachers, 60 students, fixed passwords printed to console. Deterministic (seeded faker).
 6. `prisma/README.md`: how to add a migration with raw SQL, the RLS rule, `DATABASE_URL` vs `DIRECT_URL`.
 
-## 3. Schema gaps found while planning (add in M1, and update spec 01 §2 in the same commit)
+## 3. Schema gaps found while planning (fixed in spec 01 §2)
 
-Other specs need these columns, but the schema in spec 01 §2 does not list them. They are implementation details (no PRD rule changes):
+Other specs needed these columns, but spec 01 §2 did not list them. They have been added to the spec (implementation details, no PRD rule changes); M1 builds them with the rest of the schema:
 
 | Needed by | Column | Why |
 |---|---|---|

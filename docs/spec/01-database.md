@@ -74,6 +74,8 @@ model User {
   avatar           StorageObject? @relation("UserAvatar", fields: [avatarId], references: [id])
   totpSecretEnc    String?    // Admin only, AES-256-GCM
   totpEnabledAt    DateTime?
+  totpPendingSecretEnc String? // Admin only: secret during setup, moved to totpSecretEnc on enable
+  totpLastStep     Int?       // last accepted TOTP time-step (replay protection, 02 §3)
   backupCodeHashes String[]   // Admin only, argon2 hashes, removed when used
   mustChangePassword Boolean  @default(true)
   lastLoginAt      DateTime?
@@ -123,6 +125,7 @@ model LoginSession {
   ip         String?
   userAgent  String?
   stepUpPending Boolean @default(false) // Admin: password OK, TOTP not yet entered
+  totpFailures  Int     @default(0)     // wrong TOTP/backup codes in this step-up session; 5 → revoked (02 §3)
   @@index([userId, revokedAt])
 }
 
@@ -315,6 +318,7 @@ model ClassMeeting {
   substituteTeacherId String?
   status              MeetingStatus @default(scheduled)
   attendanceTakenAt   DateTime?                  // set on first submit; "Not taken" when null
+  lastClientDraftId   String?                    // last attendance submit draft id (idempotent re-submit, 04 §6.1)
   createdAt           DateTime      @default(now())
   offerings           ClassMeetingOffering[]
   // UNIQUE (routine_slot_id, COALESCE(original_date, date)) — expression index in raw SQL (PRD: one slot never creates two meetings a day)
@@ -854,6 +858,7 @@ model Setting {
   value     Json
   updatedBy String?
   updatedAt DateTime @updatedAt
+  // Also holds login ID counters (03 §5.1): keys `login_seq:S-<year>` and `login_seq:T`, value { next: n }, read with SELECT ... FOR UPDATE
 }
 
 model AuditLog {
