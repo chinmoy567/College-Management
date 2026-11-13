@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.14 |
+| **Document Version** | 2.15 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **all students are 18 or older** (confirmed by the client) |
@@ -28,6 +28,7 @@
 | 2.12 | 14 Nov 2026 | Data model: added Settings, AIUsage, AuditLog, LoginHistory, UserSanction (warn/mute), Block, BannedWord, RecordingProgress and MaterialView. |
 | 2.13 | 14 Nov 2026 | Client confirmed **all students are 18+** (no minors); Groq stays as the AI provider. Exam scoring rules (multi-correct all-or-nothing, best quiz attempt counts). Private details visible only to the student and the Admin. Admin manages the academic calendar (holidays); attendance rules for "not taken" meetings and "N/A". Added Holiday entity. |
 | 2.14 | 14 Nov 2026 | Adding students: Admin adds students from the session page (system gives a Student ID + password) and can create sections there. **Each section holds at most 30 students**; when full, the Admin creates another section. Enrollment keeps history (status, dates), and attendance/exam records store the student's section, so moving a student keeps old data correct. |
+| 2.15 | 14 Nov 2026 | Single Admin confirmed by design (no second Admin). Routine period times and rooms are typed by the Admin on each routine slot (no Period/Room tables). Public profile of passed-out/deactivated users defined. Student ID removed from the public profile. Decision #13 reworded. |
 
 ---
 
@@ -102,7 +103,7 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 > "Course Teacher" and "Section Mentor" are not separate account types. They are permissions a **Teacher** account gets through assignments. One teacher can teach several course offerings and also be the Section Mentor of a section. **Everything is decided by the Admin:** who teaches which class, who is the Section Mentor of each section, and the routine.
 
 ### 2.2 Admin
-- Single super-user. Logs in with **email + password**.
+- Single super-user. Logs in with **email + password**. **There is only one Admin account by design** (client decision); no second Admin and no other recovery path. The Admin keeps the login email safe.
 - First login uses a **seed password** set during deployment; the system forces a password change.
 - Can reset own password via email.
 
@@ -319,7 +320,8 @@ All of these work only within the teacher's assigned course offerings:
 - **Report** post/comment with a reason; it goes to Admin moderation.
 - **Visibility:** every active student, teacher and the Admin can see every post (college-wide feed).
 - **Author info on every post and comment:** photo and name, and for a student author also **session · group · section** (e.g. *2024–25 · Science · A*). For a teacher it shows "Teacher" (plus "Section Mentor · 2024–25 Science-A" if they mentor a section); for the Admin it shows "Admin".
-- **Public profile:** clicking the author's name or photo opens their **public profile**, which any logged-in user can view. It shows: photo, name, role, Student ID, session / group / section / class (students), courses taught (teachers), bio, and their recent posts. It **never** shows private details (email, mobile, address, DOB, guardian info). The Admin still opens the full Student 360° view instead (5.3.1).
+- **Public profile:** clicking the author's name or photo opens their **public profile**, which any logged-in user can view. It shows: photo, name, role, session / group / section / class (students), courses taught (teachers), bio, and their recent posts. It **never** shows private details (email, mobile, address, DOB, guardian info) and **does not show the Student ID** (the Student ID is the login ID; only the student, their teachers and the Admin see it). The Admin still opens the full Student 360° view instead (5.3.1).
+- **Inactive authors:** their posts and comments stay visible. For a **passed-out or deactivated** user, the public profile shows only photo, name and the note *"This account is no longer active."* Nothing else (no session/section, bio or posts list). A permanently deleted user appears as "Deleted user" with no profile (4.4).
 
 #### 5.7.2 Admin & Section Mentor Pinned Posts
 - Admin can **create, edit and delete** posts like any user; Admin can additionally **delete any post or comment**.
@@ -450,6 +452,7 @@ All of these work only within the teacher's assigned course offerings:
 
 ### 5.17 Class Routine
 - **The Admin allocates the class routine for every session**: for each session → group → section, the Admin fills a days × periods grid. Each cell = course offering (course code + title) + time + room; the teacher is filled in automatically from the course assignment.
+- **Period times and rooms are typed by the Admin** on each routine slot (start time, end time, room as free text). There is no separate period or room list; if the college's period times change, the Admin updates the routine.
 - **Only the Admin can create or change the routine.** Section Mentors and teachers can only view it.
 - This routine is what drives attendance: every routine slot becomes a class the teacher takes attendance for (Section 5.18).
 - **Conflict check:** warns if a teacher is double-booked in two sections at the same time.
@@ -589,7 +592,7 @@ Roll  Name             Status
 | **Course** | id, code, name, group_type, class, paper, is_optional |
 | **CourseOffering** | id, section_id, course_id, teacher_id, created_at |
 | **Enrollment** | id, course_offering_id, student_id, status (active/ended), enrolled_at, ended_at (a row for **every** student in every offering they take; ending keeps history; only one active row per student + offering) |
-| **RoutineSlot** | id, section_id, day, start_time, end_time, course_offering_id, room |
+| **RoutineSlot** | id, section_id, day, start_time, end_time, course_offering_id, room (times and room typed by the Admin; room is free text; no Period/Room tables) |
 | **Post** | id, author_id, text, tag, pinned_until, pin_audience (all/section), pin_section_id (null = everyone), status, created_at |
 | **PostView** | post_id, user_id, seen_at (unique post + user; a pinned post is hidden from the top once a row exists) |
 | **PostMedia** | id, post_id, url, type |
@@ -718,13 +721,16 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 11. **Sessions are closed only by the Admin, manually** (never automatically). The Admin sees each session's status (Active / Closed) on the Sessions page (Section 4.5).
 
 12. **Online exams and quizzes are text-based MCQ only**, all auto-graded. No written answers and no file/image uploads (Section 5.14).
-13. Requirement numbers 14, 15, 16 and 23 were **removed by the client on purpose**. No features are missing.
+13. Some items in the client's original requirements list were **removed by the client on purpose**. No features are missing.
 14. **Google Meet's 60-minute limit on free calls is acceptable** for live classes.
 15. **Posts show the author's session, group and section**, and any logged-in user can view the author's public profile (private details stay hidden) (Section 5.7.1).
 16. **Exam ranks are by section only.** Exams are created by the course teacher; results and ranks are computed among that section's students (Section 5.15).
 17. **All students are 18 or older.** There are no minors on the portal (v2.13).
 18. **The Admin decides the academic calendar:** when classes run, holidays and the routine (Sections 5.17, 5.18).
 19. **Students are added by the Admin** from the session page with a Student ID and password the Admin gives to the student; **a section holds at most 30 students**, and the Admin creates as many sections as needed (Section 3.1.1).
+20. **Only one Admin account**, by design. The client keeps the Admin login email safe; no second Admin or recovery path is built (Section 2.2).
+21. **The Admin types period times and rooms** on each routine slot and updates the routine if times change (Section 5.17).
+22. **The Student ID is not shown on the public profile**; only the student, their teachers and the Admin see it (Section 5.7.1).
 
 **Open questions:**
 None at the moment.

@@ -13,20 +13,20 @@
 | ARC-004 | Phase contradictions                         | Medium   | PRD §5.2, §5.9, §5.10, §5.20, §10 | 2026-11-13 | Open                          |
 | ARC-005 | Missing entities in data model               | High     | PRD §6                            | 2026-11-13 | Mostly fixed (v2.12)          |
 | ARC-006 | ClassMeeting courses stored as array         | High     | PRD §6                            | 2026-11-13 | Partly fixed (v2.10)          |
-| ARC-007 | Exam scoring gaps                            | High     | PRD §5.14                         | 2026-11-13 | Open                          |
+| ARC-007 | Exam scoring gaps                            | High     | PRD §5.14                         | 2026-11-13 | Fixed (v2.13)                 |
 | ARC-008 | Class 11/12 stored in two places             | Medium   | PRD §6 StudentProfile             | 2026-11-13 | Open                          |
-| ARC-009 | Enrollment meaning is contradictory          | Medium   | PRD §2.4 vs §6                    | 2026-11-13 | Open                          |
+| ARC-009 | Enrollment meaning is contradictory          | Medium   | PRD §2.4 vs §6                    | 2026-11-13 | Fixed (v2.14)                 |
 | ARC-010 | Section Mentor scope unclear                 | Medium   | PRD §2.1                          | 2026-11-13 | Open                          |
-| ARC-011 | Child safety in 1-to-1 messaging             | High     | PRD §5.8                          | 2026-11-13 | Open (client)                 |
+| ARC-011 | Child safety in 1-to-1 messaging             | High     | PRD §5.8                          | 2026-11-13 | Closed (all users 18+, v2.13) |
 | ARC-012 | Decision #13 cites numbers that don't exist  | Low      | PRD §11                           | 2026-11-13 | Open                          |
 | ARC-013 | Repo hygiene                                 | Medium   | repo root                         | 2026-11-13 | Open                          |
 | ARC-014 | PRD not in git                               | Critical | commit 6482bc2                    | 2026-11-13 | Fixed (f566d54)               |
 | ARC-015 | .gitignore wrong both ways                   | High     | .gitignore                        | 2026-11-13 | Fixed (v2.12)                 |
 | ARC-016 | Misleading commit message                    | Low      | commit 6482bc2                    | 2026-11-13 | Open (process)                |
-| ARC-017 | Gemini API terms forbid under-18 users       | Critical | PRD §5.20, Decision #9            | 2026-11-13 | Fixed (v2.11, pending client) |
-| ARC-018 | Privacy rule contradicts itself              | High     | PRD §8 vs §5.3.1                  | 2026-11-13 | Open                          |
-| ARC-019 | Attendance calendar & calculation gaps       | High     | PRD §5.18                         | 2026-11-13 | Open                          |
-| ARC-020 | Section move loses history                   | High     | PRD §4.4, §5.3, §6                | 2026-11-13 | Open                          |
+| ARC-017 | Gemini API terms forbid under-18 users       | Critical | PRD §5.20, Decision #9            | 2026-11-13 | Fixed (v2.13, Groq confirmed) |
+| ARC-018 | Privacy rule contradicts itself              | High     | PRD §8 vs §5.3.1                  | 2026-11-13 | Fixed (v2.13)                 |
+| ARC-019 | Attendance calendar & calculation gaps       | High     | PRD §5.18                         | 2026-11-13 | Fixed (v2.13)                 |
+| ARC-020 | Section move loses history                   | High     | PRD §4.4, §5.3, §6                | 2026-11-13 | Fixed (v2.14)                 |
 | ARC-021 | Correct answers leak during exam window      | High     | PRD §5.14.1                       | 2026-11-13 | Open                          |
 | ARC-022 | Exam window vs duration; live bank questions | Medium   | PRD §5.14, §6                     | 2026-11-13 | Open                          |
 | ARC-023 | Every Admin/Mentor post auto-pins            | Medium   | PRD §5.7.2                        | 2026-11-13 | Fixed (v2.9)                  |
@@ -44,6 +44,7 @@
 | ARC-038 | Stale pin wording in §5.3 / §5.4             | Low      | PRD §5.3, §5.4                    | 2026-11-14 | Fixed (v2.10)                 |
 | ARC-039 | Flow C missing pin switch                    | Low      | PRD §7                            | 2026-11-14 | Fixed (v2.10)                 |
 | ARC-040 | Unpinned Admin/Mentor posts: notification?   | Medium   | PRD §5.10                         | 2026-11-14 | Fixed (v2.10)                 |
+| ARC-041 | HSC age claim conflicts with typical ages   | Medium   | PRD §1                            | 2026-11-14 | Open (client-confirmed)       |
 
 ---
 
@@ -51,11 +52,11 @@
 
 ### 🔴 Critical
 
-**ARC-017 — Gemini API terms forbid under-18 users** · PRD §5.20, §9, Decision #9 · Fixed (v2.11, pending client)
+**ARC-017 — Gemini API terms forbid under-18 users** · PRD §5.20, §9, Decision #9 · Fixed (v2.13)
 
-- **Problem:** The Gemini API Additional Terms say users must be 18 or older, and the API must not be used in an app "directed towards or likely to be accessed by" people under 18. HSC Class 11–12 students are mostly 16–18. On the free tier, Google may use the inputs to improve its products, and human reviewers may read them.
-- **Why it matters:** The "zero-cost AI" decision uses the API in a way its terms do not allow. Google can shut off the key, and the college carries the legal and reputation risk for minors' data.
-- **Fix applied in v2.11:** Switched to Groq free tier. Groq's Services Agreement (§6.3) allows Customer Applications used by minors, with the customer (college) solely responsible for legal compliance. §4.2 prohibits Groq from using inputs/outputs for training. Account holder must be 18+ (college/developer). PRD adds open question 1 for client confirmation; if declined, the AI feature is dropped (Phase 3, does not block earlier phases).
+- **Problem:** The Gemini API Additional Terms say users must be 18 or older, and the API must not be used in an app "directed towards or likely to be accessed by" people under 18. HSC Class 11–12 students are mostly 16–18.
+- **Fix applied in v2.11:** Switched to Groq free tier. Groq does not train on inputs, and its terms allow apps used by minors (college responsible).
+- **Client confirmation in v2.13:** Client confirmed all students are 18+, so Groq stays. Open question 1 removed from §11. See ARC-041 for age claim verification.
 
 **ARC-014 — PRD not in git** · commit 6482bc2 · Fixed (f566d54)
 
@@ -64,11 +65,12 @@
 
 ### 🟠 High
 
-**ARC-005 — Missing entities in data model** · PRD §6 · Mostly fixed (v2.12)
+**ARC-005 — Missing entities in data model** · PRD §6 · Mostly fixed (v2.13)
 
 - **Problem:** Many features in §5 require entities not listed in §6: configurable settings (attendance threshold, grading scale, AI provider/model/limits, pin length), activity tracking (login history, AI usage per student per day), moderation (warn/mute sanctions, banned words), messaging (block list), audit trail (Admin actions), recording and material view counts.
-- **Fixed in v2.12:** Added Settings, AIUsage, AuditLog, LoginHistory, UserSanction, Block, BannedWord, RecordingProgress, MaterialView. All map correctly to the features that need them (5.3.1, 5.7.3, 5.8, 5.12, 5.13, 5.18, 5.20).
-- **Still missing:** Holiday/AcademicCalendar (ARC-019), Period/Room (ARC-027, low priority).
+- **Fixed in v2.12:** Added Settings, AIUsage, AuditLog, LoginHistory, UserSanction, Block, BannedWord, RecordingProgress, MaterialView.
+- **Fixed in v2.13:** Added Holiday entity.
+- **Still missing:** Period/Room (ARC-027, low priority).
 
 **ARC-006 — ClassMeeting courses stored as an array** · PRD §6 · Partly fixed (v2.10)
 
@@ -76,40 +78,41 @@
 - **Fixed in v2.10:** `ClassMeetingOffering` join table with a unique meeting + offering rule; routine changes apply to future classes only.
 - **Still open:** add an explicit unique rule `UNIQUE(routine_slot_id, date)` on ClassMeeting so the same routine slot can never create two meetings on one day.
 
-**ARC-007 — Exam scoring gaps** · PRD §5.14 · Open
+**ARC-007 — Exam scoring gaps** · PRD §5.14 · Fixed (v2.13)
 
 - **Problem:** No rule for: partial marks on multi-correct MCQs; how negative marking works with multi-correct; which attempt counts (best, last or first) when a quiz allows several attempts.
-- **Why it matters:** Grading is automatic. Without a rule, the code will pick one silently, and students will dispute results.
-- **Fix (recommended):** Multi-correct = all-or-nothing, no negative marks on multi-correct; for multi-attempt quizzes the **best** attempt counts for progress and rank. Confirm with the client.
+- **Fix applied in v2.13:** Single-correct: full marks if correct, negative marks if set, 0 if unanswered. Multi-correct: all-or-nothing (full marks only if exactly all correct options selected and no wrong ones), no negative marks. Student total never goes below 0. Quizzes with multiple attempts: best attempt counts for progress and rank.
 
-**ARC-011 — Child safety in 1-to-1 messaging** · PRD §5.8 · Open (client)
+**ARC-011 — Child safety in 1-to-1 messaging** · PRD §5.8 · Fixed (v2.13)
 
 - **Problem:** Students and teachers can message minors 1-to-1 freely, and the Admin can only see chats that someone reports.
-- **Why it matters:** Grooming or bullying in private chats is invisible to the college until someone reports it. This is a real legal and reputation risk.
-- **Fix:** Ask the client about: block + report on every chat, a message retention policy, Admin access rules, and maybe turning off student-to-student DMs or teacher-to-student DMs outside their courses.
+- **Fix applied in v2.13:** Client confirmed all students are 18 or older; no minors on the portal. §5.8 now states "All users are adults (18+), so 1-to-1 chat is open to everyone as listed above; no extra minor-protection rules are needed." Block/report available from every chat. See ARC-041 for age claim verification.
 
-**ARC-018 — Privacy rule contradicts itself** · PRD §8 vs §5.3.1 · Open
+**ARC-018 — Privacy rule contradicts itself** · PRD §8 vs §5.3.1 · Fixed (v2.13)
 
-- **Problem:** §8 says mobile, address and guardian info are visible to "their teachers". §5.3.1 says teachers see only profile and course data.
-- **Why it matters:** The permission code cannot follow both. This is minors' personal data.
-- **Fix (recommended):** Private details visible only to the Admin and the student. Update §8.
+- **Problem:** §8 said mobile, address and guardian info are visible to "their teachers"; §5.3.1 said teachers see only profile and course data.
+- **Fix applied in v2.13:** §8 now says "Students' personal details (mobile, address, guardian info, DOB) visible **only to the student and the Admin**. Teachers and Section Mentors see only profile and course data (Section 5.3.1)."
 
-**ARC-019 — Attendance calendar and calculation gaps** · PRD §5.18 · Open
+**ARC-019 — Attendance calendar and calculation gaps** · PRD §5.18 · Fixed (v2.13)
 
-- **Problem:** No Holiday/AcademicCalendar entity, so the routine will generate meetings on holidays. "Classes held" is not defined for meetings where nobody took attendance. Held − Excused = 0 divides by zero.
-- **Why it matters:** Wrong attendance % directly affects students (the 75% threshold).
-- **Fix:** Add a Holiday entity managed by the Admin (no meetings generated on those days). Rule: a meeting with no attendance taken does not count as held, and shows as "not taken" to the teacher/Admin. If the divisor is 0, show "N/A".
+- **Problem:** No Holiday entity, so the routine generates meetings on holidays. "Classes held" not defined for meetings where nobody took attendance. Held − Excused = 0 divides by zero.
+- **Fix applied in v2.13:** Holiday entity added (id, start_date, end_date, title, created_by). §5.17 says Admin marks holidays; no Class Meetings generated on those days; future meetings on new holiday dates (with no attendance) are removed. §5.18.4: "Classes held" = meetings where attendance was taken; a meeting with no attendance taken is not counted and shows as "Not taken" to teacher/Section Mentor/Admin. If Classes held − Excused = 0, the percentage shows "N/A".
 
-**ARC-020 — Moving section or class loses history** · PRD §4.4, §5.3, §6 · Open
+**ARC-020 — Moving section or class loses history** · PRD §4.4, §5.3, §6 · Fixed (v2.14)
 
-- **Problem:** Enrollment has no start/end date or status, and AttendanceRecord / ExamAttempt do not store which section the student was in.
-- **Why it matters:** After a section move, old attendance, ranks and class lists will show wrong data.
-- **Fix:** `Enrollment(student_id, course_offering_id, status, enrolled_at, ended_at)`, and store `section_id` on AttendanceRecord and ExamAttempt.
+- **Problem:** Enrollment had no start/end date or status, and AttendanceRecord / ExamAttempt did not store which section the student was in.
+- **Fix applied in v2.14:** Enrollment now `(id, course_offering_id, student_id, status (active/ended), enrolled_at, ended_at)` with "a row for **every** student in every offering they take; ending keeps history; only one active row per student + offering." AttendanceRecord and ExamAttempt now store `section_id` (section at the time of the record). §4.4 says moving a student ends old enrollments and creates new ones; past attendance, exam attempts and ranks stay with the section the student was in at that time.
 
 **ARC-021 — Correct answers leak during the exam window** · PRD §5.14.1 · Open
 
 - **Problem:** "Show correct answers after submission" lets the first student who submits see the answers and share them while others are still taking the exam.
 - **Fix:** Correct answers are shown only after the exam's `end_at` has passed, never right after one student submits.
+
+**ARC-041 — HSC age claim conflicts with typical ages** · PRD §1 · Open (client-confirmed)
+
+- **Problem:** v2.13 says "all students are 18 or older (confirmed by the client)" but HSC Class 11-12 students are typically ages 16-17 in Bangladesh. Class 11 starts after SSC (age ~16), Class 12 ends at ~17-18.
+- **Why it matters:** This is either (1) an adult HSC program (distance learning, second-chance education), or (2) a factual error. If it is a standard HSC college, the age claim is false, and the Groq/privacy decisions based on it are invalid.
+- **Fix:** Ask the client to clarify: Is this an adult education HSC program, or are there actually students under 18? If the latter, ARC-011 and ARC-017 must be reopened (child safety, AI provider terms). If the former, consider adding "adult education" to §1 to make it clear.
 
 ### 🟡 Medium
 
@@ -128,10 +131,10 @@
 - **Problem:** `StudentProfile.class` repeats information that belongs to the session; Session has no "current class" field.
 - **Fix:** Put `current_class` on Session and remove `class` from StudentProfile. Promotion to Class 12 = one update on the session.
 
-**ARC-009 — Enrollment meaning is contradictory** · PRD §2.4 vs §6 · Open
+**ARC-009 — Enrollment meaning is contradictory** · PRD §2.4 vs §6 · Fixed (v2.14)
 
-- **Problem:** §6 says Enrollment is "for optional courses", while §2.4 says students are auto-enrolled in every course offering.
-- **Fix (recommended):** One Enrollment row for every student in every offering. Simpler queries for attendance, ranks and class lists, and needed for ARC-020.
+- **Problem:** §6 said Enrollment is "for optional courses"; §2.4 said students are auto-enrolled in every course offering.
+- **Fix applied in v2.14:** §6 now says "a row for **every** student in every offering they take", not just optional courses. This aligns with §2.4 and is needed for the history tracking in ARC-020.
 
 **ARC-010 — Section Mentor scope unclear** · PRD §2.1 · Open
 
@@ -192,7 +195,8 @@
 
 **ARC-030 — Student ID on public profile** · PRD §5.7.1 · Open (client)
 
-- **Problem:** Student ID + name + session + section lets anyone identify a minor outside the platform.
+- **Problem:** Student ID + name + session + section on the public profile lets anyone identify a student outside the platform.
+- **Note:** v2.13 confirmed all users are 18+, so this is no longer a child-protection issue, but remains a general privacy question.
 - **Fix:** Ask the client whether Student ID should be on the public profile or only for Admin/teachers.
 
 ### ✅ Fixed (short)
@@ -202,7 +206,7 @@
 - **ARC-005** — 9 missing entities added (Settings, AIUsage, AuditLog, LoginHistory, UserSanction, Block, BannedWord, RecordingProgress, MaterialView) in v2.12; Holiday/Period/Room still missing but documented in other issues.
 - **ARC-014** — PRD.md restored to root and committed (f566d54).
 - **ARC-015** — .gitignore rewritten: removes `.claude` ignore (so agents/ and architect/ are committed), keeps .env ignored, adds .env.example, ignores only settings.local.json, plus proper ignores for node_modules/.next/dist/build/coverage/uploads/*.log (v2.12).
-- **ARC-017** — AI switched from Gemini to Groq (allows minors, no training on data); pending client confirmation (v2.11).
+- **ARC-017** — AI switched from Gemini to Groq (allows minors, no training on data); client confirmed Groq and 18+ claim (v2.13).
 - **ARC-023** — "Pin this post" switch, on by default; pin audience fixed at creation (v2.9).
 - **ARC-031** — Seen = at least half the post on screen for 1 second; client sends event, server saves PostView (v2.9).
 - **ARC-032** — Extending a pin does not re-pin for users who already saw it (v2.9).
@@ -224,3 +228,4 @@
 - **2026-11-14 · Log rebuilt** — file was found empty; rebuilt from review reports. ARC-006 marked partly fixed after checking PRD v2.10 §6.
 - **2026-11-14 · Review #6** — PRD v2.11 (Gemini → Groq). ARC-017 fixed pending client confirmation. No conflicts with §9, §10, out-of-scope, or other sections. ARC-005 still open (Settings entity needed for AI provider/model config and daily limits).
 - **2026-11-14 · Review #7** — Pre-commit review of .gitignore rewrite and PRD v2.12 (9 new entities). ARC-015 fixed (proper .gitignore with .env.example, .claude/ committed except settings.local.json). ARC-005 mostly fixed (all 9 entities map correctly to features 5.3.1, 5.7.3, 5.8, 5.12, 5.13, 5.18, 5.20). .claude/ directory safe to commit (no secrets, no personal info). Ready to commit.
+- **2026-11-14 · Review #8** — PRD v2.13 and v2.14 uncommitted changes. v2.13 (developer): client confirmed all students 18+, exam scoring rules (multi-correct all-or-nothing, best attempt counts), privacy Admin+student only, Holiday entity, attendance "Not taken"/"N/A", Groq confirmed. v2.14 (user): Admin adds students from session page with Student ID+password, max 30 active students per section (blocks add/move/CSV when full), Enrollment with id/status/dates for every student, section_id on ExamAttempt and AttendanceRecord, section move ends old enrollments. **Fixed:** ARC-007, 009, 011, 017, 018, 019, 020. **New:** ARC-041 (HSC age claim conflicts with typical ages 16-18; client-confirmed but unusual, possibly adult education program). No conflicts with §2.4, §4.4, §5.15, §5.18. Section capacity examples changed from 50 to 30. Ready to commit.
