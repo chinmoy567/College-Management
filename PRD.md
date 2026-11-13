@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.27 |
+| **Document Version** | 2.28 |
 | **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -41,6 +41,7 @@
 | 2.25 | 14 Nov 2026 | Removed Section 11 (Decisions & Open Questions); every decision is already written in its own section. |
 | 2.26 | 14 Nov 2026 | Removed Section 10 (Release Plan / phases) and the phase notes in 5.9, 5.10 and 5.20. |
 | 2.27 | 14 Nov 2026 | Stack changed to Next.js + Express.js + PostgreSQL on Supabase (Storage for files); details in `tech.stack.md` (§9). |
+| 2.28 | 14 Nov 2026 | Hosting is free only: Next.js + Express as one service on Render free, Supabase free, free subdomain (§9); book PDF max 50 MB (Supabase free file limit) and backups by `pg_dump` (§8). |
 
 ---
 
@@ -218,7 +219,7 @@ Session (2024–25)
 - **Edit:** name, ID, section (move student), designation, subjects, status.
 - **Move student to another section:** only into a section with a free place (max 30). The old enrollments are **ended** (not deleted) and new ones are created for the new section's course offerings. Past attendance, exam attempts and ranks stay with the section the student was in at that time.
 - **Promote Class 11 → 12 (manual, Admin only):** nothing moves automatically. The Admin creates the Class 12 sections (each section has a **class**, 11 or 12), assigns their courses, teachers, mentor and routine, then moves students into them, one by one, in bulk, or a whole section at once. Same rules as a section move: only into a section with a free place (max 30), old enrollments are **ended** (not deleted), new ones are created for the Class 12 section's offerings, and the student's class becomes 12 (it always comes from the section). Past attendance, exam attempts and ranks stay with the Class 11 section.
-- **Remove:** **Deactivate** is the default (login blocked, data kept). **Permanent delete** requires a confirmation and **anonymises** the account: the User row stays (so attendance, exam and chat records still point to it) but name, email, mobile, photo, login ID and all profile details are erased, logins are revoked, and the user's posts are shown as "Deleted user". Daily backups age out after 30 days (Section 8).
+- **Remove:** **Deactivate** is the default (login blocked, data kept). **Permanent delete** requires a confirmation and **anonymises** the account: the User row stays (so attendance, exam and chat records still point to it) but name, email, mobile, photo, login ID and all profile details are erased, logins are revoked, and the user's posts are shown as "Deleted user". Backups age out after 30 days (Section 8).
 - **Credential slip:** printable/copyable ID + initial password.
 
 ### 4.5 Pass-Out Rule
@@ -735,10 +736,10 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 | **Scalability** | Support ~3,000 active users and ~500 students taking an exam at the same time. |
 | **Availability** | 99.5% uptime; exams must not be scheduled during maintenance windows. |
 | **Responsiveness** | Fully usable on mobile phones (most students use phones); PWA "add to home screen". |
-| **Uploads** | Images (JPG/PNG/WebP) max **5 MB** each, resized/compressed on upload; PDF/DOC/DOCX/PPT/PPTX max **20 MB**; book PDFs max **100 MB** (Admin only); max 10 images per post or comment. File type checked by content, not only by extension. |
+| **Uploads** | Images (JPG/PNG/WebP) max **5 MB** each, resized/compressed on upload; PDF/DOC/DOCX/PPT/PPTX max **20 MB**; book PDFs max **50 MB** (Admin only; Supabase free-plan file limit); max 10 images per post or comment. File type checked by content, not only by extension. |
 | **Security** | HTTPS everywhere, role + assignment-based authorization, input sanitization (XSS), file-type and size validation on uploads, signed URLs for private files, audit log for Admin actions. |
 | **Privacy** | Students' personal details (mobile, address, guardian info, DOB) visible **only to the student and the Admin**. Teachers and Section Mentors see only profile and course data (Section 5.3.1). |
-| **Backups** | Daily automatic database backups, kept 30 days. Files are never overwritten (every upload gets a new unique name), and a deleted file is removed from storage only after 30 days. |
+| **Backups** | Database backups with `pg_dump` (the free Supabase plan has no downloadable backups; see `tech.stack.md` §7), kept 30 days. Files are never overwritten (every upload gets a new unique name), and a deleted file is removed from storage only after 30 days. |
 | **Timezone** | All times are shown in **Asia/Dhaka** and stored in **UTC** (routine, exams, attendance, pin expiry, holidays). |
 | **Language** | UI in English; Bangla content supported everywhere (Unicode); Bangla UI can be added later. |
 | **Accessibility** | Readable fonts, sufficient contrast, keyboard navigation for forms and exams. |
@@ -747,7 +748,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 
 ## 9. Technical Architecture (chosen)
 
-Full details, libraries and setup: **`tech.stack.md`**. Kept simple: **one repo, Next.js frontend + Express backend, one PostgreSQL database on Supabase.**
+Full details, libraries and setup: **`tech.stack.md`**. Kept simple and **free**: **one repo, Next.js frontend + Express backend run as one service, one PostgreSQL database on Supabase.**
 
 | Layer | Choice |
 |---|---|
@@ -761,4 +762,4 @@ Full details, libraries and setup: **`tech.stack.md`**. Kept simple: **one repo,
 | **Email** | SMTP through a free Google account, with a background job queue and rate limiting (Section 5.9). |
 | **Payments** | None in this version (placeholder **Pay** button). A gateway can be plugged in later. |
 | **AI** | Groq API free tier (open model, e.g. Llama 70B-class), called server-side only; provider and model configurable. |
-| **Hosting** | Next.js and Express on one VPS with Docker Compose behind Caddy (HTTPS, one domain so the login cookie is first-party). Database and files on Supabase (Pro plan for production). Backups: Supabase daily backups plus a nightly `pg_dump` kept 30 days. |
+| **Hosting** | **Free only.** Next.js and Express run as one Node service (Express passes non-API requests to Next.js, so there is one address and the login cookie is first-party) on Render's free plan, with a free `onrender.com` subdomain (no domain to buy). Database and files on Supabase's free plan. Free-plan limits and the free path for the real launch: `tech.stack.md` §7. |

@@ -1,6 +1,6 @@
 # Tech Stack: College Management System
 
-The stack for building `PRD.md`. It is kept simple on purpose: **one repo, two Node apps (Next.js + Express), one PostgreSQL database on Supabase.**
+The stack for building `PRD.md`. It is kept simple on purpose: **one repo, Next.js + Express running together as one Node service, one PostgreSQL database on Supabase. Hosting costs nothing (Section 7).**
 Language everywhere: **TypeScript**.
 
 ## 1. Overview
@@ -14,16 +14,16 @@ Language everywhere: **TypeScript**.
 | **ORM** | **Prisma** | Typed queries; every schema change is a migration in the repo. |
 
 ```
-Browser ──HTTPS──> Caddy (one domain, e.g. cms.college.edu)
-                    ├── /        → Next.js   (web, port 3000)
-                    ├── /api     → Express   (api, port 4000)
-                    └── /socket.io → Express (Socket.IO)
+Browser ──HTTPS──> one free web service (e.g. cms-demo.onrender.com)
+                    Express (one Node process)
+                    ├── /api, /socket.io → Express routes + Socket.IO
+                    └── everything else  → Next.js (rendered inside the same process)
 Express ──> Supabase PostgreSQL   (data, sessions, jobs)
 Express ──> Supabase Storage      (files, signed URLs)
 Express ──> Gmail SMTP · Groq API
 ```
 
-Next.js and Express sit behind **one domain**, so the login cookie is a normal first-party `httpOnly` cookie (no CORS or cross-site cookie problems).
+Express is the server and hands every non-API request to Next.js (`next({ dev }).getRequestHandler()`). So the site has **one address**: the login cookie is a normal first-party `httpOnly` cookie, Socket.IO works, and there are no CORS or cross-site cookie problems. The code stays split into `/apps/web` and `/apps/api`.
 
 ## 2. Frontend: Next.js
 
@@ -96,16 +96,24 @@ API layout: `/api/<module>/...`, one folder per module (auth, users, academics, 
 | Google Meet / Jitsi | Live class links pasted by teachers (no integration) |
 | YouTube | Recorded class links (embedded player) |
 
-## 7. Hosting & deployment
+## 7. Hosting & deployment (free, no domain needed)
 
-| Part | Where |
-|---|---|
-| Next.js + Express | One VPS (about 2 vCPU / 4 GB RAM) with **Docker Compose** |
-| HTTPS + routing | **Caddy** (automatic HTTPS, routes `/api` and `/socket.io` to Express) |
-| Database + files | Supabase |
-| Backups | Supabase daily backups **plus** a nightly `pg_dump` job on the VPS kept **30 days** (PRD §8 asks for 30) |
+| Part | Where | Cost |
+|---|---|---|
+| Next.js + Express (one service) | **Render**, free web service | Free, no credit card |
+| Database + files | **Supabase**, free plan | Free, no credit card |
+| Address | Free Render subdomain, e.g. `https://cms-demo.onrender.com` (HTTPS included) | Free, no domain to buy |
+| Email | Gmail SMTP (free account) | Free |
+| AI | Groq free tier | Free |
+| Code | GitHub; Render deploys on every push to `main` | Free |
 
-Supabase plan: the **free plan** is fine for development but pauses idle projects and has small database and storage limits (book PDFs up to 100 MB will fill it). Use the **Pro plan** for production.
+**Free-plan limits (check them at sign-up; free plans change):**
+- **Render sleeps after about 15 minutes with no visitors.** The next visit takes about a minute to wake it. **Open the site a minute before showing the client.** Background jobs (emails, Class Meeting generation) wait until it wakes; exam deadlines are still enforced because the server checks `deadline_at` on every answer and submit.
+- **Render may block outgoing email (SMTP) on free services.** If emails do not arrive, the demo still works: reset/verification links are written to the server log, and the Admin can reset passwords.
+- **Supabase free:** about 500 MB database, 1 GB file storage, **50 MB max per file** (so book PDFs are limited to 50 MB, PRD §8), and the project **pauses after 7 days with no activity**; open it from the Supabase dashboard to resume. No downloadable backups on the free plan; run `pg_dump` from your own computer before big changes and keep the last 30 days.
+- Plenty for a **client demo** and testing. For the real college (about 3,000 users), 1 GB of files will fill up and the sleep delay is not acceptable.
+
+**Later, for the real launch (still free):** Oracle Cloud **Always Free** VM (always on, no sleep; needs a card only for identity checks, nothing is charged) running the same app with Docker, and Caddy for HTTPS on a free subdomain (e.g. DuckDNS). Files can stay on Supabase. If the client wants their own domain, only the domain itself costs money (about $10/year).
 
 ## 8. Repo layout
 
@@ -116,8 +124,7 @@ Supabase plan: the **free plan** is fine for development but pauses idle project
 /packages
   /shared     Zod schemas, shared types and constants
 /prisma       schema.prisma + migrations (used by /apps/api)
-docker-compose.yml
-Caddyfile
+render.yaml          Render settings (build + start commands)
 .env.example
 ```
 
@@ -138,9 +145,9 @@ SMTP_USER=
 SMTP_PASS=               # Gmail app password
 SMTP_FROM=
 GROQ_API_KEY=
-APP_URL=https://cms.college.edu
+APP_URL=https://cms-demo.onrender.com
 TZ_DISPLAY=Asia/Dhaka
 
 # web
-NEXT_PUBLIC_APP_URL=https://cms.college.edu
+NEXT_PUBLIC_APP_URL=https://cms-demo.onrender.com
 ```
