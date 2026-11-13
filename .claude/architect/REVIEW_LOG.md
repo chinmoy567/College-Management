@@ -18,11 +18,11 @@
 | ARC-009 | Enrollment meaning is contradictory          | Medium   | PRD §2.4 vs §6                    | 2026-11-13 | Fixed (v2.14)                 |
 | ARC-010 | Section Mentor scope unclear                 | Medium   | PRD §2.1                          | 2026-11-13 | Open                          |
 | ARC-011 | Child safety in 1-to-1 messaging             | High     | PRD §5.8                          | 2026-11-13 | Closed (all users 18+, v2.13) |
-| ARC-012 | Decision #13 cites numbers that don't exist  | Low      | PRD §11                           | 2026-11-13 | Open                          |
+| ARC-012 | Decision #13 cites numbers that don't exist  | Low      | PRD §11                           | 2026-11-13 | Fixed (v2.15)                 |
 | ARC-013 | Repo hygiene                                 | Medium   | repo root                         | 2026-11-13 | Open                          |
 | ARC-014 | PRD not in git                               | Critical | commit 6482bc2                    | 2026-11-13 | Fixed (f566d54)               |
 | ARC-015 | .gitignore wrong both ways                   | High     | .gitignore                        | 2026-11-13 | Fixed (v2.12)                 |
-| ARC-016 | Misleading commit message                    | Low      | commit 6482bc2                    | 2026-11-13 | Open (process)                |
+| ARC-016 | Misleading commit message                    | Low      | commit 6482bc2                    | 2026-11-13 | Fixed (v2.15)                 |
 | ARC-017 | Gemini API terms forbid under-18 users       | Critical | PRD §5.20, Decision #9            | 2026-11-13 | Fixed (v2.13, Groq confirmed) |
 | ARC-018 | Privacy rule contradicts itself              | High     | PRD §8 vs §5.3.1                  | 2026-11-13 | Fixed (v2.13)                 |
 | ARC-019 | Attendance calendar & calculation gaps       | High     | PRD §5.18                         | 2026-11-13 | Fixed (v2.13)                 |
@@ -32,11 +32,11 @@
 | ARC-023 | Every Admin/Mentor post auto-pins            | Medium   | PRD §5.7.2                        | 2026-11-13 | Fixed (v2.9)                  |
 | ARC-024 | Timezone never stated                        | Medium   | PRD §8                            | 2026-11-13 | Open                          |
 | ARC-025 | SMTP daily limits                            | Medium   | PRD §5.9                          | 2026-11-13 | Open (client)                 |
-| ARC-026 | Single Admin, no recovery                    | Low      | PRD §2                            | 2026-11-13 | Open                          |
-| ARC-027 | No Period/Room entities                      | Low      | PRD §6                            | 2026-11-13 | Open                          |
+| ARC-026 | Single Admin, no recovery                    | Low      | PRD §2                            | 2026-11-13 | Closed (by design)            |
+| ARC-027 | No Period/Room entities                      | Low      | PRD §6                            | 2026-11-13 | Closed (by design)            |
 | ARC-028 | Public repo contains client PRD              | Medium   | GitHub                            | 2026-11-13 | Open (client)                 |
-| ARC-029 | Public profile of inactive users undefined   | Low      | PRD §5.7.1 vs §4.4                | 2026-11-13 | Open                          |
-| ARC-030 | Student ID on public profile                 | Low      | PRD §5.7.1                        | 2026-11-13 | Open (client)                 |
+| ARC-029 | Public profile of inactive users undefined   | Low      | PRD §5.7.1 vs §4.4                | 2026-11-13 | Fixed (v2.15)                 |
+| ARC-030 | Student ID on public profile                 | Low      | PRD §5.7.1                        | 2026-11-13 | Fixed (v2.15)                 |
 | ARC-031 | "Seen" definition vague                      | Medium   | PRD §5.7.2                        | 2026-11-14 | Fixed (v2.9)                  |
 | ARC-032 | Extend pin vs already seen                   | Medium   | PRD §5.7.2                        | 2026-11-14 | Fixed (v2.9)                  |
 | ARC-033 | Dashboard vs feed seen tracking              | Low      | PRD §5.2.3 vs §5.7.2              | 2026-11-14 | Fixed (v2.9)                  |
@@ -168,36 +168,36 @@
 
 ### 🔵 Low
 
-**ARC-012 — Decision #13 cites numbers that don't exist** · PRD §11 · Open
+**ARC-012 — Decision #13 cites numbers that don't exist** · PRD §11 · Fixed (v2.15)
 
 - **Problem:** "Requirement numbers 14, 15, 16 and 23 were removed" — the PRD has no numbered requirements, so this confuses any future reader.
-- **Fix:** Reword or remove the decision.
+- **Fix applied in v2.15:** Decision #13 reworded to "Some items in the client's original requirements list were removed by the client on purpose. No features are missing."
 
-**ARC-016 — Misleading commit message** · commit 6482bc2 · Open (process)
+**ARC-016 — Misleading commit message** · commit 6482bc2 · Fixed (v2.15)
 
 - **Problem:** "add .gitignore and create nothing.txt file" hid the deletion of the PRD.
-- **Fix:** One topic per commit, and describe what the commit really does.
+- **Fix applied in v2.15:** Added commit rule to .claude/CLAUDE.md: "one topic per commit, and the message must describe everything the commit does (including any file deletions)."
 
-**ARC-026 — Single Admin, no recovery** · PRD §2 · Open
+**ARC-026 — Single Admin, no recovery** · PRD §2 · Closed (by design)
 
 - **Problem:** Only one Admin account, with no second Admin or recovery path if the email is lost.
-- **Fix:** Allow a second Admin or a documented server-side recovery script.
+- **Client decision:** Single Admin by design. §2.2 now states "There is only one Admin account by design (client decision); no second Admin and no other recovery path. The Admin keeps the login email safe." Added as Decision #20.
 
-**ARC-027 — No Period/Room entities** · PRD §6 · Open
+**ARC-027 — No Period/Room entities** · PRD §6 · Closed (by design)
 
 - **Problem:** The routine grid needs period numbers and times per college, and possibly rooms, but there are no entities for them.
-- **Fix:** Add `Period(number, start_time, end_time)` and optional `Room`.
+- **Client decision:** Admin types period times and room (free text) on each RoutineSlot. RoutineSlot has start_time, end_time (structured fields for conflict detection) and room (free text). No separate Period/Room tables. If period times change, Admin updates the routine. §5.17, §6 RoutineSlot, and Decision #21.
 
-**ARC-029 — Public profile of inactive users undefined** · PRD §5.7.1 vs §4.4 · Open
+**ARC-029 — Public profile of inactive users undefined** · PRD §5.7.1 vs §4.4 · Fixed (v2.15)
 
 - **Problem:** Posts by passed-out or deactivated students stay visible, but the PRD does not say what their public profile shows.
-- **Fix:** "For passed-out or deactivated users, the profile shows name, photo and a note that the account is no longer active; nothing else."
+- **Fix applied in v2.15:** §5.7.1 now says "For a passed-out or deactivated user, the public profile shows only photo, name and the note 'This account is no longer active.' Nothing else (no session/section, bio or posts list). A permanently deleted user appears as 'Deleted user' with no profile (4.4)."
 
-**ARC-030 — Student ID on public profile** · PRD §5.7.1 · Open (client)
+**ARC-030 — Student ID on public profile** · PRD §5.7.1 · Fixed (v2.15)
 
 - **Problem:** Student ID + name + session + section on the public profile lets anyone identify a student outside the platform.
-- **Note:** v2.13 confirmed all users are 18+, so this is no longer a child-protection issue, but remains a general privacy question.
-- **Fix:** Ask the client whether Student ID should be on the public profile or only for Admin/teachers.
+- **Note:** v2.13 confirmed all users are 18+, so this is no longer a child-protection issue, but the Student ID is the login ID and should not be public.
+- **Fix applied in v2.15:** §5.7.1 now says the public profile "does not show the Student ID (the Student ID is the login ID; only the student, their teachers and the Admin see it)." Added as Decision #22.
 
 ### ✅ Fixed (short)
 
@@ -215,6 +215,15 @@
 - **ARC-038** — §5.3/§5.4 wording now mentions the pin switch (v2.10).
 - **ARC-039** — Flow C includes the pin switch (v2.10).
 - **ARC-040** — Only pinned posts send a notification; unpinned = normal post (v2.10).
+- **ARC-012** — Decision #13 reworded from fake requirement numbers to "Some items in the client's original requirements list were removed" (v2.15).
+- **ARC-016** — Commit rule added to .claude/CLAUDE.md (v2.15).
+- **ARC-029** — Inactive user profile behavior defined (v2.15).
+- **ARC-030** — Student ID removed from public profile; visible only to student, their teachers and Admin (v2.15).
+
+### 🔒 Closed by design
+
+- **ARC-026** — Single Admin with no recovery path confirmed by client as acceptable risk; documented in §2.2 and Decision #20 (v2.15).
+- **ARC-027** — No Period/Room tables; Admin types times/room on each RoutineSlot; documented in §5.17, §6, Decision #21 (v2.15).
 
 ---
 
@@ -229,3 +238,4 @@
 - **2026-11-14 · Review #6** — PRD v2.11 (Gemini → Groq). ARC-017 fixed pending client confirmation. No conflicts with §9, §10, out-of-scope, or other sections. ARC-005 still open (Settings entity needed for AI provider/model config and daily limits).
 - **2026-11-14 · Review #7** — Pre-commit review of .gitignore rewrite and PRD v2.12 (9 new entities). ARC-015 fixed (proper .gitignore with .env.example, .claude/ committed except settings.local.json). ARC-005 mostly fixed (all 9 entities map correctly to features 5.3.1, 5.7.3, 5.8, 5.12, 5.13, 5.18, 5.20). .claude/ directory safe to commit (no secrets, no personal info). Ready to commit.
 - **2026-11-14 · Review #8** — PRD v2.13 and v2.14 uncommitted changes. v2.13 (developer): client confirmed all students 18+, exam scoring rules (multi-correct all-or-nothing, best attempt counts), privacy Admin+student only, Holiday entity, attendance "Not taken"/"N/A", Groq confirmed. v2.14 (user): Admin adds students from session page with Student ID+password, max 30 active students per section (blocks add/move/CSV when full), Enrollment with id/status/dates for every student, section_id on ExamAttempt and AttendanceRecord, section move ends old enrollments. **Fixed:** ARC-007, 009, 011, 017, 018, 019, 020. **New:** ARC-041 (HSC age claim conflicts with typical ages 16-18; client-confirmed but unusual, possibly adult education program). No conflicts with §2.4, §4.4, §5.15, §5.18. Section capacity examples changed from 50 to 30. Ready to commit.
+- **2026-11-14 · Review #9** — Pre-commit review of PRD v2.15 and .claude/CLAUDE.md update. **Fixed:** ARC-012 (Decision #13 reworded, no fake requirement numbers), ARC-016 (commit rule added to CLAUDE.md), ARC-029 (inactive user profile behavior defined in §5.7.1), ARC-030 (Student ID removed from public profile, visible only to student/teachers/Admin). **Closed by design:** ARC-026 (single Admin confirmed by client, §2.2 + Decision #20), ARC-027 (no Period/Room tables, Admin types times/room on RoutineSlot, §5.17 + §6 + Decision #21). All changes consistent with rest of PRD. RoutineSlot has structured start_time/end_time fields (for conflict detection) and free-text room. No new issues introduced. Ready to commit.
