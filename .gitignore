@@ -16,3 +16,7 @@ uploads/
 
 # Local Claude Code settings (personal, not shared)
 .claude/settings.local.json
+
+# Test output (Playwright screenshots, reports)
+test-results/
+playwright-report/

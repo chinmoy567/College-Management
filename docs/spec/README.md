@@ -23,11 +23,11 @@ Stack and hosting are fixed by `docs/tech.stack.md`. Client decisions in `.claud
 
 ## Build order (milestones)
 
-Each milestone ends with type-check, lint, tests and a PRD check (`cms-verify` skill), then a commit and push.
+Each milestone ends with type-check, lint, tests and a PRD check (`cms-verify` skill), then **`/spec-check <spec number>`** (agent `spec-verifier`), then a commit and push. Every spec has an **Acceptance** list of IDs; each ID needs a test named `[ID] ...` (00 §9). Run `/spec-check all` before launch.
 
 | M | Milestone | Depends on | Done when |
 |---|---|---|---|
-| M0 | **Scaffold**: npm workspaces, `apps/web`, `apps/api`, `packages/shared`, `prisma`, Express serving Next.js, `GET /api/health`, pino, helmet, error handler, Vitest, ESLint, `render.yaml` | – | `npm run dev` serves the landing placeholder and `/api/health` returns `ok` |
+| M0 | **Scaffold**: npm workspaces, `apps/web`, `apps/api`, `packages/shared`, `prisma`, Express serving Next.js, `GET /api/health`, pino, helmet, error handler, ESLint, `render.yaml`; **test tooling**: Vitest + supertest with a test Postgres, Playwright (360 × 740 project), `scripts/spec-check.ts` (`npm run spec:check`), GitHub Actions CI | – | `npm run dev` serves the landing placeholder, `/api/health` returns `ok`, `npm test`, `npm run test:e2e` and `npm run spec:check` run |
 | M1 | **Database**: full Prisma schema (01), first migration, RLS migration, seed (Admin, settings, periods) | M0 | `prisma migrate deploy` + seed run on a clean DB |
 | M2 | **Auth** (02): login, sessions, Admin TOTP, first-login profile, reset, verify, change email, rate limits, socket auth helper | M1 | Auth tests pass; deactivation kills sessions |
 | M3 | **Academics & accounts** (03): sessions/groups/sections, catalog, chapters, offerings, enrollment, add/import/move/promote/pass-out/delete, audit log | M2 | 30-student limit and enrollment history tested |

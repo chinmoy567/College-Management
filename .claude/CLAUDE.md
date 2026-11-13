@@ -14,6 +14,11 @@
 - There is no architect agent and no review log. After a meaningful change (PRD edits, schema/migrations, auth/permissions, API routes, exams, attendance, chat, file storage, AI chat), check it yourself against `docs/PRD.md` for contradictions, gaps and security/data-integrity problems, and tell the user briefly in chat.
 - Do not write issue lists or detail files into the repo.
 
+## Specs and testing
+- Build from `docs/spec/` in the milestone order in `docs/spec/README.md`.
+- Every Acceptance ID in a spec needs a test named `[ID] ...` (see `docs/spec/00-conventions.md` §9).
+- After finishing a milestone or spec, automatically run `/spec-check <spec number>` (skill `spec-check`, agent `spec-verifier`). A milestone is done only when that check reports the spec complete.
+
 ## Documents
 - All project documents live in the `docs/` folder (`docs/PRD.md`, `docs/tech.stack.md`, `docs/dashboards.md`, and any new document). Do not put documents in the repo root.
 
