@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.29 |
+| **Document Version** | 2.30 |
 | **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -43,6 +43,7 @@
 | 2.27 | 14 Nov 2026 | Stack changed to Next.js + Express.js + PostgreSQL on Supabase (Storage for files); details in `tech.stack.md` (§9). |
 | 2.28 | 14 Nov 2026 | Hosting is free only: Next.js + Express as one service on Render free, Supabase free, free subdomain (§9); book PDF max 50 MB (Supabase free file limit) and backups by `pg_dump` (§8). |
 | 2.29 | 14 Nov 2026 | Added the health check and keep-awake ping: `GET /api/health` called every 10 minutes by a free uptime monitor (§9). |
+| 2.30 | 14 Nov 2026 | Landing page: added Student / Teacher / Admin login buttons that open one shared login form; the server still decides the role (§4.1, §5.1); detail in `landing-page.md`. |
 
 ---
 
@@ -195,8 +196,8 @@ Session (2024–25)
 ## 4. Authentication & Account Lifecycle
 
 ### 4.1 Login Flow
-1. User opens Landing Page → clicks **Login**.
-2. Enters **User ID or Email** + **Password**; the system detects the role.
+1. User opens the public Landing Page → clicks **Student Login**, **Teacher Login**, **Admin Login** or the top-right **Login** (details in `landing-page.md`).
+2. Enters **User ID or Email** + **Password** in one shared form. The role button only pre-selects a label; **the server decides the role from the account**.
 3. On success, the user is redirected to their **role-specific dashboard**.
 
 ### 4.2 First-Time Login (Teacher & Student)
@@ -243,7 +244,7 @@ Session (2024–25)
 
 ### 5.1 Landing Page (Public)
 - College name, logo, banner, introduction; About, Departments, latest public **Central Notices**, Book Shop preview, Contact.
-- **Login** button (top-right).
+- **Login** button (top-right) and three role buttons: **Student Login**, **Teacher Login**, **Admin Login**. All open the same login form (4.1); a logged-in user sees **Open my dashboard** instead. Full detail in `landing-page.md`.
 
 ### 5.2 Separate Dashboards
 
