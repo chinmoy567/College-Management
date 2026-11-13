@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.15 |
+| **Document Version** | 2.16 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **all students are 18 or older** (confirmed by the client) |
@@ -29,6 +29,7 @@
 | 2.13 | 14 Nov 2026 | Client confirmed **all students are 18+** (no minors); Groq stays as the AI provider. Exam scoring rules (multi-correct all-or-nothing, best quiz attempt counts). Private details visible only to the student and the Admin. Admin manages the academic calendar (holidays); attendance rules for "not taken" meetings and "N/A". Added Holiday entity. |
 | 2.14 | 14 Nov 2026 | Adding students: Admin adds students from the session page (system gives a Student ID + password) and can create sections there. **Each section holds at most 30 students**; when full, the Admin creates another section. Enrollment keeps history (status, dates), and attendance/exam records store the student's section, so moving a student keeps old data correct. |
 | 2.15 | 14 Nov 2026 | Single Admin confirmed by design (no second Admin). Routine period times and rooms are typed by the Admin on each routine slot (no Period/Room tables). Public profile of passed-out/deactivated users defined. Student ID removed from the public profile. Decision #13 reworded. |
+| 2.16 | 14 Nov 2026 | **Admin Schedule Manager** (5.17.1): Admin adds/edits/deletes periods, rooms, routine slots, holidays and any single day or class; Period and Room tables added (replaces the v2.15 free-text rule). Exam scoring simplified: right = marks, wrong/unanswered = 0, no negative marking, no partial marks. Correct answers shown only after the exam window ends; exam time capped at window end; question snapshot at publish. Admin can edit any attendance record (logged). Timezone Asia/Dhaka. SMTP via free Google account with a rate-limited queue. Phases: §10 is the single source. Student age comes from profile DOB. |
 
 ---
 
@@ -87,14 +88,14 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 | Messaging (1-to-1) | ✅ | ✅ | ✅ | ✅ |
 | Group chat of session-group | ❌ | ✅ (auto) | ❌ | ✅ (auto) |
 | Section chat | ❌ | ✅ (auto) | ✅ (auto, own sections) | ✅ (auto) |
-| Manage routine | ✅ | ❌ (view own section) | ❌ (view own) | View |
+| Manage routine, periods, rooms, holidays & daily schedule (5.17.1) | ✅ | ❌ (view own section) | ❌ (view own) | View |
 | Create / conduct online classes | ❌ | ✅ (own courses) | ✅ (own courses) | Attend |
 | Add recorded class (YouTube) links | ✅ | ✅ | ✅ (own courses) | Watch |
 | Upload notes & study materials | ✅ | ✅ | ✅ (own courses) | View / download |
 | Create exams & quizzes | ❌ | ✅ (own courses only, as course teacher) | ✅ (own courses) | Take |
 | View exam results / progress | ✅ (all) | ✅ (own section) | ✅ (own courses) | Own only |
 | Upload previous-year questions | ✅ | ✅ | ✅ (own courses) | View |
-| Take / manage attendance | View all | ✅ (own section) | ✅ (own courses) | View own |
+| Take / manage attendance | ✅ (view all, edit any; every edit logged) | ✅ (own section) | ✅ (own courses) | View own |
 | Manage book shop (catalog, purchases) | ✅ | ❌ | ❌ | Buy |
 | AI chatbox | ❌ | ❌ | ❌ | ✅ |
 | Assign which teacher takes which class, substitute teachers, cancel a class | ✅ | ❌ | ❌ | ❌ |
@@ -117,7 +118,7 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 - Belongs to exactly one session, one group and one section at any time.
 - Automatically enrolled in every course offering of their section.
 - Cannot log in after being marked **Passed Out**.
-- Every student is **18 or older** (confirmed by the client); the portal has no under-18 users.
+- Every student is **18 or older** (confirmed by the client); the portal has no under-18 users. Where an age is needed, it is calculated from the date of birth in the student's profile; no age checks or blocks are built.
 
 ---
 
@@ -366,12 +367,13 @@ All of these work only within the teacher's assigned course offerings:
 | Extras | Show on public landing page (optional), publish now or schedule, expiry date | Publish now or schedule, expiry date |
 
 - Students see a unified **Notices** page with filters (Central / My Classes) and an unread indicator.
-- *Important* and *Urgent* notices also trigger an **email**; *Urgent* notices appear as a banner on the dashboard until read.
+- *Important* and *Urgent* notices also trigger an **email** (from Phase 3, Section 10); *Urgent* notices appear as a banner on the dashboard until read.
+- **Email sending:** SMTP through a **free Google account** (no paid service). Emails go through a **queue with rate limiting** that stays under Google's daily sending limit (about 500/day for a personal Gmail; the Admin sets the limit in Settings). If more emails are waiting than the limit allows, the rest are sent the next day; in-app notifications are never delayed. Password-reset and verification emails go first.
 
 ### 5.10 Notifications
 - **In-app notification center** (bell icon with unread count), delivered in real time over WebSockets.
 - **Email** for important events (configurable per user, except for urgent notices).
-- **Browser push notifications** (Phase 2).
+- **Browser push notifications** (Phase 3).
 
 | Event | Student | Teacher |
 |---|:-:|:-:|
@@ -422,12 +424,14 @@ All of these work only within the teacher's assigned course offerings:
   - MCQ – single correct answer
   - MCQ – multiple correct answers (optional per question)
 - **All grading is automatic.** Marks are calculated the moment the student submits; the teacher never grades by hand.
-- **Scoring rules:**
-  - **Single correct:** full marks if correct; if negative marking is on, the set negative mark is deducted for a wrong answer; unanswered = 0.
-  - **Multiple correct: all-or-nothing.** Full marks only if the student selects exactly all the correct options and no wrong ones; otherwise 0. **No negative marks** on multiple-correct questions.
-  - A student's total never goes below 0.
+- **Scoring rules (simple):**
+  - **Right answer = the question's marks** (default 1). **Wrong or unanswered = 0.**
+  - **No negative marking and no partial marks.** For a multiple-correct question, the answer is right only if the student selects exactly all the correct options; otherwise it is wrong.
   - **Quizzes with several attempts:** the **best** attempt counts for progress and rank. All attempts stay visible to the student and the teacher.
-- **Settings:** start & end window, duration (timer), total marks, pass marks, negative marking (optional), shuffle questions/options, number of attempts, show correct answers after submission (yes/no), result publish mode (instantly / manually).
+- **Settings:** start & end window, duration (timer), total marks, pass marks, shuffle questions/options, number of attempts, show correct answers after the exam ends (yes/no), result publish mode (instantly / manually).
+- **Time rule:** a student's exam ends at the **earlier of (start time + duration) and the window end**. Example: window 8–10 PM, 40-minute exam, student starts at 9:50 → the exam auto-submits at 10:00.
+- **Correct answers are shown only after the exam window has ended (`end_at` passed)**, never right after one student submits, so answers cannot be shared while others are still taking the exam.
+- **Question snapshot:** when an exam is published, the question text, options and correct answer are **copied into the exam**. Later edits to the teacher's question bank do not change published or past exams. The teacher can still edit a published exam **before its start time**, which copies the questions again; once the exam has started, it is locked.
 - **Reports:** score distribution, highest/average/lowest, per-question correctness, list of students who did not attend. Export as CSV/PDF.
 
 #### 5.14.2 Student: Taking an Exam
@@ -452,7 +456,7 @@ All of these work only within the teacher's assigned course offerings:
 
 ### 5.17 Class Routine
 - **The Admin allocates the class routine for every session**: for each session → group → section, the Admin fills a days × periods grid. Each cell = course offering (course code + title) + time + room; the teacher is filled in automatically from the course assignment.
-- **Period times and rooms are typed by the Admin** on each routine slot (start time, end time, room as free text). There is no separate period or room list; if the college's period times change, the Admin updates the routine.
+- **Periods and rooms are managed by the Admin** in the Schedule Manager (Section 5.17.1): the Admin creates the college's periods (name, start time, end time) and rooms, then picks them on each routine slot.
 - **Only the Admin can create or change the routine.** Section Mentors and teachers can only view it.
 - This routine is what drives attendance: every routine slot becomes a class the teacher takes attendance for (Section 5.18).
 - **Conflict check:** warns if a teacher is double-booked in two sections at the same time.
@@ -463,6 +467,23 @@ All of these work only within the teacher's assigned course offerings:
 - **Routine changes apply from the next class onward.** Past Class Meetings and their attendance are never changed. Future Class Meetings that have no attendance yet are rebuilt from the new routine.
 - **Academic calendar (Admin only):** the Admin decides when classes run and marks **holidays / off days** (one date or a date range, e.g. Eid vacation). No Class Meetings are generated on those days, and if the Admin adds a holiday later, the future meetings on those dates (with no attendance yet) are removed. Teachers and students see holidays on the routine and the attendance calendar.
 - **The Admin is responsible for a correct routine.** The system does not reconcile or resolve clashes between the old and new routine; the conflict check above is only a warning.
+
+#### 5.17.1 Admin Schedule Manager (everything is Admin-controlled)
+One Admin area where the Admin can **add, edit and delete** every part of the schedule. Teachers, Section Mentors and students can only view.
+
+| Item | What the Admin can do |
+|---|---|
+| **Periods** | Add / edit / delete periods (name, start time, end time), e.g. Period 1 = 08:00–08:45. |
+| **Rooms** | Add / edit / delete rooms (name, optional capacity/building). |
+| **Routine** | For each session → group → section: assign course offering, day, period and room to every slot; add, edit, move or delete any slot; copy a routine from another section or session. |
+| **Holidays / off days** | Add, edit or delete a holiday (one date or a range, e.g. Eid vacation, public holiday, exam break). |
+| **Single day / single class** | Change one date only without touching the routine: add an extra class, move a class to another period or room, cancel a class, assign a substitute teacher, or delete a future class. |
+| **Whole-day changes** | Mark one date as a special day (e.g. half day, exam day) and pick which periods run (a list of period IDs). On that date, only routine slots in the listed periods create Class Meetings; the others are not created. A Holiday cancels the whole day; a special day only shortens it. If a listed period is later deleted, it is removed from the list. |
+
+- Every change **applies to future classes only** and keeps the rules in 5.17: past Class Meetings and their attendance are never changed; a future meeting that already has attendance is not deleted (the Admin must cancel it instead).
+- Deleting a period or room that future routine slots use asks the Admin to **choose a replacement** or delete those slots first. Past meetings keep the period times and room they had.
+- Affected students and teachers are notified of every change (5.10).
+- All changes are written to the **AuditLog**.
 
 ### 5.18 Attendance (Per Period)
 
@@ -575,7 +596,7 @@ Roll  Name             Status
 - Students can start new chats, see past chats, and write in **Bangla or English**. Supports formatted math/code in answers.
 - **Safety:** server-side calls only (key never exposed), no access to other students' data, disclaimer "AI may make mistakes, verify with your teacher".
 - **During a live exam, the AI chatbox is disabled** for students taking that exam.
-- **Phase 2:** answers grounded in the college's own uploaded notes (course-aware assistant).
+- **Phase 3 (Section 10):** answers grounded in the college's own uploaded notes (course-aware assistant).
 
 ---
 
@@ -592,7 +613,9 @@ Roll  Name             Status
 | **Course** | id, code, name, group_type, class, paper, is_optional |
 | **CourseOffering** | id, section_id, course_id, teacher_id, created_at |
 | **Enrollment** | id, course_offering_id, student_id, status (active/ended), enrolled_at, ended_at (a row for **every** student in every offering they take; ending keeps history; only one active row per student + offering) |
-| **RoutineSlot** | id, section_id, day, start_time, end_time, course_offering_id, room (times and room typed by the Admin; room is free text; no Period/Room tables) |
+| **Period** | id, name, start_time, end_time (managed by the Admin, Section 5.17.1) |
+| **Room** | id, name, capacity (optional), building (optional) (managed by the Admin) |
+| **RoutineSlot** | id, section_id, day, period_id, room_id, course_offering_id |
 | **Post** | id, author_id, text, tag, pinned_until, pin_audience (all/section), pin_section_id (null = everyone), status, created_at |
 | **PostView** | post_id, user_id, seen_at (unique post + user; a pinned post is hidden from the top once a row exists) |
 | **PostMedia** | id, post_id, url, type |
@@ -606,12 +629,13 @@ Roll  Name             Status
 | **Material** | id, course_offering_id / scope, chapter, title, file_url, type |
 | **Question (bank)** | id, teacher_id, course_id, type, text, options_json, correct_json, marks, chapter_tag |
 | **Exam** | id, course_offering_id, kind (exam/quiz), title, start_at, end_at, duration, total_marks, pass_marks, settings_json, status |
-| **ExamQuestion** | exam_id, question_id, order, marks |
+| **ExamQuestion** | exam_id, question_id (source reference), order, marks, question_text, options_json, correct_json (snapshot copied from the question bank when the exam is published; source question_id kept for reference only) |
 | **ExamAttempt** | id, exam_id, student_id, section_id (section at the time of the attempt, used for rank), started_at, submitted_at, score, status, integrity_log |
 | **Answer** | attempt_id, question_id, selected_option_ids, is_correct, marks_awarded |
 | **PreviousQuestion** | id, course_id, year, exam_type, board, file_url, solution_url |
-| **ClassMeeting** | id, routine_slot_id / online_class_id, date, start_time, teacher_id, substitute_teacher_id, status (scheduled/held/cancelled) |
+| **ClassMeeting** | id, routine_slot_id (null for an extra class) / online_class_id, date, period_id, room_id, start_time, end_time (copied from the period when created, so later period changes do not alter past meetings), teacher_id, substitute_teacher_id, status (scheduled/held/cancelled) |
 | **Holiday** | id, start_date, end_date, title, created_by (set by the Admin; no Class Meetings on these dates) |
+| **SpecialDay** | id, date, title, session_id (optional), periods_json (which periods run that day; set by the Admin) |
 | **ClassMeetingOffering** | class_meeting_id, course_offering_id (unique meeting + offering; a combined class has one row per offering) |
 | **AttendanceRecord** | id, class_meeting_id, student_id, section_id (section at the time of the class), status (present/absent/late/excused), marked_by, marked_at |
 | **AttendanceEdit** | id, attendance_record_id, old_status, new_status, edited_by, edited_at |
@@ -673,6 +697,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 | **Security** | HTTPS everywhere, role + assignment-based authorization, input sanitization (XSS), file-type and size validation on uploads, signed URLs for private files, audit log for Admin actions. |
 | **Privacy** | Students' personal details (mobile, address, guardian info, DOB) visible **only to the student and the Admin**. Teachers and Section Mentors see only profile and course data (Section 5.3.1). |
 | **Backups** | Daily automatic database backups, kept 30 days; file storage with versioning. |
+| **Timezone** | All times are shown in **Asia/Dhaka** and stored in **UTC** (routine, exams, attendance, pin expiry, holidays). |
 | **Language** | UI in English; Bangla content supported everywhere (Unicode); Bangla UI can be added later. |
 | **Accessibility** | Readable fonts, sufficient contrast, keyboard navigation for forms and exams. |
 
@@ -688,7 +713,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 | **File storage** | S3-compatible object storage (AWS S3 / Cloudflare R2 / DigitalOcean Spaces) for images and PDFs (no videos). |
 | **Live classes** | No integration: teacher pastes a free Google Meet or Jitsi Meet link. |
 | **Recorded video** | Teacher's own YouTube (unlisted) link, shown in an embedded player. No video upload. |
-| **Email** | SMTP (client-provided) with a background job queue. |
+| **Email** | SMTP through a free Google account, with a background job queue and rate limiting (Section 5.9). |
 | **Payments** | None in this version (placeholder **Pay** button). A gateway can be plugged in later. |
 | **AI** | Groq API free tier (open model, e.g. Llama 70B-class), called server-side only; provider and model configurable. |
 | **Hosting** | VPS or cloud (e.g. DigitalOcean / AWS) with Docker; daily backups. |
@@ -699,9 +724,11 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 
 | Phase | Features |
 |---|---|
-| **Phase 1 – Core** | Auth & accounts, sessions/groups/sections, course & teacher assignment, separate dashboards, profile, community feed with pinned posts & moderation, messaging, central & class-wise notices, in-app notifications, routine. |
+| **Phase 1 – Core** | Auth & accounts, sessions/groups/sections, course & teacher assignment, separate dashboards, profile, community feed with pinned posts & moderation, messaging, central & class-wise notices, in-app notifications, routine and Admin Schedule Manager (periods, rooms, holidays, daily schedule). |
 | **Phase 2 – Learning** | Online classes, recorded classes, notes & materials, previous-year questions, online exams & quizzes, exam progress, attendance, Student 360° view. |
 | **Phase 3 – Extras** | Digital book shop (placeholder Pay button), free AI chatbox, email/push notifications, reports & exports, AI grounded in college notes. |
+
+**Section 10 is the single source for phases.** If another section mentions a phase, this table wins. In Phase 1 the dashboards **hide the widgets** (attendance, exams, results) for features that are not built yet.
 
 ---
 
@@ -729,7 +756,9 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 18. **The Admin decides the academic calendar:** when classes run, holidays and the routine (Sections 5.17, 5.18).
 19. **Students are added by the Admin** from the session page with a Student ID and password the Admin gives to the student; **a section holds at most 30 students**, and the Admin creates as many sections as needed (Section 3.1.1).
 20. **Only one Admin account**, by design. The client keeps the Admin login email safe; no second Admin or recovery path is built (Section 2.2).
-21. **The Admin types period times and rooms** on each routine slot and updates the routine if times change (Section 5.17).
+21. **The Admin manages periods, rooms, routine, holidays and any single day or class** in the Schedule Manager: add, edit and delete everything (Section 5.17.1). Replaces the earlier free-text rule.
+23. **Exam scoring is simple:** right = marks, wrong = 0, no negative or partial marks (Section 5.14.1).
+24. **Email uses a free Google SMTP account** with a rate-limited queue (Section 5.9).
 22. **The Student ID is not shown on the public profile**; only the student, their teachers and the Admin see it (Section 5.7.1).
 
 **Open questions:**
