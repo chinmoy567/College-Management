@@ -8,9 +8,9 @@
 | ID      | Title                                        | Severity | Location                          | First seen | Status                        |
 | ------- | -------------------------------------------- | -------- | --------------------------------- | ---------- | ----------------------------- |
 | ARC-001 | Pin audience by group, should be section     | High     | PRD §6 Post                       | 2026-11-13 | Fixed (v2.8)                  |
-| ARC-002 | Admin attendance: view-only vs edit          | Medium   | PRD §2.1 vs §5.18.3               | 2026-11-13 | Open                          |
+| ARC-002 | Admin attendance: view-only vs edit          | Medium   | PRD §2.1 vs §5.18.3               | 2026-11-13 | Fixed (v2.16)                 |
 | ARC-003 | Group rank cannot be computed                | High     | PRD §5.15                         | 2026-11-13 | Fixed (v2.7)                  |
-| ARC-004 | Phase contradictions                         | Medium   | PRD §5.2, §5.9, §5.10, §5.20, §10 | 2026-11-13 | Open                          |
+| ARC-004 | Phase contradictions                         | Medium   | PRD §5.2, §5.9, §5.10, §5.20, §10 | 2026-11-13 | Fixed (v2.16)                 |
 | ARC-005 | Missing entities in data model               | High     | PRD §6                            | 2026-11-13 | Mostly fixed (v2.12)          |
 | ARC-006 | ClassMeeting courses stored as array         | High     | PRD §6                            | 2026-11-13 | Partly fixed (v2.10)          |
 | ARC-007 | Exam scoring gaps                            | High     | PRD §5.14                         | 2026-11-13 | Fixed (v2.13)                 |
@@ -27,13 +27,13 @@
 | ARC-018 | Privacy rule contradicts itself              | High     | PRD §8 vs §5.3.1                  | 2026-11-13 | Fixed (v2.13)                 |
 | ARC-019 | Attendance calendar & calculation gaps       | High     | PRD §5.18                         | 2026-11-13 | Fixed (v2.13)                 |
 | ARC-020 | Section move loses history                   | High     | PRD §4.4, §5.3, §6                | 2026-11-13 | Fixed (v2.14)                 |
-| ARC-021 | Correct answers leak during exam window      | High     | PRD §5.14.1                       | 2026-11-13 | Open                          |
-| ARC-022 | Exam window vs duration; live bank questions | Medium   | PRD §5.14, §6                     | 2026-11-13 | Open                          |
+| ARC-021 | Correct answers leak during exam window      | High     | PRD §5.14.1                       | 2026-11-13 | Fixed (v2.16)                 |
+| ARC-022 | Exam window vs duration; live bank questions | Medium   | PRD §5.14, §6                     | 2026-11-13 | Fixed (v2.16)                 |
 | ARC-023 | Every Admin/Mentor post auto-pins            | Medium   | PRD §5.7.2                        | 2026-11-13 | Fixed (v2.9)                  |
-| ARC-024 | Timezone never stated                        | Medium   | PRD §8                            | 2026-11-13 | Open                          |
-| ARC-025 | SMTP daily limits                            | Medium   | PRD §5.9                          | 2026-11-13 | Open (client)                 |
+| ARC-024 | Timezone never stated                        | Medium   | PRD §8                            | 2026-11-13 | Fixed (v2.16)                 |
+| ARC-025 | SMTP daily limits                            | Medium   | PRD §5.9                          | 2026-11-13 | Fixed (v2.16)                 |
 | ARC-026 | Single Admin, no recovery                    | Low      | PRD §2                            | 2026-11-13 | Closed (by design)            |
-| ARC-027 | No Period/Room entities                      | Low      | PRD §6                            | 2026-11-13 | Closed (by design)            |
+| ARC-027 | No Period/Room entities                      | Low      | PRD §6                            | 2026-11-13 | Fixed (v2.16)                 |
 | ARC-028 | Public repo contains client PRD              | Medium   | GitHub                            | 2026-11-13 | Open (client)                 |
 | ARC-029 | Public profile of inactive users undefined   | Low      | PRD §5.7.1 vs §4.4                | 2026-11-13 | Fixed (v2.15)                 |
 | ARC-030 | Student ID on public profile                 | Low      | PRD §5.7.1                        | 2026-11-13 | Fixed (v2.15)                 |
@@ -44,7 +44,16 @@
 | ARC-038 | Stale pin wording in §5.3 / §5.4             | Low      | PRD §5.3, §5.4                    | 2026-11-14 | Fixed (v2.10)                 |
 | ARC-039 | Flow C missing pin switch                    | Low      | PRD §7                            | 2026-11-14 | Fixed (v2.10)                 |
 | ARC-040 | Unpinned Admin/Mentor posts: notification?   | Medium   | PRD §5.10                         | 2026-11-14 | Fixed (v2.10)                 |
-| ARC-041 | HSC age claim conflicts with typical ages   | Medium   | PRD §1                            | 2026-11-14 | Open (client-confirmed)       |
+| ARC-041 | HSC age claim conflicts with typical ages   | Medium   | PRD §1                            | 2026-11-14 | Closed (client-decided, v2.16) |
+| ARC-042 | Period/Room deletion cascade undefined       | Low      | PRD §5.17.1, §6                   | 2026-11-14 | NEW                           |
+| ARC-043 | SpecialDay interaction with routine unclear  | Medium   | PRD §5.17.1, §6 SpecialDay        | 2026-11-14 | NEW                           |
+| ARC-044 | ExamQuestion snapshot vs exam editing        | Medium   | PRD §5.14.1, §6 ExamQuestion      | 2026-11-14 | NEW                           |
+| ARC-045 | ClassMeeting.period_id nullability unclear   | Low      | PRD §6 ClassMeeting               | 2026-11-14 | NEW                           |
+| ARC-046 | AttendanceEdit scope ambiguous               | Low      | PRD §5.18.3, §6 AttendanceEdit    | 2026-11-14 | NEW                           |
+| ARC-047 | SpecialDay periods_json format undefined     | Low      | PRD §6 SpecialDay                 | 2026-11-14 | NEW                           |
+| ARC-048 | Google SMTP rate limit enforcement           | Low      | PRD §5.9                          | 2026-11-14 | NEW                           |
+| ARC-049 | ExamQuestion.question_id missing from schema | Medium   | PRD §6 ExamQuestion               | 2026-11-14 | NEW                           |
+| ARC-050 | Online class and extra class field rules     | Low      | PRD §6 ClassMeeting               | 2026-11-14 | NEW                           |
 
 ---
 
@@ -103,28 +112,28 @@
 - **Problem:** Enrollment had no start/end date or status, and AttendanceRecord / ExamAttempt did not store which section the student was in.
 - **Fix applied in v2.14:** Enrollment now `(id, course_offering_id, student_id, status (active/ended), enrolled_at, ended_at)` with "a row for **every** student in every offering they take; ending keeps history; only one active row per student + offering." AttendanceRecord and ExamAttempt now store `section_id` (section at the time of the record). §4.4 says moving a student ends old enrollments and creates new ones; past attendance, exam attempts and ranks stay with the section the student was in at that time.
 
-**ARC-021 — Correct answers leak during the exam window** · PRD §5.14.1 · Open
+**ARC-021 — Correct answers leak during the exam window** · PRD §5.14.1 · Fixed (v2.16)
 
 - **Problem:** "Show correct answers after submission" lets the first student who submits see the answers and share them while others are still taking the exam.
-- **Fix:** Correct answers are shown only after the exam's `end_at` has passed, never right after one student submits.
+- **Fix applied in v2.16:** §5.14.1 now says "Correct answers are shown only after the exam window has ended (`end_at` passed), never right after one student submits, so answers cannot be shared while others are still taking the exam."
 
-**ARC-041 — HSC age claim conflicts with typical ages** · PRD §1 · Open (client-confirmed)
+**ARC-041 — HSC age claim conflicts with typical ages** · PRD §1 · Closed (client-decided, v2.16)
 
 - **Problem:** v2.13 says "all students are 18 or older (confirmed by the client)" but HSC Class 11-12 students are typically ages 16-17 in Bangladesh. Class 11 starts after SSC (age ~16), Class 12 ends at ~17-18.
 - **Why it matters:** This is either (1) an adult HSC program (distance learning, second-chance education), or (2) a factual error. If it is a standard HSC college, the age claim is false, and the Groq/privacy decisions based on it are invalid.
-- **Fix:** Ask the client to clarify: Is this an adult education HSC program, or are there actually students under 18? If the latter, ARC-011 and ARC-017 must be reopened (child safety, AI provider terms). If the former, consider adding "adult education" to §1 to make it clear.
+- **Client decision in v2.16:** §1 clarifies "Where an age is needed, it is calculated from the date of birth in the student's profile; no age checks or blocks are built." The client has confirmed all students are 18+, so the portal is built on that assumption with no enforcement. If this is later found to be incorrect, privacy rules and AI provider terms must be reviewed.
 
 ### 🟡 Medium
 
-**ARC-002 — Admin attendance: view-only vs edit** · PRD §2.1 vs §5.18.3 · Open
+**ARC-002 — Admin attendance: view-only vs edit** · PRD §2.1 vs §5.18.3 · Fixed (v2.16)
 
 - **Problem:** The permission matrix says Admin can "View all" attendance; §5.18.3 says Admin "can edit any record".
-- **Fix (recommended):** Admin can edit any record, and every edit is saved in AttendanceEdit. Update the matrix.
+- **Fix applied in v2.16:** Permission matrix updated to "✅ (view all, edit any; every edit logged)". AttendanceEdit table already in §6.
 
-**ARC-004 — Phase contradictions** · PRD §5.2, §5.9, §5.10, §5.20, §10 · Open
+**ARC-004 — Phase contradictions** · PRD §5.2, §5.9, §5.10, §5.20, §10 · Fixed (v2.16)
 
 - **Problem:** Browser push is Phase 2 in §5.10 but Phase 3 in §10. AI grounded in notes is Phase 2 in §5.20 but Phase 3 in §10. Notice emails for Important/Urgent are in a Phase 1 feature (§5.9), but "email notifications" are Phase 3. Phase 1 dashboards show attendance/exams that only arrive in Phase 2.
-- **Fix:** Make §10 the single source for phases and fix the other sections. Phase 1 dashboards hide widgets for features not built yet.
+- **Fix applied in v2.16:** §10 now says "Section 10 is the single source for phases. If another section mentions a phase, this table wins. In Phase 1 the dashboards hide the widgets (attendance, exams, results) for features that are not built yet." Browser push → Phase 3 in §5.10. AI grounded in notes → Phase 3 in §5.20. Email sending clarified as Phase 3 in §5.9 with a note "(from Phase 3, Section 10)".
 
 **ARC-008 — Class 11/12 stored in two places** · PRD §6 · Open
 
@@ -146,25 +155,41 @@
 - **Problem:** `nothing.txt` was committed as a stray file (it now has content added by the developer). No README, no `.env.example`.
 - **Fix:** Delete or rename `nothing.txt` to something meaningful; add a short README and `.env.example` when scaffolding.
 
-**ARC-022 — Exam window vs duration; live bank questions** · PRD §5.14, §6 · Open
+**ARC-022 — Exam window vs duration; live bank questions** · PRD §5.14, §6 · Fixed (v2.16)
 
 - **Problem:** A student who starts at 9:50 in an 8–10 PM window with a 40-minute exam: the PRD does not say if time is cut at 10:00. Also, ExamQuestion points to live question-bank rows, so editing a bank question changes past exams.
-- **Fix:** Rule: end time = earlier of (start + duration) and window end. Snapshot question text, options and answer into the exam when it is published.
+- **Fix applied in v2.16:** §5.14.1 now says "a student's exam ends at the earlier of (start time + duration) and the window end. Example: window 8–10 PM, 40-minute exam, student starts at 9:50 → the exam auto-submits at 10:00." §6 ExamQuestion changed to "exam_id, order, marks, question_text, options_json, correct_json (snapshot copied from the question bank when the exam is published; source question_id kept for reference only)". §5.14.1: "Question snapshot: when an exam is published, the question text, options and correct answer are copied into the exam. Later edits to the teacher's question bank do not change published or past exams."
 
-**ARC-024 — Timezone never stated** · PRD §8 · Open
+**ARC-024 — Timezone never stated** · PRD §8 · Fixed (v2.16)
 
 - **Problem:** Routine, exams, attendance and pin expiry all depend on time, but the timezone is not written anywhere.
-- **Fix:** Add to §8: all times shown in Asia/Dhaka, stored in UTC.
+- **Fix applied in v2.16:** §8 now says "Timezone: All times are shown in Asia/Dhaka and stored in UTC (routine, exams, attendance, pin expiry, holidays)."
 
-**ARC-025 — SMTP daily limits** · PRD §5.9 · Open (client)
+**ARC-025 — SMTP daily limits** · PRD §5.9 · Fixed (v2.16)
 
 - **Problem:** Important/Urgent notice emails to ~3,000 users may hit SMTP daily limits (a personal Gmail is about 500/day).
-- **Fix:** Ask which SMTP provider the client will use; use a queue with rate limiting.
+- **Fix applied in v2.16:** §5.9 now says "Email sending: SMTP through a free Google account (no paid service). Emails go through a queue with rate limiting that stays under Google's daily sending limit (about 500/day for a personal Gmail; the Admin sets the limit in Settings). If more emails are waiting than the limit allows, the rest are sent the next day; in-app notifications are never delayed. Password-reset and verification emails go first."
 
 **ARC-028 — Public repo contains client PRD** · GitHub · Open (client)
 
 - **Problem:** The GitHub repo is PUBLIC and its history contains the client's PRD v1.0 (and now v2.7–2.10).
 - **Fix:** Ask the client. If not OK, make the repo private.
+
+**ARC-043 — SpecialDay interaction with routine unclear** · PRD §5.17.1, §6 SpecialDay · NEW
+
+- **Problem:** §6 adds SpecialDay (id, date, title, session_id, periods_json) and §5.17.1 says "Mark one date as a special day and set which periods run." But the PRD does not say: (a) are regular routine classes on that day canceled and replaced by the SpecialDay periods, or do both run? (b) what is the format of periods_json? (c) if a SpecialDay period is not in the routine for a section, is a ClassMeeting still created? (d) how does this interact with Holidays (which cancel all classes)?
+- **Fix:** Add rules to §5.17.1 and §6: format of periods_json (e.g. array of period IDs), whether SpecialDay replaces or overlays the routine (likely: the routine runs only for the periods listed in the SpecialDay), and how class generation works. Clarify that Holidays cancel all classes while SpecialDay allows some periods.
+
+**ARC-044 — ExamQuestion snapshot vs exam editing** · PRD §5.14.1, §6 ExamQuestion · NEW
+
+- **Problem:** §5.14.1 says "when an exam is published, the question text, options and correct answer are copied into the exam." But the PRD does not say whether a published exam (status = published, before start_at) can be edited. If yes, does editing re-snapshot the questions? If no, teachers lose the ability to fix errors before the exam starts.
+- **Fix:** Add rule: teachers can edit a published exam only before start_at (or before the first student starts it, whichever is earlier). Editing re-snapshots the questions. Or, simpler: teachers can edit draft exams only; publishing locks the exam.
+
+**ARC-049 — ExamQuestion.question_id missing from schema** · PRD §6 ExamQuestion · NEW
+
+- **Problem:** §6 ExamQuestion comment says "source question_id kept for reference only" but the field list is "exam_id, order, marks, question_text, options_json, correct_json" — question_id is missing.
+- **Why it matters:** Without question_id, you cannot trace which question bank item a given exam question came from (useful for analyzing which bank questions are hardest, or for debugging).
+- **Fix:** Add question_id to the field list: `exam_id, question_id (source reference), order, marks, question_text, options_json, correct_json`. Or remove the comment if question_id is intentionally not kept.
 
 ### 🔵 Low
 
@@ -183,10 +208,11 @@
 - **Problem:** Only one Admin account, with no second Admin or recovery path if the email is lost.
 - **Client decision:** Single Admin by design. §2.2 now states "There is only one Admin account by design (client decision); no second Admin and no other recovery path. The Admin keeps the login email safe." Added as Decision #20.
 
-**ARC-027 — No Period/Room entities** · PRD §6 · Closed (by design)
+**ARC-027 — No Period/Room entities** · PRD §6 · Fixed (v2.16)
 
 - **Problem:** The routine grid needs period numbers and times per college, and possibly rooms, but there are no entities for them.
-- **Client decision:** Admin types period times and room (free text) on each RoutineSlot. RoutineSlot has start_time, end_time (structured fields for conflict detection) and room (free text). No separate Period/Room tables. If period times change, Admin updates the routine. §5.17, §6 RoutineSlot, and Decision #21.
+- **v2.15 client decision:** Admin types period times and room (free text) on each RoutineSlot. No separate Period/Room tables.
+- **Fix applied in v2.16 (design change):** Admin Schedule Manager (§5.17.1) added with full Period and Room tables. §6 now has "Period: id, name, start_time, end_time" and "Room: id, name, capacity (optional), building (optional)". RoutineSlot changed from "day, start_time, end_time, room (free text)" to "day, period_id, room_id". Decision #21 updated to reflect the new design.
 
 **ARC-029 — Public profile of inactive users undefined** · PRD §5.7.1 vs §4.4 · Fixed (v2.15)
 
@@ -198,6 +224,36 @@
 - **Problem:** Student ID + name + session + section on the public profile lets anyone identify a student outside the platform.
 - **Note:** v2.13 confirmed all users are 18+, so this is no longer a child-protection issue, but the Student ID is the login ID and should not be public.
 - **Fix applied in v2.15:** §5.7.1 now says the public profile "does not show the Student ID (the Student ID is the login ID; only the student, their teachers and the Admin see it)." Added as Decision #22.
+
+**ARC-042 — Period/Room deletion cascade undefined** · PRD §5.17.1, §6 · NEW
+
+- **Problem:** §5.17.1 says "Deleting a period or room that future routine slots use asks the Admin to choose a replacement or clear those slots first." But the PRD does not say what happens if the Admin cancels the delete, or what "clear those slots" means (delete the RoutineSlot rows? set period_id/room_id to null?).
+- **Fix:** Clarify: (a) canceling the delete leaves period/room unchanged; (b) "clear" means delete the RoutineSlot rows; (c) add the rule to §6 as a constraint.
+
+**ARC-045 — ClassMeeting.period_id nullability unclear** · PRD §6 ClassMeeting · NEW
+
+- **Problem:** §6 ClassMeeting has "period_id, room_id, start_time, end_time (copied from the period when created, so later period changes do not alter past meetings)". But (a) if start_time and end_time are frozen copies, why keep period_id? (b) if period_id references a period that is later deleted, what happens? (c) for an "extra class" (routine_slot_id null), can period_id also be null if the Admin picks custom times?
+- **Fix:** Clarify: period_id is kept for reporting/display (e.g. "Period 3" on the attendance sheet) even though the times are frozen. period_id can be null for extra classes with custom times. If a period is deleted, past ClassMeeting rows keep the period_id (it becomes a dangling reference, or Period has a soft-delete flag).
+
+**ARC-046 — AttendanceEdit scope ambiguous** · PRD §5.18.3, §6 AttendanceEdit · NEW
+
+- **Problem:** §6 has AttendanceEdit (id, attendance_record_id, old_status, new_status, edited_by, edited_at). §2.1 says "Admin can edit any attendance record (logged)" but the permission matrix says teachers/mentors can "manage" attendance. Can teachers edit attendance they already marked? Are those edits also logged in AttendanceEdit, or only Admin edits?
+- **Fix:** Clarify in §5.18.3: teachers and Section Mentors can edit attendance they marked (e.g. to fix a mistake), and every edit (by anyone) is saved in AttendanceEdit.
+
+**ARC-047 — SpecialDay periods_json format undefined** · PRD §6 SpecialDay · NEW
+
+- **Problem:** §6 says "periods_json (which periods run that day)" but does not define the format (array of period IDs? names? full objects?). If a period referenced in periods_json is later deleted, does the SpecialDay break?
+- **Fix:** Define format in §6, e.g. `periods_json: [period_id1, period_id2, ...]`. Add rule: deleting a period that a SpecialDay uses asks Admin to remove it from the SpecialDay first (or auto-remove it).
+
+**ARC-048 — Google SMTP rate limit enforcement** · PRD §5.9 · NEW
+
+- **Problem:** §5.9 says "the Admin sets the limit in Settings" but does not say if the system enforces a hard cap (e.g. 500/day for Gmail) or allows the Admin to set any value. If the Admin sets 1000/day but Gmail allows only 500, emails will bounce after 500.
+- **Fix:** Add a note: the system does not enforce a hard cap; the Admin is responsible for setting a correct limit. Or, if there is a safety rule, define it: "The system warns if the limit is set above 500 (typical Gmail free tier)."
+
+**ARC-050 — Online class and extra class field rules** · PRD §6 ClassMeeting · NEW
+
+- **Problem:** ClassMeeting has period_id, room_id, but for an online class (online_class_id is set) these do not make sense. Also, for an extra class (routine_slot_id null), can the Admin pick a period (period_id + copied times) or type custom times (period_id null, manual times)?
+- **Fix:** Add to §6: for an online class, period_id and room_id are null (or room_id = "Online"). For an extra class, the Admin can either pick an existing period (period_id is set, times copied) or leave period_id null and type custom start_time/end_time.
 
 ### ✅ Fixed (short)
 
@@ -219,11 +275,18 @@
 - **ARC-016** — Commit rule added to .claude/CLAUDE.md (v2.15).
 - **ARC-029** — Inactive user profile behavior defined (v2.15).
 - **ARC-030** — Student ID removed from public profile; visible only to student, their teachers and Admin (v2.15).
+- **ARC-002** — Permission matrix updated: Admin can edit any attendance (logged); AttendanceEdit in §6 (v2.16).
+- **ARC-004** — §10 is single source for phases; browser push and AI notes → Phase 3; email → Phase 3; dashboards hide unbuilt widgets (v2.16).
+- **ARC-021** — Correct answers shown only after exam end_at, not after one student submits (v2.16).
+- **ARC-022** — Exam time = min(start + duration, window end); question snapshot in ExamQuestion (v2.16).
+- **ARC-024** — Timezone Asia/Dhaka, stored in UTC (v2.16).
+- **ARC-025** — Google SMTP with rate-limited queue; Admin sets daily limit in Settings (v2.16).
+- **ARC-027** — Period and Room tables added with Admin Schedule Manager; RoutineSlot uses period_id, room_id (v2.16; reverses v2.15 design).
 
 ### 🔒 Closed by design
 
 - **ARC-026** — Single Admin with no recovery path confirmed by client as acceptable risk; documented in §2.2 and Decision #20 (v2.15).
-- **ARC-027** — No Period/Room tables; Admin types times/room on each RoutineSlot; documented in §5.17, §6, Decision #21 (v2.15).
+- **ARC-041** — Client confirmed all students 18+; age from DOB, no checks built; if later found incorrect, privacy and AI terms must be reviewed (v2.16).
 
 ---
 
@@ -239,3 +302,4 @@
 - **2026-11-14 · Review #7** — Pre-commit review of .gitignore rewrite and PRD v2.12 (9 new entities). ARC-015 fixed (proper .gitignore with .env.example, .claude/ committed except settings.local.json). ARC-005 mostly fixed (all 9 entities map correctly to features 5.3.1, 5.7.3, 5.8, 5.12, 5.13, 5.18, 5.20). .claude/ directory safe to commit (no secrets, no personal info). Ready to commit.
 - **2026-11-14 · Review #8** — PRD v2.13 and v2.14 uncommitted changes. v2.13 (developer): client confirmed all students 18+, exam scoring rules (multi-correct all-or-nothing, best attempt counts), privacy Admin+student only, Holiday entity, attendance "Not taken"/"N/A", Groq confirmed. v2.14 (user): Admin adds students from session page with Student ID+password, max 30 active students per section (blocks add/move/CSV when full), Enrollment with id/status/dates for every student, section_id on ExamAttempt and AttendanceRecord, section move ends old enrollments. **Fixed:** ARC-007, 009, 011, 017, 018, 019, 020. **New:** ARC-041 (HSC age claim conflicts with typical ages 16-18; client-confirmed but unusual, possibly adult education program). No conflicts with §2.4, §4.4, §5.15, §5.18. Section capacity examples changed from 50 to 30. Ready to commit.
 - **2026-11-14 · Review #9** — Pre-commit review of PRD v2.15 and .claude/CLAUDE.md update. **Fixed:** ARC-012 (Decision #13 reworded, no fake requirement numbers), ARC-016 (commit rule added to CLAUDE.md), ARC-029 (inactive user profile behavior defined in §5.7.1), ARC-030 (Student ID removed from public profile, visible only to student/teachers/Admin). **Closed by design:** ARC-026 (single Admin confirmed by client, §2.2 + Decision #20), ARC-027 (no Period/Room tables, Admin types times/room on RoutineSlot, §5.17 + §6 + Decision #21). All changes consistent with rest of PRD. RoutineSlot has structured start_time/end_time fields (for conflict detection) and free-text room. No new issues introduced. Ready to commit.
+- **2026-11-14 · Review #10** — PRD v2.16 uncommitted changes. **Major additions:** Admin Schedule Manager (§5.17.1) with Period/Room tables (reverses v2.15 design), SpecialDay entity for whole-day changes, simplified exam scoring (right = marks, wrong = 0, no negative/partial), correct answers only after exam end_at, exam time capped at window end, question snapshot in ExamQuestion, Admin can edit any attendance (logged), Asia/Dhaka timezone, Google SMTP with rate-limited queue, §10 as single source for phases. **Fixed:** ARC-002, 004, 021, 022, 024, 025, 027 (7 issues). **Closed:** ARC-041 (client-decided: all students 18+, age from DOB, no checks). **New:** ARC-042 (Period/Room deletion cascade), ARC-043 (SpecialDay interaction with routine), ARC-044 (exam editing after publish), ARC-045 (ClassMeeting.period_id nullability), ARC-046 (AttendanceEdit scope), ARC-047 (SpecialDay periods_json format), ARC-048 (SMTP rate limit enforcement), ARC-049 (ExamQuestion.question_id missing from schema), ARC-050 (online/extra class field rules). All new issues are low/medium clarifications; no critical problems. The Admin Schedule Manager is well-designed. Ready to commit.
