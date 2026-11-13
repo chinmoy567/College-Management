@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.6 |
+| **Document Version** | 2.7 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC) |
@@ -20,6 +20,7 @@
 | 2.4 | 13 Nov 2026 | Attendance is mainly taken by teachers in the physical classroom (select session, group, section, course); Admin allocates the routine for every session. |
 | 2.5 | 13 Nov 2026 | Routine is created and changed by the Admin only; Batch Coordinators can only view it. |
 | 2.6 | 13 Nov 2026 | "Batch Coordinator" renamed **Section Mentor**; one Section Mentor per section (not per group); substitutes and class cancellations decided by the Admin only. |
+| 2.7 | 13 Nov 2026 | Every post shows the author's session, group and section; any logged-in user can open the author's public profile. Exam ranks are **section-only** (exams are created by the course teacher for one section); group rank removed. |
 
 ---
 
@@ -82,7 +83,7 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 | Create / conduct online classes | ❌ | ✅ (own courses) | ✅ (own courses) | Attend |
 | Add recorded class (YouTube) links | ✅ | ✅ | ✅ (own courses) | Watch |
 | Upload notes & study materials | ✅ | ✅ | ✅ (own courses) | View / download |
-| Create exams & quizzes | ❌ | ✅ (own courses) | ✅ (own courses) | Take |
+| Create exams & quizzes | ❌ | ✅ (own courses only, as course teacher) | ✅ (own courses) | Take |
 | View exam results / progress | ✅ (all) | ✅ (own section) | ✅ (own courses) | Own only |
 | Upload previous-year questions | ✅ | ✅ | ✅ (own courses) | View |
 | Take / manage attendance | View all | ✅ (own section) | ✅ (own courses) | View own |
@@ -299,6 +300,8 @@ All of these work only within the teacher's assigned course offerings:
 - Edit / delete own post or comment ("edited" label shown).
 - **Report** post/comment with a reason; it goes to Admin moderation.
 - **Visibility:** every active student, teacher and the Admin can see every post (college-wide feed).
+- **Author info on every post and comment:** photo and name, and for a student author also **session · group · section** (e.g. *2024–25 · Science · A*). For a teacher it shows "Teacher" (plus "Section Mentor · 2024–25 Science-A" if they mentor a section); for the Admin it shows "Admin".
+- **Public profile:** clicking the author's name or photo opens their **public profile**, which any logged-in user can view. It shows: photo, name, role, Student ID, session / group / section / class (students), courses taught (teachers), bio, and their recent posts. It **never** shows private details (email, mobile, address, DOB, guardian info). The Admin still opens the full Student 360° view instead (5.3.1).
 
 #### 5.7.2 Admin & Section Mentor Pinned Posts
 - Admin can **create, edit and delete** posts like any user; Admin can additionally **delete any post or comment**.
@@ -405,7 +408,7 @@ All of these work only within the teacher's assigned course offerings:
 ### 5.15 Exam Progress
 - **Student view:**
   - List of all results by course: marks, percentage, grade (configurable HSC grading scale: A+, A, A-, B, C, D, F), and **rank**.
-  - **Ranks are always shown to students:** rank in section and rank in the whole group (session-group) for every exam/quiz, plus an overall rank per course. Students with equal marks share the same rank (e.g. 1, 2, 2, 4).
+  - **Ranks are always shown to students, by section only.** Every exam/quiz is created by the **course teacher** for one course offering, which belongs to one section, so the rank is among the students of that section who took it. Plus an overall rank per course (also within the section). There is **no group-wide or college-wide rank**. Students with equal marks share the same rank (e.g. 1, 2, 2, 4).
   - **Progress charts:** score trend over time per course, comparison with the section average, strong/weak chapters (based on question tags).
   - Downloadable result summary (PDF).
 - **Teacher/Section Mentor view:** per-student and per-section progress; list of students below the pass mark.
@@ -669,5 +672,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 12. **Online exams and quizzes are text-based MCQ only**, all auto-graded. No written answers and no file/image uploads (Section 5.14).
 13. Requirement numbers 14, 15, 16 and 23 were **removed by the client on purpose**. No features are missing.
 14. **Google Meet's 60-minute limit on free calls is acceptable** for live classes.
+15. **Posts show the author's session, group and section**, and any logged-in user can view the author's public profile (private details stay hidden) (Section 5.7.1).
+16. **Exam ranks are by section only.** Exams are created by the course teacher; results and ranks are computed among that section's students (Section 5.15).
 
 **Open questions:** none at this time.
