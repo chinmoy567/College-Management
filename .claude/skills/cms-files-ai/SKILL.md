@@ -5,7 +5,7 @@ description: Handle file uploads, Supabase Storage, signed URLs, book previews a
 
 # CMS files and AI
 
-Source: `PRD.md` §5.19 books, §5.20 AI, §8 limits, `tech.stack.md` §5-6.
+Source: `docs/PRD.md` §5.19 books, §5.20 AI, §8 limits, `docs/tech.stack.md` §5-6.
 
 ## Files
 - Upload via multer (memory). Check the real type with `file-type` (not the extension or header) and the size limits from PRD §8. Supabase free allows 50 MB per file.

@@ -5,7 +5,7 @@ description: Implement or review login, sessions, TOTP, password flows, role and
 
 # CMS auth and permissions
 
-Source: `PRD.md` §2.1 permission matrix, §3.3-3.4 assignments, §4 auth, §4.6 security.
+Source: `docs/PRD.md` §2.1 permission matrix, §3.3-3.4 assignments, §4 auth, §4.6 security.
 
 ## Sessions
 - Own `LoginSession` table. Random token in an `httpOnly`, `Secure`, `SameSite=Lax` cookie; store only its hash. Check on every request and every Socket.IO connect.

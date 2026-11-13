@@ -5,7 +5,7 @@ description: Build Socket.IO chat/notifications and pg-boss background jobs (exa
 
 # CMS realtime and jobs
 
-Source: `PRD.md` §5.8 messaging, §5.10 notifications, §5.17 routine, `tech.stack.md` §3.
+Source: `docs/PRD.md` §5.8 messaging, §5.10 notifications, §5.17 routine, `docs/tech.stack.md` §3.
 
 ## Socket.IO
 - Single server, no Redis. Authenticate with the session cookie on connect; reject otherwise.

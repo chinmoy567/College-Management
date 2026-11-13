@@ -5,7 +5,7 @@ description: Implement or review exams/quizzes, scoring, exam progress and per-p
 
 # CMS exams and attendance
 
-Source: `PRD.md` §5.14-5.15 exams, §5.17 routine, §5.18 attendance.
+Source: `docs/PRD.md` §5.14-5.15 exams, §5.17 routine, §5.18 attendance.
 
 ## Exams
 - Scoring: right = marks, wrong = 0. No negative or partial marks (client decision).

@@ -5,7 +5,7 @@ description: Change the Prisma schema, write migrations, seed data or query Post
 
 # CMS database
 
-Source: `PRD.md` §6 (data model) and `tech.stack.md` §4.
+Source: `docs/PRD.md` §6 (data model) and `docs/tech.stack.md` §4.
 
 - Every change is a Prisma migration in `/prisma`; never edit the DB by hand. Review the generated SQL before applying.
 - `DATABASE_URL` = Supabase session pooler (5432); `DIRECT_URL` = direct, used only by `prisma migrate`.
