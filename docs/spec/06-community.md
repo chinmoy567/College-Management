@@ -1,6 +1,6 @@
 # 06 · Community: Feed, Pins, Comments, Moderation, Public Profile
 
-Source: PRD §5.7, §2.1, `dashboards.md` §5.
+Source: PRD §5.7, §2.1, PRD §5.7.
 
 ## 1. Visibility
 

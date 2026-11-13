@@ -20,7 +20,7 @@
 - After finishing a milestone or spec, automatically run `/spec-check <spec number>` (skill `spec-check`, agent `spec-verifier`). A milestone is done only when that check reports the spec complete.
 
 ## Documents
-- All project documents live in the `docs/` folder (`docs/PRD.md`, `docs/tech.stack.md`, `docs/dashboards.md`, and any new document). Do not put documents in the repo root.
+- All project documents live in the `docs/` folder (`docs/PRD.md`, `docs/tech.stack.md`, and any new document). Do not put documents in the repo root.
 
 ## Commits
 - The user does not commit or push. Claude commits and pushes after every change that touches the repo, without being asked.

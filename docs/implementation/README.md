@@ -82,7 +82,7 @@ A milestone is **done only when `/spec-check` reports the spec complete**. Specs
 
 Built after M5–M10, from pieces in several specs:
 - Student 360° all tabs + PDF (03 §7) — the attendance, exams, community and books tabs need M5–M10 data.
-- Admin dashboard stats, alerts and lazy Recharts charts (`docs/dashboards.md` §1, 10 §2.2).
+- Admin dashboard stats, alerts and lazy Recharts charts (PRD §5.2.1, 10 §2.2).
 - `/admin/reports`: CSV/PDF exports of students, results (05 §7), attendance (04 §7.1), book purchases (09 §1.1). Streamed, never stored; Bangla font embedded in pdfkit (OPS-10).
 - Done when: ACAD-16 passes, every export opens correctly in Excel/LibreOffice and a PDF viewer, and `/spec-check 03` is complete.
 

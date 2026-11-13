@@ -1,6 +1,6 @@
 # 10 · Frontend (Next.js App Router)
 
-Source: PRD §5.1–5.6, `docs/dashboards.md`, `docs/landing-page.md`, `docs/tech.stack.md` §2. Skill: `cms-frontend`.
+Source: PRD §5.1–5.6, `docs/tech.stack.md` §2. Skill: `cms-frontend`.
 **Phone first (360 px), about 95% of users are on phones.** The visual design (colours, card placement) is decided during design; this spec fixes structure and behaviour.
 
 ## 1. App structure

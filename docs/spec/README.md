@@ -18,7 +18,7 @@ Stack and hosting are fixed by `docs/tech.stack.md`. Client decisions in `.claud
 | 07 | [07-chat-notices-notifications.md](07-chat-notices-notifications.md) | Messaging, Socket.IO, notices, notifications, email queue, web push (§5.8–5.10) |
 | 08 | [08-learning-content.md](08-learning-content.md) | Online classes, recorded classes, notes/materials, previous questions (§5.11–5.13, §5.16) |
 | 09 | [09-bookshop-ai.md](09-bookshop-ai.md) | Book shop, AI study assistant (§5.19, §5.20) |
-| 10 | [10-frontend.md](10-frontend.md) | Route map per role, layouts, shared components, phone-first rules (§5.1, §5.2, `dashboards.md`, `landing-page.md`) |
+| 10 | [10-frontend.md](10-frontend.md) | Route map per role, layouts, shared components, phone-first rules (§5.1, §5.2) |
 | 11 | [11-jobs-ops.md](11-jobs-ops.md) | pg-boss jobs, env vars, deployment, health check, backups, NFR checks, test plan (§8, §9) |
 
 ## Build order (milestones)

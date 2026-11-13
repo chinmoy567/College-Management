@@ -1,6 +1,6 @@
 # Plan 10 · Frontend (Milestone M4 shell, then every milestone)
 
-Spec: `docs/spec/10-frontend.md` · PRD §5.1–5.6, `docs/dashboards.md`, `docs/landing-page.md`, tech.stack §2. Agents: `ui-designer` (first), `web-builder`, `qa-tester`. Skill: `cms-frontend`.
+Spec: `docs/spec/10-frontend.md` · PRD §5.1–5.6, tech.stack §2. Agents: `ui-designer` (first), `web-builder`, `qa-tester`. Skill: `cms-frontend`.
 **Phone first at 360 px — about 95% of users are on phones.**
 
 ## 1. Strategy
@@ -9,7 +9,7 @@ The frontend is not one milestone. M4 builds the **shell, design system and shar
 
 ## 2. M4 build order
 
-1. **Design pass** (`ui-designer`, before code): tokens (colour, type scale with 16 px body minimum, spacing, radius, shadow), light theme first, dark optional; landing page layout per `landing-page.md`; dashboard card patterns per `dashboards.md`; empty/loading/error state patterns. Output: Tailwind theme + `globals.css` CSS variables + shadcn theme. Bangla-capable font stack (Noto Sans Bengali fallback, `font-display: swap`, subset).
+1. **Design pass** (`ui-designer`, before code): tokens (colour, type scale with 16 px body minimum, spacing, radius, shadow), light theme first, dark optional; landing page layout per PRD §5.1; dashboard card patterns per PRD §5.2; empty/loading/error state patterns. Output: Tailwind theme + `globals.css` CSS variables + shadcn theme. Bangla-capable font stack (Noto Sans Bengali fallback, `font-display: swap`, subset).
 2. **App skeleton** (§1): route groups `(public)`, `(onboarding)`, `(app)`; `(app)/layout.tsx` auth guard via `GET /api/auth/me` (TanStack Query, suspense skeleton), role shell, socket provider (connects after `me` resolves), bottom nav.
 3. **`lib/api.ts`**: fetch wrapper (`credentials: 'same-origin'`, `X-Requested-With: cms`, error shape → typed `ApiError`), 401 → `/login`, `FIRST_LOGIN_REQUIRED` → `/complete-profile` (FE-07). `lib/queryKeys.ts` per module. `lib/socket.ts` with cache updaters.
 4. **`middleware.ts`**: cookie-presence redirect only (UX), never security.

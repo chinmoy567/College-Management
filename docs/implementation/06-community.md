@@ -1,6 +1,6 @@
 # Plan 06 · Community: Feed, Pins, Comments, Moderation, Public Profile (Milestone M8)
 
-Spec: `docs/spec/06-community.md` · PRD §5.7, §2.1, `docs/dashboards.md` §5. Agents: `api-builder`, `web-builder`.
+Spec: `docs/spec/06-community.md` · PRD §5.7, §2.1, PRD §5.7. Agents: `api-builder`, `web-builder`.
 Goal: a fast college-wide feed with the pinned-post rules exactly as the PRD says, and moderation tools for the single Admin.
 
 ## 1. Build order

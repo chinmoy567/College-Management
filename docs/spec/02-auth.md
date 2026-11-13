@@ -1,6 +1,6 @@
 # 02 · Authentication, Sessions & Profile
 
-Source: PRD §2.2–2.4, §4.1–4.3, §4.6, `landing-page.md` §3. Skill: `cms-auth-permissions`.
+Source: PRD §2.2–2.4, §4.1–4.3, §4.6, PRD §5.1.3. Skill: `cms-auth-permissions`.
 
 ## 1. Sessions
 
@@ -21,7 +21,7 @@ Source: PRD §2.2–2.4, §4.1–4.3, §4.6, `landing-page.md` §3. Skill: `cms-
    `status = passed_out` → `403 ACCOUNT_PASSED_OUT` "Your account is inactive because your session has been completed." (PRD §4.5). Only shown after the correct password.
 4. Write `LoginHistory`.
 5. **Admin:** create session with `stepUpPending = true` → `200 { next: "totp" }` (or `{ next: "totp_setup" }` if TOTP not enabled). A step-up session can call only the TOTP routes.
-6. Others: create session → `200 { next: firstLogin ? "complete_profile" : "dashboard", role, roleMismatch: roleHint && roleHint != role }`. The UI shows "This is a Teacher account" style notice on mismatch but still goes to the real dashboard (`landing-page.md` §3.2).
+6. Others: create session → `200 { next: firstLogin ? "complete_profile" : "dashboard", role, roleMismatch: roleHint && roleHint != role }`. The UI shows "This is a Teacher account" style notice on mismatch but still goes to the real dashboard (PRD §5.1.3).
 
 `POST /api/auth/logout` – revoke current session, clear cookie.
 `GET /api/auth/me` – `{ user: { id, role, name, avatarUrl, firstLogin, emailVerified, isMentorOf?: sectionId, mutedUntil? } }`.

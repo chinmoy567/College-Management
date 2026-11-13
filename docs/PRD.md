@@ -159,7 +159,7 @@ Session (2024–25)
 ## 4. Authentication & Account Lifecycle
 
 ### 4.1 Login Flow
-1. User opens the public Landing Page → clicks **Student Login**, **Teacher Login**, **Admin Login** or the top-right **Login** (details in `landing-page.md`).
+1. User opens the public Landing Page → clicks **Student Login**, **Teacher Login**, **Admin Login** or the top-right **Login** (details in 5.1).
 2. Enters **User ID or Email** + **Password** in one shared form. The role button only pre-selects a label; **the server decides the role from the account**.
 3. On success, the user is redirected to their **role-specific dashboard**.
 
@@ -206,10 +206,67 @@ Session (2024–25)
 ## 5. Functional Requirements
 
 ### 5.1 Landing Page (Public)
-- College name, logo, banner, introduction; About, Departments, latest public **Central Notices**, Book Shop preview, Contact.
-- **Login** button (top-right) and three role buttons: **Student Login**, **Teacher Login**, **Admin Login**. All open the same login form (4.1); a logged-in user sees **Open my dashboard** instead. Full detail in `landing-page.md`.
+
+#### 5.1.1 Purpose
+Everyone can open the site without an account. It is the college's public front door. From here, a student, teacher or the Admin goes into the portal by logging in. The landing page is public and shown before anyone logs in; it is separate from the dashboards (5.2).
+
+#### 5.1.2 Public sections (no login needed)
+- **Header:** college logo and name; **Login** button (top-right).
+- **Hero:** college banner and a short introduction.
+- **About** the college.
+- **Departments** (groups).
+- **Latest public notices:** Central Notices the Admin marked "Show on public landing page" (5.9). Attachments are public files.
+- **Book Shop preview:** a few book covers and titles. Buying needs a student login.
+- **Contact:** address, phone, email.
+- **Footer.**
+
+Nothing private is shown: no student data, no feed posts, no exam or class content.
+
+#### 5.1.3 Role buttons and login (client choice: role buttons, one form)
+Below the hero (and behind the top-right Login button) the page shows three buttons:
+
+| Button | Who | What happens |
+|---|---|---|
+| **Student Login** | Students | Opens the login form with "Student" pre-selected |
+| **Teacher Login** | Teachers and Section Mentors | Opens the same form with "Teacher" pre-selected |
+| **Admin Login** | The Admin | Opens the same form with "Admin" pre-selected |
+
+The top-right **Login** button opens the same form with no role pre-selected.
+
+Rules:
+1. It is **one login form** for everyone: **User ID or Email** + **Password**.
+2. The pre-selected role is only a convenience (label and wording). **The server decides the role from the account**, never from the button. If someone uses the wrong button, they still land on the dashboard of their real role, or get a clear message "This is a Teacher account" and are sent to the right login. Never show which accounts exist (same generic error for a wrong ID or password).
+3. **Admin** also enters a one-time code from the authenticator app (or a backup code) after the password (4.6).
+4. **First login** for a Teacher or Student: forced "Complete Your Profile" step (new password + mobile) before the dashboard (4.2).
+5. After success, the person goes to their **role dashboard** (Admin, Teacher / Section Mentor, Student; see 5.2).
+6. Already logged in: opening the landing page shows an **Open my dashboard** button instead of the login buttons.
+7. Forgot password: link on the form (email reset works only for a verified email; otherwise the Admin resets it, 4.3).
+8. Login is rate-limited; no self-registration (the Admin creates every account).
+
+#### 5.1.4 Flow
+```
+Anyone opens the site
+        |
+        v
+   Landing page (public)
+        |  Student / Teacher / Admin Login
+        v
+   Login form (ID or email + password; Admin + code)
+        |
+        +- first login --> Complete Your Profile --+
+        v                                          v
+   Role dashboard (Admin | Teacher/Mentor | Student)
+```
+
+#### 5.1.5 Phone layout (phone-first, 360 px)
+- Single column; hero image resized and lazy-loaded.
+- Three large role buttons (at least 44 px tall) stacked under the hero; Login stays reachable in the header.
+- Notices as stacked cards; Book Shop preview as a horizontal swipe row.
+- Login form is one column, 16 px inputs, correct keyboard types, show/hide password.
+- Light page: no heavy libraries on the landing page; the page works on slow mobile data and can be added to the home screen (PWA).
 
 ### 5.2 Separate Dashboards
+The PRD does not fix the visual layout (card placement, colors, spacing); that is decided during design. All screens are phone-first (360 px), with a bottom tab bar or drawer on phones.
 
 #### 5.2.1 Admin Dashboard
 - **Stats cards:** active sessions, students, teachers, sections, today's posts, books purchased this month, reported posts.
@@ -224,9 +281,19 @@ Session (2024–25)
 - **Pending work:** exam results waiting to be published, unread messages.
 - **Section Mentor area** (only if a Section Mentor): section overview, students of the section, section routine (view only), section notices, pinned posts.
 - **Menu:** Dashboard, My Courses, Routine, Feed, Messages, Notifications, Profile.
+- **Rule:** everything works only within the teacher's assigned course offerings.
+
+#### 5.2.2a Section Mentor Dashboard
+A Section Mentor is a teacher in charge of exactly one section. They get the full Teacher dashboard plus a **Section Mentor area**:
+- Section overview and the section's students and course offerings.
+- Section routine (view only).
+- Section notices and pinned posts.
+- Monitoring: exam results, attendance summaries, inactive students.
+- Message any student; post announcements in the section chat.
+- Cannot assign teachers or substitutes, cancel classes or change the routine (Admin only).
 
 #### 5.2.3 Student Dashboard
-- **Pinned posts** from Admin/Section Mentor (Section 5.7.2), then quick widgets:
+- **Top:** pinned posts from the Admin or Section Mentor (Section 5.7.2), shown until the student has seen each one once (max 7 days), then quick widgets:
   - Today's routine and next class; live class **Join** button when a class is live.
   - Upcoming exams/quizzes with countdown.
   - Latest notices (central + class-wise).
