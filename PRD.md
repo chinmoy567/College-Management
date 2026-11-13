@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.17 |
+| **Document Version** | 2.18 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -31,6 +31,7 @@
 | 2.15 | 14 Nov 2026 | Single Admin confirmed by design (no second Admin). Routine period times and rooms are typed by the Admin on each routine slot (no Period/Room tables). Public profile of passed-out/deactivated users defined. Student ID removed from the public profile. Decision #13 reworded. |
 | 2.16 | 14 Nov 2026 | **Admin Schedule Manager** (5.17.1): Admin adds/edits/deletes periods, rooms, routine slots, holidays and any single day or class; Period and Room tables added (replaces the v2.15 free-text rule). Exam scoring simplified: right = marks, wrong/unanswered = 0, no negative marking, no partial marks. Correct answers shown only after the exam window ends; exam time capped at window end; question snapshot at publish. Admin can edit any attendance record (logged). Timezone Asia/Dhaka. SMTP via free Google account with a rate-limited queue. Phases: §10 is the single source. Student age comes from profile DOB. |
 | 2.17 | 14 Nov 2026 | Client corrected the age rule: students are **up to 18 years old and may be minors** (replaces the v2.13 "18+" statement). **Groq** stays as the AI provider (its terms allow apps used by minors; the college is responsible). Student age comes from the **date of birth in the profile**, and a student who edits the profile also updates the DOB. 1-to-1 chat stays open as listed, with block/report from every chat. |
+| 2.18 | 14 Nov 2026 | Client request: the Admin updates the routine, schedule, classrooms and holidays from one portal. Added the **Schedule Manager** to the Admin Panel table (5.3), a **calendar view** with inline add/edit/delete, and a room-availability warning (5.17.1). |
 
 ---
 
@@ -261,6 +262,7 @@ Session (2024–25)
 | **Sessions** | Create session (auto-creates 3 groups), promote Class 11 → 12, mark Passed Out, archive. |
 | **Sections** | Add / rename / remove sections per group (max 30 students each); move students between sections. |
 | **Courses** | Manage catalog; assign courses + course teachers per section (Section 3.3); copy assignments. |
+| **Schedule Manager** | One portal to add / edit / delete the routine, periods, classrooms (rooms), holidays, special days and single-class changes (Section 5.17.1). Includes a calendar view. |
 | **Teachers / Students** | Add, bulk import, edit, deactivate, delete, reset password (Section 4.4). |
 | **Section Mentors** | Exactly one per section (e.g. Science-A, Science-B, Science-C → 3); change at any time; auto-joins the section chat and the group chat. |
 | **Central Notices** | Section 5.9. |
@@ -481,6 +483,8 @@ One Admin area where the Admin can **add, edit and delete** every part of the sc
 | **Single day / single class** | Change one date only without touching the routine: add an extra class, move a class to another period or room, cancel a class, assign a substitute teacher, or delete a future class. |
 | **Whole-day changes** | Mark one date as a special day (e.g. half day, exam day) and pick which periods run (a list of period IDs). On that date, only routine slots in the listed periods create Class Meetings; the others are not created. A Holiday cancels the whole day; a special day only shortens it. If a listed period is later deleted, it is removed from the list. |
 
+- **Calendar view:** the Admin sees a month/week calendar showing holidays, special days, routine classes and one-off changes. The Admin can click any date or class to add, edit or delete it right there, and can filter by session, group, section, teacher or room.
+- **Classrooms (rooms):** the Admin manages the list of classrooms and can see which rooms are free or used in each period, to avoid double-booking (shown as a warning only, never blocking, like the teacher conflict check in 5.17). The check runs on Class Meetings (date + period + room), so it also covers extra classes, special days and single-class room changes.
 - Every change **applies to future classes only** and keeps the rules in 5.17: past Class Meetings and their attendance are never changed; a future meeting that already has attendance is not deleted (the Admin must cancel it instead).
 - Deleting a period or room that future routine slots use asks the Admin to **choose a replacement** or delete those slots first. Past meetings keep the period times and room they had.
 - Affected students and teachers are notified of every change (5.10).

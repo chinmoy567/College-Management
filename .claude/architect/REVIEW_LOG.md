@@ -56,6 +56,7 @@
 | ARC-050 | Online class and extra class field rules     | Low      | PRD §6 ClassMeeting               | 2026-11-14 | Open                              |
 | ARC-051 | Minors: no consent/privacy rule for chat, AI | Medium   | PRD §1 header, §5.10, §5.19, §3.1 | 2026-11-14 | NEW                               |
 | ARC-052 | DOB self-editable; age use and limit vague   | Low      | PRD §3.1, §5.6, §6 StudentProfile | 2026-11-14 | NEW                               |
+| ARC-053 | Room availability check scope undefined     | Low      | PRD §5.17.1, §6 ClassMeeting      | 2026-11-14 | Fixed (v2.18)                     |
 
 ---
 
@@ -291,3 +292,4 @@
 
 - **2026-11-14 · Review #11** — PRD v2.16 (re-check, no new PRD change; only system-architect.md changed). **Fixed:** ARC-042, 043, 044, 047, 049 (details moved to Fixed (short)). **Still open (Low, re-checked):** ARC-045, 046, 048, 050. **New:** 0. Log cleaned: detail blocks synced with table, history format fixed.
 - **2026-11-14 · Review #12** — PRD v2.17 (age rule corrected: students up to 18, may be minors; Groq stays; chat stays open). No leftover 18+/adult wording outside history rows (v2.13 row is history). ARC-014 untouched. **Fixed:** 0. **New:** ARC-051 (Medium), ARC-052 (Low). **Open:** ARC-045, 046, 048, 050.
+- **2026-11-14 · Review #13** — PRD v2.18 (Schedule Manager row in 5.3, calendar view and room warning in 5.17.1). Fixed: 0. New: ARC-053 (Low, fixed in v2.18). Open: ARC-045, 046, 048, 050, 051, 052.
