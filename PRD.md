@@ -3,10 +3,10 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.12 |
+| **Document Version** | 2.14 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
-| **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC) |
+| **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **all students are 18 or older** (confirmed by the client) |
 | **User Roles** | Admin, Teacher (Course Teacher and/or Section Mentor), Student |
 
 ### Revision History
@@ -26,6 +26,8 @@
 | 2.10 | 14 Nov 2026 | Routine changes apply to future classes only; the Admin is responsible for a correct, conflict-free routine. Class Meeting courses moved to a ClassMeetingOffering table (no duplicates). |
 | 2.11 | 14 Nov 2026 | AI chatbox moved from Google Gemini to the **Groq** free tier: Gemini's API terms do not allow apps used by under-18s; Groq's terms allow them (the college is responsible) and Groq does not train on inputs. Client confirmation added as an open question. |
 | 2.12 | 14 Nov 2026 | Data model: added Settings, AIUsage, AuditLog, LoginHistory, UserSanction (warn/mute), Block, BannedWord, RecordingProgress and MaterialView. |
+| 2.13 | 14 Nov 2026 | Client confirmed **all students are 18+** (no minors); Groq stays as the AI provider. Exam scoring rules (multi-correct all-or-nothing, best quiz attempt counts). Private details visible only to the student and the Admin. Admin manages the academic calendar (holidays); attendance rules for "not taken" meetings and "N/A". Added Holiday entity. |
+| 2.14 | 14 Nov 2026 | Adding students: Admin adds students from the session page (system gives a Student ID + password) and can create sections there. **Each section holds at most 30 students**; when full, the Admin creates another section. Enrollment keeps history (status, dates), and attendance/exam records store the student's section, so moving a student keeps old data correct. |
 
 ---
 
@@ -114,6 +116,7 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 - Belongs to exactly one session, one group and one section at any time.
 - Automatically enrolled in every course offering of their section.
 - Cannot log in after being marked **Passed Out**.
+- Every student is **18 or older** (confirmed by the client); the portal has no under-18 users.
 
 ---
 
@@ -131,11 +134,11 @@ Session (2024–25)
 **How it works (example):**
 1. The Admin creates as many sessions as needed, e.g. **2024–25**, **2025–26**, **2026–27**, **2027–28**.
 2. When a session is created, its **3 groups (Science, Arts, Commerce) are created automatically**. Every session has its own separate 3 groups.
-3. Inside each group, the Admin creates as many **sections** as needed. Example: *2024–25 → Science* has 150 students, so the Admin creates 3 sections: **Science-A (50)**, **Science-B (50)**, **Science-C (50)**. Arts and Commerce of the same session can have a different number of sections.
+3. Inside each group, the Admin creates as many **sections** as needed. **A section holds at most 30 students.** When a section is full, the Admin creates another one; how many sections to create is the Admin's choice. Example: *2024–25 → Science* has 90 students, so the Admin creates 3 sections: **Science-A (30)**, **Science-B (30)**, **Science-C (30)**. Arts and Commerce of the same session can have a different number of sections.
 
 ```
 2024–25
- ├── Science   → Section A (50) · Section B (50) · Section C (50)   = 150 students
+ ├── Science   → Section A (30) · Section B (30) · Section C (30)   = 90 students
  ├── Arts      → Section A (…)
  └── Commerce  → Section A (…) · Section B (…)
 2025–26
@@ -143,6 +146,15 @@ Session (2024–25)
  ├── Arts      → its own sections
  └── Commerce  → its own sections
 ```
+
+### 3.1.1 Adding Students (Admin)
+1. Admin opens **Sessions → *2024–25*** and clicks **Add student**.
+2. Admin selects the **group** and the **section**. If no section has a free place, the Admin can **create a new section right there** (e.g. Science-D).
+3. Admin enters the student's details (name, roll, class). The system creates a unique **Student ID** (Admin can edit it) and an initial **password** (or the Admin types one; "Generate" creates a strong one).
+4. The system shows a **credential slip** (ID + password) that the Admin prints or copies and gives to the student. The student must change the password on first login (4.2).
+5. The student is **automatically enrolled** in every course offering of that section (optional courses: see 3.3 step 6).
+- **30-student limit:** a section with 30 active students is **full**. The system blocks adding or moving more students into it and asks the Admin to pick or create another section. Passed-out, deactivated and deleted students do not count toward the 30.
+- Bulk CSV import (4.4) follows the same rules: rows for a full section are rejected with a clear message, and nothing is half-imported.
 
 ### 3.2 Course Catalog
 - Admin maintains a master list of **courses**: name, code, group (Science/Commerce/Arts/Common), class (11/12/both), paper (1st/2nd), type (compulsory/optional).
@@ -190,6 +202,7 @@ Session (2024–25)
 ### 4.4 Account Management by Admin
 - **Add:** single form or **bulk CSV import** (students: name, roll, section, class; teachers: name, designation, subjects).
 - **Edit:** name, ID, section (move student), designation, subjects, status.
+- **Move student to another section:** only into a section with a free place (max 30). The old enrollments are **ended** (not deleted) and new ones are created for the new section's course offerings. Past attendance, exam attempts and ranks stay with the section the student was in at that time.
 - **Remove:** **Deactivate** is the default (login blocked, data kept). **Permanent delete** requires a confirmation and removes personal data; the user's posts are shown as "Deleted user".
 - **Credential slip:** printable/copyable ID + initial password.
 
@@ -243,7 +256,7 @@ Session (2024–25)
 | Area | Functions |
 |---|---|
 | **Sessions** | Create session (auto-creates 3 groups), promote Class 11 → 12, mark Passed Out, archive. |
-| **Sections** | Add / rename / remove sections per group; set capacity; move students between sections. |
+| **Sections** | Add / rename / remove sections per group (max 30 students each); move students between sections. |
 | **Courses** | Manage catalog; assign courses + course teachers per section (Section 3.3); copy assignments. |
 | **Teachers / Students** | Add, bulk import, edit, deactivate, delete, reset password (Section 4.4). |
 | **Section Mentors** | Exactly one per section (e.g. Science-A, Science-B, Science-C → 3); change at any time; auto-joins the section chat and the group chat. |
@@ -337,7 +350,8 @@ All of these work only within the teacher's assigned course offerings:
 - **Section chat** per section (students + the Section Mentor + course teachers of that section, auto-joined).
 - Text, emoji, images, links, PDF attachments.
 - Real-time delivery (WebSockets), typing indicator, unread counts, seen status.
-- Block / report a user. Admin can review reported conversations only.
+- Block / report a user from every chat. Admin can review reported conversations only.
+- All users are adults (18+), so 1-to-1 chat is open to everyone as listed above; no extra minor-protection rules are needed.
 - Passed-out students are removed from group/section chats automatically.
 
 ### 5.9 Notices
@@ -406,6 +420,11 @@ All of these work only within the teacher's assigned course offerings:
   - MCQ – single correct answer
   - MCQ – multiple correct answers (optional per question)
 - **All grading is automatic.** Marks are calculated the moment the student submits; the teacher never grades by hand.
+- **Scoring rules:**
+  - **Single correct:** full marks if correct; if negative marking is on, the set negative mark is deducted for a wrong answer; unanswered = 0.
+  - **Multiple correct: all-or-nothing.** Full marks only if the student selects exactly all the correct options and no wrong ones; otherwise 0. **No negative marks** on multiple-correct questions.
+  - A student's total never goes below 0.
+  - **Quizzes with several attempts:** the **best** attempt counts for progress and rank. All attempts stay visible to the student and the teacher.
 - **Settings:** start & end window, duration (timer), total marks, pass marks, negative marking (optional), shuffle questions/options, number of attempts, show correct answers after submission (yes/no), result publish mode (instantly / manually).
 - **Reports:** score distribution, highest/average/lowest, per-question correctness, list of students who did not attend. Export as CSV/PDF.
 
@@ -439,6 +458,7 @@ All of these work only within the teacher's assigned course offerings:
 - Alternative: upload the routine as an image/PDF (kept from v1.0) for quick use.
 - Changes to the routine notify affected students and teachers.
 - **Routine changes apply from the next class onward.** Past Class Meetings and their attendance are never changed. Future Class Meetings that have no attendance yet are rebuilt from the new routine.
+- **Academic calendar (Admin only):** the Admin decides when classes run and marks **holidays / off days** (one date or a date range, e.g. Eid vacation). No Class Meetings are generated on those days, and if the Admin adds a holiday later, the future meetings on those dates (with no attendance yet) are removed. Teachers and students see holidays on the routine and the attendance calendar.
 - **The Admin is responsible for a correct routine.** The system does not reconcile or resolve clashes between the old and new routine; the conflict check above is only a warning.
 
 ### 5.18 Attendance (Per Period)
@@ -500,7 +520,9 @@ Roll  Name             Status
 #### 5.18.4 Calculation Rules
 - **Attendance % = (Present + Late) ÷ (Classes held − Excused) × 100**, calculated per course and overall.
 - **Required attendance: 75%** (Admin-configurable).
-- Cancelled meetings are not counted.
+- Cancelled meetings and holidays are not counted.
+- **Classes held** = meetings where attendance was taken. A meeting whose attendance was never taken is **not counted** and shows as **"Not taken"** to the teacher, Section Mentor and Admin (5.18.6).
+- If no classes count yet (Classes held − Excused = 0), the percentage shows **"N/A"**, not 0% and not a warning.
 - Color status: 🟢 ≥ 75% · 🟠 60–74% · 🔴 < 60%.
 
 #### 5.18.5 Student Dashboard View
@@ -540,13 +562,13 @@ Roll  Name             Status
 - A chat assistant for **students only**, available from the menu and as a floating button.
 - **Purpose:** explain concepts, solve and explain problems step by step, summarize topics, generate practice questions, and help with English/Bangla writing. It is scoped to academic help, and off-topic or harmful requests are politely declined.
 - **Zero cost: powered by the free tier of the Groq API** (GroqCloud Free plan; a payment method is only needed to upgrade). Use an open model that is on the free tier at build time (e.g. a Llama 70B-class model); the model name is a setting so it can be changed without code changes.
-- **Why Groq, not Google Gemini:** Gemini's API terms require users to be 18+ and do not allow apps that are likely to be used by under-18s; most HSC students are 16–18. Groq's Services Agreement allows apps used by minors, with the **college responsible** for following the law, and Groq does not use API inputs or outputs for training. The Groq account is owned by the college/developer (must be 18+).
+- **Why Groq:** Groq does not use API inputs or outputs for training, and its free tier is enough for a daily per-student limit. All students are 18+, so there is no age restriction issue. The Groq account is owned by the college/developer.
 - **Free-tier limits to plan around:** Groq caps free requests and tokens per minute and per day for the **whole account** (shared by all students, not per student), and the numbers change from time to time (check the Groq console before launch and run a short load test). So:
   - Admin sets a **daily message limit per student** (e.g. 15–20) so a few students cannot use up the whole day's quota.
   - When the free quota is used up, students see *"The AI assistant is busy, please try again later"* instead of an error.
   - Only one Groq account is used; never create extra free accounts to get around the limits (Groq's terms forbid this).
 - **No personal data is sent to the AI** (name, ID, phone, section), only the student's question and the chat so far.
-- **Provider is configurable** (provider + model in Settings). Any replacement provider must allow use by under-18s and must not train on student messages; Google Gemini's API is not allowed for this reason.
+- **Provider is configurable** (provider + model in Settings). Any replacement provider must be free and must not train on student messages.
 - Students can start new chats, see past chats, and write in **Bangla or English**. Supports formatted math/code in answers.
 - **Safety:** server-side calls only (key never exposed), no access to other students' data, disclaimer "AI may make mistakes, verify with your teacher".
 - **During a live exam, the AI chatbox is disabled** for students taking that exam.
@@ -563,10 +585,10 @@ Roll  Name             Status
 | **TeacherProfile** | user_id, name, designation, subjects[], bio |
 | **Session** | id, name, status, created_at |
 | **Group** | id, session_id, type (science/commerce/arts) |
-| **Section** | id, group_id, name (A/B…), capacity, mentor_teacher_id |
+| **Section** | id, group_id, name (A/B…), mentor_teacher_id (unique: one mentor per section); max 30 active students, checked when adding or moving |
 | **Course** | id, code, name, group_type, class, paper, is_optional |
 | **CourseOffering** | id, section_id, course_id, teacher_id, created_at |
-| **Enrollment** | course_offering_id, student_id (for optional courses) |
+| **Enrollment** | id, course_offering_id, student_id, status (active/ended), enrolled_at, ended_at (a row for **every** student in every offering they take; ending keeps history; only one active row per student + offering) |
 | **RoutineSlot** | id, section_id, day, start_time, end_time, course_offering_id, room |
 | **Post** | id, author_id, text, tag, pinned_until, pin_audience (all/section), pin_section_id (null = everyone), status, created_at |
 | **PostView** | post_id, user_id, seen_at (unique post + user; a pinned post is hidden from the top once a row exists) |
@@ -582,12 +604,13 @@ Roll  Name             Status
 | **Question (bank)** | id, teacher_id, course_id, type, text, options_json, correct_json, marks, chapter_tag |
 | **Exam** | id, course_offering_id, kind (exam/quiz), title, start_at, end_at, duration, total_marks, pass_marks, settings_json, status |
 | **ExamQuestion** | exam_id, question_id, order, marks |
-| **ExamAttempt** | id, exam_id, student_id, started_at, submitted_at, score, status, integrity_log |
+| **ExamAttempt** | id, exam_id, student_id, section_id (section at the time of the attempt, used for rank), started_at, submitted_at, score, status, integrity_log |
 | **Answer** | attempt_id, question_id, selected_option_ids, is_correct, marks_awarded |
 | **PreviousQuestion** | id, course_id, year, exam_type, board, file_url, solution_url |
 | **ClassMeeting** | id, routine_slot_id / online_class_id, date, start_time, teacher_id, substitute_teacher_id, status (scheduled/held/cancelled) |
+| **Holiday** | id, start_date, end_date, title, created_by (set by the Admin; no Class Meetings on these dates) |
 | **ClassMeetingOffering** | class_meeting_id, course_offering_id (unique meeting + offering; a combined class has one row per offering) |
-| **AttendanceRecord** | id, class_meeting_id, student_id, status (present/absent/late/excused), marked_by, marked_at |
+| **AttendanceRecord** | id, class_meeting_id, student_id, section_id (section at the time of the class), status (present/absent/late/excused), marked_by, marked_at |
 | **AttendanceEdit** | id, attendance_record_id, old_status, new_status, edited_by, edited_at |
 | **Book** | id, title, author, publisher, course_id, price, cover_url, pdf_url, preview_pages |
 | **BookPurchase** | id, student_id, book_id, price, payment_status (unlocked_no_gateway), purchased_at |
@@ -645,7 +668,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 | **Availability** | 99.5% uptime; exams must not be scheduled during maintenance windows. |
 | **Responsiveness** | Fully usable on mobile phones (most students use phones); PWA "add to home screen". |
 | **Security** | HTTPS everywhere, role + assignment-based authorization, input sanitization (XSS), file-type and size validation on uploads, signed URLs for private files, audit log for Admin actions. |
-| **Privacy** | Students' personal details (mobile, address, guardian) visible only to the student, their teachers and the Admin. |
+| **Privacy** | Students' personal details (mobile, address, guardian info, DOB) visible **only to the student and the Admin**. Teachers and Section Mentors see only profile and course data (Section 5.3.1). |
 | **Backups** | Daily automatic database backups, kept 30 days; file storage with versioning. |
 | **Language** | UI in English; Bangla content supported everywhere (Unicode); Bangla UI can be added later. |
 | **Accessibility** | Readable fonts, sufficient contrast, keyboard navigation for forms and exams. |
@@ -683,14 +706,14 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 
 **Confirmed by the client (13 Nov 2026):**
 1. "Seasons" means academic **sessions** of HSC students, e.g. 2024–25, 2025–26, 2027–28.
-2. The Admin creates sessions; each new session automatically gets its own 3 groups (**Science, Arts, Commerce**); each group is split into one or more **sections** by the Admin, e.g. 150 Science students → Science-A, B, C with 50 each (Section 3.1).
+2. The Admin creates sessions; each new session automatically gets its own 3 groups (**Science, Arts, Commerce**); each group is split into one or more **sections** by the Admin, **at most 30 students per section**, e.g. 90 Science students → Science-A, B, C with 30 each (Section 3.1).
 3. Section Mentor posts are pinned only for students of their own section; Admin posts are pinned for everyone. A pin stays at the top for each user only until they have seen it once, for at most 7 days (Section 5.7.2).
 4. Admin can edit **own** posts and delete **any** post; Admin does not edit other users' posts.
 5. Book shop sells **digital PDF books only**. No printed books, delivery or cash on delivery (Section 5.19).
 6. **No payment gateway** in this version: the **Pay** button unlocks the PDF immediately (Section 5.19).
 7. **Recorded classes:** the portal does not record. Teachers record themselves, upload to YouTube and share the link; students see it automatically (Section 5.12).
 8. **Live classes** must cost nothing: teachers use free Google Meet or Jitsi Meet links (Section 5.11).
-9. **AI chatbox** must cost nothing: free **Groq** API tier with per-student daily limits (Section 5.20). *(Changed from Gemini in v2.11 because Gemini's terms do not allow under-18 users; pending client confirmation, see open question 1.)*
+9. **AI chatbox** must cost nothing: free **Groq** API tier with per-student daily limits (Section 5.20). Confirmed by the client (v2.13).
 10. **Exam ranks are shown to students** (Section 5.15).
 11. **Sessions are closed only by the Admin, manually** (never automatically). The Admin sees each session's status (Active / Closed) on the Sessions page (Section 4.5).
 
@@ -699,6 +722,9 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 14. **Google Meet's 60-minute limit on free calls is acceptable** for live classes.
 15. **Posts show the author's session, group and section**, and any logged-in user can view the author's public profile (private details stay hidden) (Section 5.7.1).
 16. **Exam ranks are by section only.** Exams are created by the course teacher; results and ranks are computed among that section's students (Section 5.15).
+17. **All students are 18 or older.** There are no minors on the portal (v2.13).
+18. **The Admin decides the academic calendar:** when classes run, holidays and the routine (Sections 5.17, 5.18).
+19. **Students are added by the Admin** from the session page with a Student ID and password the Admin gives to the student; **a section holds at most 30 students**, and the Admin creates as many sections as needed (Section 3.1.1).
 
 **Open questions:**
-1. **AI provider (Groq):** with Groq, the college is responsible for the AI being used safely and legally by minors. Does the client accept this? If not, the AI chatbox is dropped (it is Phase 3, so nothing earlier is blocked).
+None at the moment.
