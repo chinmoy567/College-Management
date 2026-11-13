@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.18 |
+| **Document Version** | 2.19 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
@@ -32,6 +32,7 @@
 | 2.16 | 14 Nov 2026 | **Admin Schedule Manager** (5.17.1): Admin adds/edits/deletes periods, rooms, routine slots, holidays and any single day or class; Period and Room tables added (replaces the v2.15 free-text rule). Exam scoring simplified: right = marks, wrong/unanswered = 0, no negative marking, no partial marks. Correct answers shown only after the exam window ends; exam time capped at window end; question snapshot at publish. Admin can edit any attendance record (logged). Timezone Asia/Dhaka. SMTP via free Google account with a rate-limited queue. Phases: §10 is the single source. Student age comes from profile DOB. |
 | 2.17 | 14 Nov 2026 | Client corrected the age rule: students are **up to 18 years old and may be minors** (replaces the v2.13 "18+" statement). **Groq** stays as the AI provider (its terms allow apps used by minors; the college is responsible). Student age comes from the **date of birth in the profile**, and a student who edits the profile also updates the DOB. 1-to-1 chat stays open as listed, with block/report from every chat. |
 | 2.18 | 14 Nov 2026 | Client request: the Admin updates the routine, schedule, classrooms and holidays from one portal. Added the **Schedule Manager** to the Admin Panel table (5.3), a **calendar view** with inline add/edit/delete, and a room-availability warning (5.17.1). |
+| 2.19 | 14 Nov 2026 | Added UNIQUE(routine_slot_id, date) on ClassMeeting (closes ARC-006). |
 
 ---
 
@@ -638,7 +639,7 @@ Roll  Name             Status
 | **ExamAttempt** | id, exam_id, student_id, section_id (section at the time of the attempt, used for rank), started_at, submitted_at, score, status, integrity_log |
 | **Answer** | attempt_id, question_id, selected_option_ids, is_correct, marks_awarded |
 | **PreviousQuestion** | id, course_id, year, exam_type, board, file_url, solution_url |
-| **ClassMeeting** | id, routine_slot_id (null for an extra class) / online_class_id, date, period_id, room_id, start_time, end_time (copied from the period when created, so later period changes do not alter past meetings), teacher_id, substitute_teacher_id, status (scheduled/held/cancelled) |
+| **ClassMeeting** | id, routine_slot_id (null for an extra class) / online_class_id, date, period_id, room_id, start_time, end_time (copied from the period when created, so later period changes do not alter past meetings), teacher_id, substitute_teacher_id, status (scheduled/held/cancelled); **UNIQUE(routine_slot_id, date)** so one routine slot can never create two meetings on the same day |
 | **Holiday** | id, start_date, end_date, title, created_by (set by the Admin; no Class Meetings on these dates) |
 | **SpecialDay** | id, date, title, session_id (optional), periods_json (which periods run that day; set by the Admin) |
 | **ClassMeetingOffering** | class_meeting_id, course_offering_id (unique meeting + offering; a combined class has one row per offering) |

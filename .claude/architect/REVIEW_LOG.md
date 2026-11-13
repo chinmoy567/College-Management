@@ -12,7 +12,7 @@
 | ARC-003 | Group rank cannot be computed                | High     | PRD §5.15                         | 2026-11-13 | Fixed (v2.7)                  |
 | ARC-004 | Phase contradictions                         | Medium   | PRD §5.2, §5.9, §5.10, §5.20, §10 | 2026-11-13 | Fixed (v2.16)                 |
 | ARC-005 | Missing entities in data model               | High     | PRD §6                            | 2026-11-13 | Mostly fixed (v2.12)          |
-| ARC-006 | ClassMeeting courses stored as array         | High     | PRD §6                            | 2026-11-13 | Partly fixed (v2.10)          |
+| ARC-006 | ClassMeeting courses stored as array         | High     | PRD §6                            | 2026-11-13 | Fixed (v2.19)                 |
 | ARC-007 | Exam scoring gaps                            | High     | PRD §5.14                         | 2026-11-13 | Fixed (v2.13)                 |
 | ARC-008 | Class 11/12 stored in two places             | Medium   | PRD §6 StudentProfile             | 2026-11-13 | Open                          |
 | ARC-009 | Enrollment meaning is contradictory          | Medium   | PRD §2.4 vs §6                    | 2026-11-13 | Fixed (v2.14)                 |
@@ -57,6 +57,7 @@
 | ARC-051 | Minors: no consent/privacy rule for chat, AI | Medium   | PRD §1 header, §5.10, §5.19, §3.1 | 2026-11-14 | NEW                               |
 | ARC-052 | DOB self-editable; age use and limit vague   | Low      | PRD §3.1, §5.6, §6 StudentProfile | 2026-11-14 | NEW                               |
 | ARC-053 | Room availability check scope undefined     | Low      | PRD §5.17.1, §6 ClassMeeting      | 2026-11-14 | Fixed (v2.18)                     |
+| ARC-054 | UNIQUE(routine_slot_id,date) blocks re-create after cancel | Low | PRD §6 ClassMeeting | 2026-11-14 | NEW |
 
 ---
 
@@ -84,12 +85,6 @@
 - **Fixed in v2.12:** Added Settings, AIUsage, AuditLog, LoginHistory, UserSanction, Block, BannedWord, RecordingProgress, MaterialView.
 - **Fixed in v2.13:** Added Holiday entity.
 - **Still missing:** Period/Room (ARC-027, low priority).
-
-**ARC-006 — ClassMeeting courses stored as an array** · PRD §6 · Partly fixed (v2.10)
-
-- **Problem:** `ClassMeeting.course_offering_ids[]` was an array, and nothing stopped the routine from generating the same meeting twice.
-- **Fixed in v2.10:** `ClassMeetingOffering` join table with a unique meeting + offering rule; routine changes apply to future classes only.
-- **Still open:** add an explicit unique rule `UNIQUE(routine_slot_id, date)` on ClassMeeting so the same routine slot can never create two meetings on one day.
 
 **ARC-007 — Exam scoring gaps** · PRD §5.14 · Fixed (v2.13)
 
@@ -237,6 +232,8 @@
 
 ### ✅ Fixed (short)
 
+- ARC-006 — ClassMeeting courses as array — join table (v2.10) + UNIQUE(routine_slot_id, date) — v2.19
+
 - **ARC-001** — Pin audience now `pin_section_id` (null = everyone) + PostView entity (v2.8).
 - **ARC-003** — Ranks are section-only; group rank removed (v2.7).
 - **ARC-005** — 9 missing entities added (Settings, AIUsage, AuditLog, LoginHistory, UserSanction, Block, BannedWord, RecordingProgress, MaterialView) in v2.12; Holiday/Period/Room still missing but documented in other issues.
@@ -293,3 +290,4 @@
 - **2026-11-14 · Review #11** — PRD v2.16 (re-check, no new PRD change; only system-architect.md changed). **Fixed:** ARC-042, 043, 044, 047, 049 (details moved to Fixed (short)). **Still open (Low, re-checked):** ARC-045, 046, 048, 050. **New:** 0. Log cleaned: detail blocks synced with table, history format fixed.
 - **2026-11-14 · Review #12** — PRD v2.17 (age rule corrected: students up to 18, may be minors; Groq stays; chat stays open). No leftover 18+/adult wording outside history rows (v2.13 row is history). ARC-014 untouched. **Fixed:** 0. **New:** ARC-051 (Medium), ARC-052 (Low). **Open:** ARC-045, 046, 048, 050.
 - **2026-11-14 · Review #13** — PRD v2.18 (Schedule Manager row in 5.3, calendar view and room warning in 5.17.1). Fixed: 0. New: ARC-053 (Low, fixed in v2.18). Open: ARC-045, 046, 048, 050, 051, 052.
+- **2026-11-14 · Review #14** — PRD v2.19 (PRD.md, REVIEW_LOG.md). Fixed: ARC-006 (closed). New: ARC-054 (Low). Open: ARC-045, 046, 048, 050, 051, 052. Note: NULL routine_slot_id (extra class) stays allowed; unique is fine for Postgres/MySQL.
