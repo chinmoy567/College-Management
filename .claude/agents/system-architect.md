@@ -40,7 +40,8 @@ The log has: an **Issue summary table**, **Issue details**, and **Review history
 3. **New issues:** take the next free ID (highest ARC number in the table + 1). Add a row at the end of the table: `| ARC-nnn | Title | Severity | Location | date | NEW |`. Keep the column style.
 4. **Details:** add a short detail block (Problem / Fix) under the right severity heading **only for new or still-open High/Critical issues**. Do not write detail blocks for Low or fixed issues.
 5. **Review history:** append one dated entry at the end: date, PRD version, files reviewed, counts (fixed / new / open), one-line summary. Max 5 lines.
-6. Never delete rows or history. Verify with one `Grep` that the new IDs appear in the table, with no duplicate IDs.
+6. **Sync check (do not skip):** `Grep` the log for `· NEW`, `· Open` and `· Fixed` on detail-block headings. Every detail block's status must match its table row. For an issue that is now Fixed, move it to the `### ✅ Fixed (short)` section as one line (`ARC-nnn — title — fix — version`) and remove its long block. The history entry must use the same format as the others: `- **date · Review #n** — PRD vX.Y …` with the next review number.
+7. Never delete table rows or history. Verify with one `Grep` that the new IDs appear in the table, with no duplicate IDs.
 If you cannot update the log, say so clearly in your report. Do not claim you updated it without doing it.
 
 ## Report (keep under ~40 lines)
