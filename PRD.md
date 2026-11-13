@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.11 |
+| **Document Version** | 2.12 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC) |
@@ -25,6 +25,7 @@
 | 2.9 | 14 Nov 2026 | Defined "seen" (at least half of the post on screen for 1 second); one seen record covers feed and dashboard; extending a pin does not re-pin for users who already saw it; Admin/Mentor get a **Pin this post** switch (on by default). |
 | 2.10 | 14 Nov 2026 | Routine changes apply to future classes only; the Admin is responsible for a correct, conflict-free routine. Class Meeting courses moved to a ClassMeetingOffering table (no duplicates). |
 | 2.11 | 14 Nov 2026 | AI chatbox moved from Google Gemini to the **Groq** free tier: Gemini's API terms do not allow apps used by under-18s; Groq's terms allow them (the college is responsible) and Groq does not train on inputs. Client confirmation added as an open question. |
+| 2.12 | 14 Nov 2026 | Data model: added Settings, AIUsage, AuditLog, LoginHistory, UserSanction (warn/mute), Block, BannedWord, RecordingProgress and MaterialView. |
 
 ---
 
@@ -592,6 +593,15 @@ Roll  Name             Status
 | **BookPurchase** | id, student_id, book_id, price, payment_status (unlocked_no_gateway), purchased_at |
 | **AIConversation / AIMessage** | id, student_id, title; conversation_id, role, content, tokens, created_at |
 | **Token (reset / verify)** | user_id, token_hash, purpose, expires_at, used |
+| **Settings** | key, value_json, updated_by, updated_at (one row per setting: attendance threshold, attendance colours, grading scale, AI provider, AI model, AI daily limit per student, banned-words filter on/off, pin length) |
+| **AIUsage** | student_id, date (Asia/Dhaka), message_count (unique student + date; checked before each AI call) |
+| **AuditLog** | id, actor_id, action, target_type, target_id, before_json, after_json, ip, created_at (every Admin action; never edited or deleted) |
+| **LoginHistory** | id, user_id, success, ip, user_agent / device, created_at (Student 360° Activity Log; failed logins feed rate limiting) |
+| **UserSanction** | id, user_id, type (warn/mute), reason, related_report_id, starts_at, ends_at (null for warn), created_by |
+| **Block** | blocker_id, blocked_id, created_at (unique pair; blocked users cannot message the blocker) |
+| **BannedWord** | id, word, created_by, created_at (posts/comments containing one are held for review) |
+| **RecordingProgress** | recorded_class_id, student_id, first_opened_at, last_opened_at (unique recording + student; "watched" = opened the link, since videos are on YouTube) |
+| **MaterialView** | material_id, user_id, action (view/download), created_at (view and download counts) |
 
 ---
 

@@ -1,2 +1,18 @@
-.claude
+# Secrets
 .env
+.env.*
+!.env.example
+
+# Dependencies & build output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+
+# Uploaded files & logs
+uploads/
+*.log
+
+# Local Claude Code settings (personal, not shared)
+.claude/settings.local.json
