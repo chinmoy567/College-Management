@@ -3,8 +3,8 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.19 |
-| **Date** | 13 November 2026 |
+| **Document Version** | 2.23 |
+| **Date** | 14 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC); **students are up to 18 years old (some may be under 18)**, as stated by the client |
 | **User Roles** | Admin, Teacher (Course Teacher and/or Section Mentor), Student |
@@ -33,6 +33,10 @@
 | 2.17 | 14 Nov 2026 | Client corrected the age rule: students are **up to 18 years old and may be minors** (replaces the v2.13 "18+" statement). **Groq** stays as the AI provider (its terms allow apps used by minors; the college is responsible). Student age comes from the **date of birth in the profile**, and a student who edits the profile also updates the DOB. 1-to-1 chat stays open as listed, with block/report from every chat. |
 | 2.18 | 14 Nov 2026 | Client request: the Admin updates the routine, schedule, classrooms and holidays from one portal. Added the **Schedule Manager** to the Admin Panel table (5.3), a **calendar view** with inline add/edit/delete, and a room-availability warning (5.17.1). |
 | 2.19 | 14 Nov 2026 | Added UNIQUE(routine_slot_id, date) on ClassMeeting (closes ARC-006). |
+| 2.20 | 14 Nov 2026 | Exam duration is chosen from fixed presets; the server enforces the exam deadline (§5.14.1). |
+| 2.21 | 14 Nov 2026 | Class 11 → 12 is a manual Admin move into a Class 12 section; Section now has a class (§4.4, §6). |
+| 2.22 | 14 Nov 2026 | Logins use server-side sessions in PostgreSQL (instantly revocable); no Redis (§4.6, §6, §9). |
+| 2.23 | 14 Nov 2026 | Pre-development review: exam examples use a preset (45 min); one in-progress attempt per student; exam clock keeps running while offline; correct answers never sent to the browser before the window ends; attendance % counted per student; an online class in a routine period uses the existing Class Meeting; Class Meetings generated 14 days ahead and Admin-deleted meetings are kept as `removed`; permanent delete anonymises the user and the AuditLog holds no personal data; banned words blocked in chat; message/user reports; upload limits; WebSocket session checks; PostgreSQL job queue. Data model: ExamQuestion id, ExamAttempt deadline/attempt number, Answer → ExamQuestion, OnlineClassOffering, ConversationMember read state, NoticeRead, Comment replies, unique keys; student class/session/group come from the section. Attendance moved to Phase 1; auth email in Phase 1. Every student has an email. |
 
 ---
 
@@ -62,7 +66,7 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 ### 1.4 Glossary
 | Term | Meaning |
 |---|---|
-| **Session** | An academic batch, e.g. "2024–25". Moves Class 11 → Class 12 → Passed Out. |
+| **Session** | An academic batch, e.g. "2024–25". Its students start in Class 11 sections, are moved by the Admin into Class 12 sections of the same session (4.4), and finally the session is closed (Passed Out). |
 | **Group** | Science, Commerce or Arts inside a session (auto-created). |
 | **Section** | A division of a group, e.g. Science-A, Science-B. Created by the Admin. |
 | **Course** | A subject from the college subject catalog, e.g. Physics 1st Paper. |
@@ -93,8 +97,8 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 | Section chat | ❌ | ✅ (auto) | ✅ (auto, own sections) | ✅ (auto) |
 | Manage routine, periods, rooms, holidays & daily schedule (5.17.1) | ✅ | ❌ (view own section) | ❌ (view own) | View |
 | Create / conduct online classes | ❌ | ✅ (own courses) | ✅ (own courses) | Attend |
-| Add recorded class (YouTube) links | ✅ | ✅ | ✅ (own courses) | Watch |
-| Upload notes & study materials | ✅ | ✅ | ✅ (own courses) | View / download |
+| Add recorded class (YouTube) links | ✅ | ✅ (own section) | ✅ (own courses) | Watch |
+| Upload notes & study materials | ✅ | ✅ (own section) | ✅ (own courses) | View / download |
 | Create exams & quizzes | ❌ | ✅ (own courses only, as course teacher) | ✅ (own courses) | Take |
 | View exam results / progress | ✅ (all) | ✅ (own section) | ✅ (own courses) | Own only |
 | Upload previous-year questions | ✅ | ✅ | ✅ (own courses) | View |
@@ -155,7 +159,7 @@ Session (2024–25)
 ### 3.1.1 Adding Students (Admin)
 1. Admin opens **Sessions → *2024–25*** and clicks **Add student**.
 2. Admin selects the **group** and the **section**. If no section has a free place, the Admin can **create a new section right there** (e.g. Science-D).
-3. Admin enters the student's details (name, roll, class). The system creates a unique **Student ID** (Admin can edit it) and an initial **password** (or the Admin types one; "Generate" creates a strong one).
+3. Admin enters the student's details (name, roll, email; the class comes from the section). The system creates a unique **Student ID** (Admin can edit it) and an initial **password** (or the Admin types one; "Generate" creates a strong one).
 4. The system shows a **credential slip** (ID + password) that the Admin prints or copies and gives to the student. The student must change the password on first login (4.2).
 5. The student is **automatically enrolled** in every course offering of that section (optional courses: see 3.3 step 6).
 - **30-student limit:** a section with 30 active students is **full**. The system blocks adding or moving more students into it and asks the Admin to pick or create another section. Passed-out, deactivated and deleted students do not count toward the 30.
@@ -205,10 +209,11 @@ Session (2024–25)
 **SMTP:** configured via environment variables (host, port, user, password, sender). Credentials will be provided by the client.
 
 ### 4.4 Account Management by Admin
-- **Add:** single form or **bulk CSV import** (students: name, roll, section, class; teachers: name, designation, subjects).
+- **Add:** single form or **bulk CSV import** (students: name, roll, section, email; teachers: name, designation, subjects).
 - **Edit:** name, ID, section (move student), designation, subjects, status.
 - **Move student to another section:** only into a section with a free place (max 30). The old enrollments are **ended** (not deleted) and new ones are created for the new section's course offerings. Past attendance, exam attempts and ranks stay with the section the student was in at that time.
-- **Remove:** **Deactivate** is the default (login blocked, data kept). **Permanent delete** requires a confirmation and removes personal data; the user's posts are shown as "Deleted user".
+- **Promote Class 11 → 12 (manual, Admin only):** nothing moves automatically. The Admin creates the Class 12 sections (each section has a **class**, 11 or 12), assigns their courses, teachers, mentor and routine, then moves students into them, one by one, in bulk, or a whole section at once. Same rules as a section move: only into a section with a free place (max 30), old enrollments are **ended** (not deleted), new ones are created for the Class 12 section's offerings, and the student's class becomes 12 (it always comes from the section). Past attendance, exam attempts and ranks stay with the Class 11 section.
+- **Remove:** **Deactivate** is the default (login blocked, data kept). **Permanent delete** requires a confirmation and **anonymises** the account: the User row stays (so attendance, exam and chat records still point to it) but name, email, mobile, photo, login ID and all profile details are erased, logins are revoked, and the user's posts are shown as "Deleted user". Daily backups age out after 30 days (Section 8).
 - **Credential slip:** printable/copyable ID + initial password.
 
 ### 4.5 Pass-Out Rule
@@ -220,7 +225,7 @@ Session (2024–25)
 
 ### 4.6 Security Requirements
 - Passwords hashed with bcrypt/argon2. They are never stored, and never emailed in plain text after the first issue.
-- JWT/session auth with role **and assignment** checks on every API (e.g. a teacher can only edit exams of their own course offerings).
+- **Server-side sessions stored in PostgreSQL** (a LoginSession row per login, in a secure httpOnly cookie; no plain long-lived JWTs). Every request checks the session and the user's status, so deactivating, blocking or marking a user Passed Out ends their sessions immediately. **WebSocket connections** are checked against the LoginSession when they connect, and the server closes them as soon as that session is revoked. Role **and assignment** checks on every API (e.g. a teacher can only edit exams of their own course offerings).
 - Reset links expire in 15–30 minutes and are single-use.
 - Rate limiting on login, reset, messaging and AI chat.
 
@@ -260,7 +265,7 @@ Session (2024–25)
 ### 5.3 Admin Panel Functions
 | Area | Functions |
 |---|---|
-| **Sessions** | Create session (auto-creates 3 groups), promote Class 11 → 12, mark Passed Out, archive. |
+| **Sessions** | Create session (auto-creates 3 groups), move students from Class 11 to Class 12 (Section 4.4), mark Passed Out, archive. |
 | **Sections** | Add / rename / remove sections per group (max 30 students each); move students between sections. |
 | **Courses** | Manage catalog; assign courses + course teachers per section (Section 3.3); copy assignments. |
 | **Schedule Manager** | One portal to add / edit / delete the routine, periods, classrooms (rooms), holidays, special days and single-class changes (Section 5.17.1). Includes a calendar view. |
@@ -357,7 +362,8 @@ All of these work only within the teacher's assigned course offerings:
 - **Section chat** per section (students + the Section Mentor + course teachers of that section, auto-joined).
 - Text, emoji, images, links, PDF attachments.
 - Real-time delivery (WebSockets), typing indicator, unread counts, seen status.
-- Block / report a user from every chat. Admin can review reported conversations only.
+- Block / report a user from every chat, and report a single message. Admin can review reported conversations only (the reported message with the messages around it).
+- **Banned words in chat:** a message containing a banned word is **not sent**; the sender sees "This message contains a blocked word." (Chat is real-time, so messages are never held for review like posts.)
 - Students may be under 18. The client chose to keep 1-to-1 chat open to everyone as listed above, with block/report on every chat, banned-word filtering and Admin warn/mute; no extra age-based chat rules are built.
 - Passed-out students are removed from group/section chats automatically.
 
@@ -403,6 +409,7 @@ All of these work only within the teacher's assigned course offerings:
 - Statuses: *Scheduled → Live → Ended / Cancelled*. Teacher can reschedule, change the link or cancel (students notified).
 - Only students enrolled in the course offering see the link inside the portal.
 - The portal logs **which students clicked Join and when**. It cannot see how long they stayed in Meet/Jitsi; this log only pre-fills the attendance sheet (Section 5.18.3).
+- **Online class in a routine period:** if the online class is held at the time of an existing routine Class Meeting of the same course offering (e.g. a routine class moved online), it is **attached to that meeting** instead of creating a second one, so attendance is never counted twice. Otherwise a new Class Meeting is created for it.
 - **Recording:** not done by the portal. If the teacher wants a recording, they record it themselves (e.g. free OBS Studio or phone screen recorder), upload it to YouTube and share the link as a Recorded Class (Section 5.12).
 
 ### 5.12 Free Recorded Classes
@@ -432,17 +439,18 @@ All of these work only within the teacher's assigned course offerings:
   - **Right answer = the question's marks** (default 1). **Wrong or unanswered = 0.**
   - **No negative marking and no partial marks.** For a multiple-correct question, the answer is right only if the student selects exactly all the correct options; otherwise it is wrong.
   - **Quizzes with several attempts:** the **best** attempt counts for progress and rank. All attempts stay visible to the student and the teacher.
-- **Settings:** start & end window, duration (timer), total marks, pass marks, shuffle questions/options, number of attempts, show correct answers after the exam ends (yes/no), result publish mode (instantly / manually).
-- **Time rule:** a student's exam ends at the **earlier of (start time + duration) and the window end**. Example: window 8–10 PM, 40-minute exam, student starts at 9:50 → the exam auto-submits at 10:00.
-- **Correct answers are shown only after the exam window has ended (`end_at` passed)**, never right after one student submits, so answers cannot be shared while others are still taking the exam.
+- **Settings:** start & end window, duration (timer, chosen from **fixed presets**: 15, 30, 45, 60, 90, 120 minutes; no free typing), total marks, pass marks, shuffle questions/options, number of attempts, show correct answers after the exam ends (yes/no), result publish mode (instantly / manually).
+- **Server-side deadline:** when a student starts, the **server** saves `started_at` and the deadline (the earlier of start + duration and `end_at`). The server rejects any answer or submit after the deadline, and auto-submits at the deadline even if the browser is closed. The on-screen timer is only a display.
+- **Time rule:** a student's exam ends at the **earlier of (start time + duration) and the window end**. Example: window 8–10 PM, 45-minute exam, student starts at 9:50 → the exam auto-submits at 10:00.
+- **Correct answers are shown only after the exam window has ended (`end_at` passed)**, never right after one student submits, so answers cannot be shared while others are still taking the exam. Until then the server **never sends the correct answers to the browser**; grading happens on the server only.
 - **Question snapshot:** when an exam is published, the question text, options and correct answer are **copied into the exam**. Later edits to the teacher's question bank do not change published or past exams. The teacher can still edit a published exam **before its start time**, which copies the questions again; once the exam has started, it is locked.
 - **Reports:** score distribution, highest/average/lowest, per-question correctness, list of students who did not attend. Export as CSV/PDF.
 
 #### 5.14.2 Student: Taking an Exam
 - Students see upcoming, live and completed exams for their courses.
 - During the exam: countdown timer, question navigator, "mark for review", **auto-save** every answer, auto-submit when time ends.
-- If the connection drops, the student can resume within the window with the remaining time.
-- **Integrity measures:** one active session per student, tab-switch/fullscreen-exit events logged and shown to the teacher, randomized order. (A web exam cannot fully prevent cheating; these measures discourage and record it.)
+- If the connection drops, the student can resume before their deadline. **The clock keeps running while they are offline**; the deadline never moves.
+- **Integrity measures:** one in-progress attempt per student per exam (a quiz's next attempt can start only after the previous one is submitted), tab-switch/fullscreen-exit events logged and shown to the teacher, randomized order. (A web exam cannot fully prevent cheating; these measures discourage and record it.)
 
 ### 5.15 Exam Progress
 - **Student view:**
@@ -497,6 +505,7 @@ One Admin area where the Admin can **add, edit and delete** every part of the sc
 - **Most attendance is taken by teachers in the physical classroom.** The teacher goes to the class, opens the attendance sheet on their phone or laptop and marks the students. Online classes (5.11) also have attendance, but they are the smaller case.
 - Attendance is taken **per class period**, not per day.
 - Every **routine slot** (e.g. *Sunday 10:00 · Physics 1st · Science-A · Mr. Rahman*) automatically generates a **Class Meeting** for each date it occurs. Online classes (5.11) are also Class Meetings.
+- **Generation:** a nightly background job creates the Class Meetings for the **next 14 days** (skipping holidays and periods not listed on a special day); any routine or calendar change re-runs it for the affected dates. A future meeting the Admin deletes is kept with status `removed` (not erased), so the job never creates it again; it is hidden everywhere and not counted.
 - Each Class Meeting has one **attendance record per student**: **Present / Absent / Late / Excused**.
 - Every record stores **date, period, course offering, section, teacher and student**, so the same data can be summarized per student, per course, per section, per teacher, per day or per month.
 
@@ -551,7 +560,7 @@ Roll  Name             Status
 - **Attendance % = (Present + Late) ÷ (Classes held − Excused) × 100**, calculated per course and overall.
 - **Required attendance: 75%** (Admin-configurable).
 - Cancelled meetings and holidays are not counted.
-- **Classes held** = meetings where attendance was taken. A meeting whose attendance was never taken is **not counted** and shows as **"Not taken"** to the teacher, Section Mentor and Admin (5.18.6).
+- **Classes held is counted per student** = meetings where attendance was taken **and that student has a record** (so a student who joined or moved section mid-term, or takes an optional course, is measured only against their own classes). A meeting whose attendance was never taken is **not counted** and shows as **"Not taken"** to the teacher, Section Mentor and Admin (5.18.6).
 - If no classes count yet (Classes held − Excused = 0), the percentage shows **"N/A"**, not 0% and not a warning.
 - Color status: 🟢 ≥ 75% · 🟠 60–74% · 🔴 < 60%.
 
@@ -611,13 +620,13 @@ Roll  Name             Status
 | Entity | Key Fields |
 |---|---|
 | **User** | id, login_id, email, mobile, password_hash, role (admin/teacher/student), status (active/inactive/passed_out/deleted), first_login, avatar_url |
-| **StudentProfile** | user_id, name, session_id, group_id, section_id, class (11/12), roll, bio, dob, address, guardian_contact |
+| **StudentProfile** | user_id, name, name_locked, section_id (current section; session, group and class are read from the section, never stored twice), roll, bio, dob, address, guardian_contact |
 | **TeacherProfile** | user_id, name, designation, subjects[], bio |
 | **Session** | id, name, status, created_at |
 | **Group** | id, session_id, type (science/commerce/arts) |
-| **Section** | id, group_id, name (A/B…), mentor_teacher_id (unique: one mentor per section); max 30 active students, checked when adding or moving |
+| **Section** | id, group_id, class (11/12), name (A/B…), mentor_teacher_id (unique: one mentor per section); max 30 active students, checked when adding or moving |
 | **Course** | id, code, name, group_type, class, paper, is_optional |
-| **CourseOffering** | id, section_id, course_id, teacher_id, created_at |
+| **CourseOffering** | id, section_id, course_id, teacher_id, created_at (unique section + course) |
 | **Enrollment** | id, course_offering_id, student_id, status (active/ended), enrolled_at, ended_at (a row for **every** student in every offering they take; ending keeps history; only one active row per student + offering) |
 | **Period** | id, name, start_time, end_time (managed by the Admin, Section 5.17.1) |
 | **Room** | id, name, capacity (optional), building (optional) (managed by the Admin) |
@@ -625,33 +634,40 @@ Roll  Name             Status
 | **Post** | id, author_id, text, tag, pinned_until, pin_audience (all/section), pin_section_id (null = everyone), status, created_at |
 | **PostView** | post_id, user_id, seen_at (unique post + user; a pinned post is hidden from the top once a row exists) |
 | **PostMedia** | id, post_id, url, type |
-| **Reaction / Comment / Report** | post or comment ref, user_id, type/text/reason |
-| **Conversation / Member / Message** | type (direct/group/section), ref_id; members; sender, text, attachment, seen_at |
+| **Reaction** | post or comment ref, user_id, type (unique user + post/comment) |
+| **Comment** | id, post_id, parent_comment_id (null = top level; replies are one level only), author_id, text, attachments, status, edited_at |
+| **Report** | id, reporter_id, target_type (post/comment/message/user), target_id, reason, status, created_at |
+| **Conversation** | id, type (direct/group/section), ref_id (group or section), direct_key (sorted user pair, unique, for direct chats) |
+| **ConversationMember** | conversation_id, user_id, joined_at, left_at, last_read_message_id (unread counts and "seen" status, also in group chats) |
+| **Message** | id, conversation_id, sender_id, text, attachment, created_at, deleted_at |
 | **Notice** | id, author_id, scope (central/class), audience_json, title, body, priority, attachments, publish_at, expires_at |
+| **NoticeRead** | notice_id, user_id, read_at (unique notice + user; unread indicator and the Urgent banner) |
 | **Notification** | id, user_id, type, ref, text, read_at, created_at |
-| **OnlineClass** | id, course_offering_id, title, start_at, duration, platform (meet/jitsi/other), join_url, status |
+| **OnlineClass** | id, teacher_id, title, start_at, duration, platform (meet/jitsi/other), join_url, status, class_meeting_id |
+| **OnlineClassOffering** | online_class_id, course_offering_id (unique pair; one online class can cover several of the teacher's offerings) |
 | **OnlineClassJoin** | online_class_id, student_id, clicked_join_at |
 | **RecordedClass** | id, course_offering_id / course_id, chapter, title, video_source (youtube/drive), url, visibility |
 | **Material** | id, course_offering_id / scope, chapter, title, file_url, type |
 | **Question (bank)** | id, teacher_id, course_id, type, text, options_json, correct_json, marks, chapter_tag |
 | **Exam** | id, course_offering_id, kind (exam/quiz), title, start_at, end_at, duration, total_marks, pass_marks, settings_json, status |
-| **ExamQuestion** | exam_id, question_id (source reference), order, marks, question_text, options_json, correct_json (snapshot copied from the question bank when the exam is published; source question_id kept for reference only) |
-| **ExamAttempt** | id, exam_id, student_id, section_id (section at the time of the attempt, used for rank), started_at, submitted_at, score, status, integrity_log |
-| **Answer** | attempt_id, question_id, selected_option_ids, is_correct, marks_awarded |
+| **ExamQuestion** | id, exam_id, question_id (source reference, nullable), order, marks, question_text, options_json, correct_json (snapshot copied from the question bank when the exam is published; source question_id kept for reference only) |
+| **ExamAttempt** | id, exam_id, student_id, attempt_no, section_id (section at the time of the attempt, used for rank), started_at, deadline_at (earlier of start + duration and end_at, set by the server), submitted_at, score, status (in_progress/submitted/auto_submitted), integrity_log (unique exam + student + attempt_no; at most one in_progress per exam + student) |
+| **Answer** | attempt_id, exam_question_id (the snapshot that was graded), selected_option_ids, is_correct, marks_awarded (unique attempt + exam_question) |
 | **PreviousQuestion** | id, course_id, year, exam_type, board, file_url, solution_url |
-| **ClassMeeting** | id, routine_slot_id (null for an extra class) / online_class_id, date, period_id, room_id, start_time, end_time (copied from the period when created, so later period changes do not alter past meetings), teacher_id, substitute_teacher_id, status (scheduled/held/cancelled); **UNIQUE(routine_slot_id, date)** so one routine slot can never create two meetings on the same day |
+| **ClassMeeting** | id, routine_slot_id (null for an extra class) / online_class_id, date, period_id, room_id, start_time, end_time (copied from the period when created, so later period changes do not alter past meetings), teacher_id, substitute_teacher_id, status (scheduled/held/cancelled/removed; `removed` = deleted by the Admin, kept so it is never generated again); **UNIQUE(routine_slot_id, date)** so one routine slot can never create two meetings on the same day |
 | **Holiday** | id, start_date, end_date, title, created_by (set by the Admin; no Class Meetings on these dates) |
 | **SpecialDay** | id, date, title, session_id (optional), periods_json (which periods run that day; set by the Admin) |
 | **ClassMeetingOffering** | class_meeting_id, course_offering_id (unique meeting + offering; a combined class has one row per offering) |
-| **AttendanceRecord** | id, class_meeting_id, student_id, section_id (section at the time of the class), status (present/absent/late/excused), marked_by, marked_at |
+| **AttendanceRecord** | id, class_meeting_id, student_id, section_id (section at the time of the class), status (present/absent/late/excused), marked_by, marked_at (unique meeting + student) |
 | **AttendanceEdit** | id, attendance_record_id, old_status, new_status, edited_by, edited_at |
 | **Book** | id, title, author, publisher, course_id, price, cover_url, pdf_url, preview_pages |
 | **BookPurchase** | id, student_id, book_id, price, payment_status (unlocked_no_gateway), purchased_at |
 | **AIConversation / AIMessage** | id, student_id, title; conversation_id, role, content, tokens, created_at |
+| **LoginSession** | id, user_id, token_hash, created_at, expires_at, last_seen_at, revoked_at, ip, user_agent (deleting or revoking the row logs the user out) |
 | **Token (reset / verify)** | user_id, token_hash, purpose, expires_at, used |
 | **Settings** | key, value_json, updated_by, updated_at (one row per setting: attendance threshold, attendance colours, grading scale, AI provider, AI model, AI daily limit per student, banned-words filter on/off, pin length) |
 | **AIUsage** | student_id, date (Asia/Dhaka), message_count (unique student + date; checked before each AI call) |
-| **AuditLog** | id, actor_id, action, target_type, target_id, before_json, after_json, ip, created_at (every Admin action; never edited or deleted) |
+| **AuditLog** | id, actor_id, action, target_type, target_id, changes_json, ip, created_at (every Admin action; never edited or deleted; **no personal data**: it stores IDs and the names of changed fields with non-personal old/new values, never names, emails, phones, addresses, DOB, guardian info or passwords) |
 | **LoginHistory** | id, user_id, success, ip, user_agent / device, created_at (Student 360° Activity Log; failed logins feed rate limiting) |
 | **UserSanction** | id, user_id, type (warn/mute), reason, related_report_id, starts_at, ends_at (null for warn), created_by |
 | **Block** | blocker_id, blocked_id, created_at (unique pair; blocked users cannot message the blocker) |
@@ -676,7 +692,7 @@ Admin → Feed → *Create post* ("Pin this post" on by default) → published w
 Teacher creates a free Google Meet link → My Courses → *Physics 1st – Science A* → Classes → *Schedule* (Sun 10:00) and pastes the link → students notified → students click *Join* (opens Meet in a new tab, click logged) → class ends → teacher reviews pre-filled attendance → later the teacher uploads their own recording to YouTube and adds the link under Recordings → students see it automatically.
 
 **Flow E – Online exam**
-Teacher creates exam (30 MCQ, 40 min, window Mon 8–10 PM) → students notified → student starts, answers auto-saved, auto-submit at time-up → all answers auto-graded instantly → teacher clicks *Publish results* (or results publish automatically) → students notified → Progress page updated.
+Teacher creates exam (30 MCQ, 45 min, window Mon 8–10 PM) → students notified → student starts, answers auto-saved, auto-submit at time-up → all answers auto-graded instantly → teacher clicks *Publish results* (or results publish automatically) → students notified → Progress page updated.
 
 **Flow F – Getting a book**
 Student → Book Shop → opens *Physics 1st Paper Guide (PDF)* → clicks **Pay** → confirms → PDF unlocks immediately and opens in the reader → book saved under *My Books*.
@@ -700,6 +716,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 | **Scalability** | Support ~3,000 active users and ~500 students taking an exam at the same time. |
 | **Availability** | 99.5% uptime; exams must not be scheduled during maintenance windows. |
 | **Responsiveness** | Fully usable on mobile phones (most students use phones); PWA "add to home screen". |
+| **Uploads** | Images (JPG/PNG/WebP) max **5 MB** each, resized/compressed on upload; PDF/DOC/DOCX/PPT/PPTX max **20 MB**; book PDFs max **100 MB** (Admin only); max 10 images per post or comment. File type checked by content, not only by extension. |
 | **Security** | HTTPS everywhere, role + assignment-based authorization, input sanitization (XSS), file-type and size validation on uploads, signed URLs for private files, audit log for Admin actions. |
 | **Privacy** | Students' personal details (mobile, address, guardian info, DOB) visible **only to the student and the Admin**. Teachers and Section Mentors see only profile and course data (Section 5.3.1). |
 | **Backups** | Daily automatic database backups, kept 30 days; file storage with versioning. |
@@ -715,7 +732,8 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 |---|---|
 | **Frontend** | Next.js (React) + Tailwind CSS; responsive, PWA-enabled. |
 | **Backend API** | Node.js (NestJS or Express) REST API, with Socket.IO for chat and notifications. |
-| **Database** | PostgreSQL; Redis for sessions, caching, rate limits and the real-time pub/sub. |
+| **Database** | PostgreSQL only (sessions, rate limits and background jobs are kept in PostgreSQL). **No Redis**; Socket.IO runs on a single server. |
+| **Background jobs** | A PostgreSQL-backed job queue (e.g. pg-boss) for exam auto-submit at the deadline, the email queue, Class Meeting generation, scheduled notices and pin expiry. |
 | **File storage** | S3-compatible object storage (AWS S3 / Cloudflare R2 / DigitalOcean Spaces) for images and PDFs (no videos). |
 | **Live classes** | No integration: teacher pastes a free Google Meet or Jitsi Meet link. |
 | **Recorded video** | Teacher's own YouTube (unlisted) link, shown in an embedded player. No video upload. |
@@ -730,11 +748,11 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 
 | Phase | Features |
 |---|---|
-| **Phase 1 – Core** | Auth & accounts, sessions/groups/sections, course & teacher assignment, separate dashboards, profile, community feed with pinned posts & moderation, messaging, central & class-wise notices, in-app notifications, routine and Admin Schedule Manager (periods, rooms, holidays, daily schedule). |
-| **Phase 2 – Learning** | Online classes, recorded classes, notes & materials, previous-year questions, online exams & quizzes, exam progress, attendance, Student 360° view. |
-| **Phase 3 – Extras** | Digital book shop (placeholder Pay button), free AI chatbox, email/push notifications, reports & exports, AI grounded in college notes. |
+| **Phase 1 – Core** | Auth & accounts (including auth emails: password reset, email verification, email change), sessions/groups/sections, course & teacher assignment, separate dashboards, profile, community feed with pinned posts & moderation, messaging, central & class-wise notices, in-app notifications, routine and Admin Schedule Manager (periods, rooms, holidays, daily schedule), **attendance** (it runs on the routine and is used every day). |
+| **Phase 2 – Learning** | Online classes, recorded classes, notes & materials, previous-year questions, online exams & quizzes, exam progress, Student 360° view. |
+| **Phase 3 – Extras** | Digital book shop (placeholder Pay button), free AI chatbox, notice/notification emails and browser push, the Admin **Reports** area, AI grounded in college notes. (Exports inside a feature, e.g. the attendance register or exam report CSV/PDF, ship with that feature.) |
 
-**Section 10 is the single source for phases.** If another section mentions a phase, this table wins. In Phase 1 the dashboards **hide the widgets** (attendance, exams, results) for features that are not built yet.
+**Section 10 is the single source for phases.** If another section mentions a phase, this table wins. In Phase 1 the dashboards **hide the widgets** (exams, results) for features that are not built yet.
 
 ---
 
@@ -763,9 +781,10 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 19. **Students are added by the Admin** from the session page with a Student ID and password the Admin gives to the student; **a section holds at most 30 students**, and the Admin creates as many sections as needed (Section 3.1.1).
 20. **Only one Admin account**, by design. The client keeps the Admin login email safe; no second Admin or recovery path is built (Section 2.2).
 21. **The Admin manages periods, rooms, routine, holidays and any single day or class** in the Schedule Manager: add, edit and delete everything (Section 5.17.1). Replaces the earlier free-text rule.
+22. **The Student ID is not shown on the public profile**; only the student, their teachers and the Admin see it (Section 5.7.1).
 23. **Exam scoring is simple:** right = marks, wrong = 0, no negative or partial marks (Section 5.14.1).
 24. **Email uses a free Google SMTP account** with a rate-limited queue (Section 5.9).
-22. **The Student ID is not shown on the public profile**; only the student, their teachers and the Admin see it (Section 5.7.1).
+25. **Every student has an email address**, entered by the Admin when adding the student and verified at first login (Sections 3.1.1, 4.2).
 
 **Open questions:**
 None at the moment.
