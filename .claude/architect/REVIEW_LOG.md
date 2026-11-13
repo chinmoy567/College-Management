@@ -48,12 +48,12 @@
 | ARC-042 | Period/Room deletion cascade undefined       | Low      | PRD §5.17.1, §6                   | 2026-11-14 | Fixed (v2.16)                 |
 | ARC-043 | SpecialDay interaction with routine unclear  | Medium   | PRD §5.17.1, §6 SpecialDay        | 2026-11-14 | Fixed (v2.16)                 |
 | ARC-044 | ExamQuestion snapshot vs exam editing        | Medium   | PRD §5.14.1, §6 ExamQuestion      | 2026-11-14 | Fixed (v2.16)                 |
-| ARC-045 | ClassMeeting.period_id nullability unclear   | Low      | PRD §6 ClassMeeting               | 2026-11-14 | NEW                           |
-| ARC-046 | AttendanceEdit scope ambiguous               | Low      | PRD §5.18.3, §6 AttendanceEdit    | 2026-11-14 | NEW                           |
+| ARC-045 | ClassMeeting.period_id nullability unclear   | Low      | PRD §6 ClassMeeting               | 2026-11-14 | Open                              |
+| ARC-046 | AttendanceEdit scope ambiguous               | Low      | PRD §5.18.3, §6 AttendanceEdit    | 2026-11-14 | Open                              |
 | ARC-047 | SpecialDay periods_json format undefined     | Low      | PRD §6 SpecialDay                 | 2026-11-14 | Fixed (v2.16)                 |
-| ARC-048 | Google SMTP rate limit enforcement           | Low      | PRD §5.9                          | 2026-11-14 | NEW                           |
+| ARC-048 | Google SMTP rate limit enforcement           | Low      | PRD §5.9                          | 2026-11-14 | Open                              |
 | ARC-049 | ExamQuestion.question_id missing from schema | Medium   | PRD §6 ExamQuestion               | 2026-11-14 | Fixed (v2.16)                 |
-| ARC-050 | Online class and extra class field rules     | Low      | PRD §6 ClassMeeting               | 2026-11-14 | NEW                           |
+| ARC-050 | Online class and extra class field rules     | Low      | PRD §6 ClassMeeting               | 2026-11-14 | Open                              |
 
 ---
 
@@ -175,22 +175,6 @@
 - **Problem:** The GitHub repo is PUBLIC and its history contains the client's PRD v1.0 (and now v2.7–2.10).
 - **Fix:** Ask the client. If not OK, make the repo private.
 
-**ARC-043 — SpecialDay interaction with routine unclear** · PRD §5.17.1, §6 SpecialDay · NEW
-
-- **Problem:** §6 adds SpecialDay (id, date, title, session_id, periods_json) and §5.17.1 says "Mark one date as a special day and set which periods run." But the PRD does not say: (a) are regular routine classes on that day canceled and replaced by the SpecialDay periods, or do both run? (b) what is the format of periods_json? (c) if a SpecialDay period is not in the routine for a section, is a ClassMeeting still created? (d) how does this interact with Holidays (which cancel all classes)?
-- **Fix:** Add rules to §5.17.1 and §6: format of periods_json (e.g. array of period IDs), whether SpecialDay replaces or overlays the routine (likely: the routine runs only for the periods listed in the SpecialDay), and how class generation works. Clarify that Holidays cancel all classes while SpecialDay allows some periods.
-
-**ARC-044 — ExamQuestion snapshot vs exam editing** · PRD §5.14.1, §6 ExamQuestion · NEW
-
-- **Problem:** §5.14.1 says "when an exam is published, the question text, options and correct answer are copied into the exam." But the PRD does not say whether a published exam (status = published, before start_at) can be edited. If yes, does editing re-snapshot the questions? If no, teachers lose the ability to fix errors before the exam starts.
-- **Fix:** Add rule: teachers can edit a published exam only before start_at (or before the first student starts it, whichever is earlier). Editing re-snapshots the questions. Or, simpler: teachers can edit draft exams only; publishing locks the exam.
-
-**ARC-049 — ExamQuestion.question_id missing from schema** · PRD §6 ExamQuestion · NEW
-
-- **Problem:** §6 ExamQuestion comment says "source question_id kept for reference only" but the field list is "exam_id, order, marks, question_text, options_json, correct_json" — question_id is missing.
-- **Why it matters:** Without question_id, you cannot trace which question bank item a given exam question came from (useful for analyzing which bank questions are hardest, or for debugging).
-- **Fix:** Add question_id to the field list: `exam_id, question_id (source reference), order, marks, question_text, options_json, correct_json`. Or remove the comment if question_id is intentionally not kept.
-
 ### 🔵 Low
 
 **ARC-012 — Decision #13 cites numbers that don't exist** · PRD §11 · Fixed (v2.15)
@@ -225,32 +209,22 @@
 - **Note:** v2.13 confirmed all users are 18+, so this is no longer a child-protection issue, but the Student ID is the login ID and should not be public.
 - **Fix applied in v2.15:** §5.7.1 now says the public profile "does not show the Student ID (the Student ID is the login ID; only the student, their teachers and the Admin see it)." Added as Decision #22.
 
-**ARC-042 — Period/Room deletion cascade undefined** · PRD §5.17.1, §6 · NEW
-
-- **Problem:** §5.17.1 says "Deleting a period or room that future routine slots use asks the Admin to choose a replacement or clear those slots first." But the PRD does not say what happens if the Admin cancels the delete, or what "clear those slots" means (delete the RoutineSlot rows? set period_id/room_id to null?).
-- **Fix:** Clarify: (a) canceling the delete leaves period/room unchanged; (b) "clear" means delete the RoutineSlot rows; (c) add the rule to §6 as a constraint.
-
-**ARC-045 — ClassMeeting.period_id nullability unclear** · PRD §6 ClassMeeting · NEW
+**ARC-045 — ClassMeeting.period_id nullability unclear** · PRD §6 ClassMeeting · Open
 
 - **Problem:** §6 ClassMeeting has "period_id, room_id, start_time, end_time (copied from the period when created, so later period changes do not alter past meetings)". But (a) if start_time and end_time are frozen copies, why keep period_id? (b) if period_id references a period that is later deleted, what happens? (c) for an "extra class" (routine_slot_id null), can period_id also be null if the Admin picks custom times?
 - **Fix:** Clarify: period_id is kept for reporting/display (e.g. "Period 3" on the attendance sheet) even though the times are frozen. period_id can be null for extra classes with custom times. If a period is deleted, past ClassMeeting rows keep the period_id (it becomes a dangling reference, or Period has a soft-delete flag).
 
-**ARC-046 — AttendanceEdit scope ambiguous** · PRD §5.18.3, §6 AttendanceEdit · NEW
+**ARC-046 — AttendanceEdit scope ambiguous** · PRD §5.18.3, §6 AttendanceEdit · Open
 
 - **Problem:** §6 has AttendanceEdit (id, attendance_record_id, old_status, new_status, edited_by, edited_at). §2.1 says "Admin can edit any attendance record (logged)" but the permission matrix says teachers/mentors can "manage" attendance. Can teachers edit attendance they already marked? Are those edits also logged in AttendanceEdit, or only Admin edits?
 - **Fix:** Clarify in §5.18.3: teachers and Section Mentors can edit attendance they marked (e.g. to fix a mistake), and every edit (by anyone) is saved in AttendanceEdit.
 
-**ARC-047 — SpecialDay periods_json format undefined** · PRD §6 SpecialDay · NEW
-
-- **Problem:** §6 says "periods_json (which periods run that day)" but does not define the format (array of period IDs? names? full objects?). If a period referenced in periods_json is later deleted, does the SpecialDay break?
-- **Fix:** Define format in §6, e.g. `periods_json: [period_id1, period_id2, ...]`. Add rule: deleting a period that a SpecialDay uses asks Admin to remove it from the SpecialDay first (or auto-remove it).
-
-**ARC-048 — Google SMTP rate limit enforcement** · PRD §5.9 · NEW
+**ARC-048 — Google SMTP rate limit enforcement** · PRD §5.9 · Open
 
 - **Problem:** §5.9 says "the Admin sets the limit in Settings" but does not say if the system enforces a hard cap (e.g. 500/day for Gmail) or allows the Admin to set any value. If the Admin sets 1000/day but Gmail allows only 500, emails will bounce after 500.
 - **Fix:** Add a note: the system does not enforce a hard cap; the Admin is responsible for setting a correct limit. Or, if there is a safety rule, define it: "The system warns if the limit is set above 500 (typical Gmail free tier)."
 
-**ARC-050 — Online class and extra class field rules** · PRD §6 ClassMeeting · NEW
+**ARC-050 — Online class and extra class field rules** · PRD §6 ClassMeeting · Open
 
 - **Problem:** ClassMeeting has period_id, room_id, but for an online class (online_class_id is set) these do not make sense. Also, for an extra class (routine_slot_id null), can the Admin pick a period (period_id + copied times) or type custom times (period_id null, manual times)?
 - **Fix:** Add to §6: for an online class, period_id and room_id are null (or room_id = "Online"). For an extra class, the Admin can either pick an existing period (period_id is set, times copied) or leave period_id null and type custom start_time/end_time.
@@ -282,6 +256,11 @@
 - **ARC-024** — Timezone Asia/Dhaka, stored in UTC (v2.16).
 - **ARC-025** — Google SMTP with rate-limited queue; Admin sets daily limit in Settings (v2.16).
 - **ARC-027** — Period and Room tables added with Admin Schedule Manager; RoutineSlot uses period_id, room_id (v2.16; reverses v2.15 design).
+- **ARC-042** — Period/Room delete: Admin picks replacement or clears slots first (v2.16).
+- **ARC-043** — SpecialDay rules for routine/holiday defined (v2.16).
+- **ARC-044** — Exam question snapshot/edit rule defined (v2.16).
+- **ARC-047** — SpecialDay periods_json format defined (v2.16).
+- **ARC-049** — ExamQuestion.question_id added to schema (v2.16).
 
 ### 🔒 Closed by design
 
@@ -304,4 +283,4 @@
 - **2026-11-14 · Review #9** — Pre-commit review of PRD v2.15 and .claude/CLAUDE.md update. **Fixed:** ARC-012 (Decision #13 reworded, no fake requirement numbers), ARC-016 (commit rule added to CLAUDE.md), ARC-029 (inactive user profile behavior defined in §5.7.1), ARC-030 (Student ID removed from public profile, visible only to student/teachers/Admin). **Closed by design:** ARC-026 (single Admin confirmed by client, §2.2 + Decision #20), ARC-027 (no Period/Room tables, Admin types times/room on RoutineSlot, §5.17 + §6 + Decision #21). All changes consistent with rest of PRD. RoutineSlot has structured start_time/end_time fields (for conflict detection) and free-text room. No new issues introduced. Ready to commit.
 - **2026-11-14 · Review #10** — PRD v2.16 uncommitted changes. **Major additions:** Admin Schedule Manager (§5.17.1) with Period/Room tables (reverses v2.15 design), SpecialDay entity for whole-day changes, simplified exam scoring (right = marks, wrong = 0, no negative/partial), correct answers only after exam end_at, exam time capped at window end, question snapshot in ExamQuestion, Admin can edit any attendance (logged), Asia/Dhaka timezone, Google SMTP with rate-limited queue, §10 as single source for phases. **Fixed:** ARC-002, 004, 021, 022, 024, 025, 027 (7 issues). **Closed:** ARC-041 (client-decided: all students 18+, age from DOB, no checks). **New:** ARC-042 (Period/Room deletion cascade), ARC-043 (SpecialDay interaction with routine), ARC-044 (exam editing after publish), ARC-045 (ClassMeeting.period_id nullability), ARC-046 (AttendanceEdit scope), ARC-047 (SpecialDay periods_json format), ARC-048 (SMTP rate limit enforcement), ARC-049 (ExamQuestion.question_id missing from schema), ARC-050 (online/extra class field rules). All new issues are low/medium clarifications; no critical problems. The Admin Schedule Manager is well-designed. Ready to commit.
 
-- 2026-11-14 | PRD v2.16 | PRD.md (5.14, 5.17.1, 6); git tree clean, no code diff | fixed 5 (ARC-042/043/044/047/049) / new 0 / open 4 (Low: 045, 046, 048, 050) | Verified the four PRD fixes.
+- **2026-11-14 · Review #11** — PRD v2.16 (re-check, no new PRD change; only system-architect.md changed). **Fixed:** ARC-042, 043, 044, 047, 049 (details moved to Fixed (short)). **Still open (Low, re-checked):** ARC-045, 046, 048, 050. **New:** 0. Log cleaned: detail blocks synced with table, history format fixed.
