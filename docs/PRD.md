@@ -330,7 +330,7 @@ All of these work only within the teacher's assigned course offerings:
 - Optional automatic filter for a configurable list of banned words (the post is held for review).
 
 ### 5.8 Messaging System
-- **One-to-one chat:** students ↔ students, teachers ↔ students, Admin ↔ anyone.
+- **One-to-one chat:** students ↔ students, teachers ↔ students, teachers ↔ teachers, Admin ↔ anyone.
 - **Group chat** per session-group (all students of the group + the Section Mentors of its sections, auto-joined).
 - **Section chat** per section (students + the Section Mentor + course teachers of that section, auto-joined).
 - Text, emoji, images, links, PDF attachments.

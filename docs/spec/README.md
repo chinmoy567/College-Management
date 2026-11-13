@@ -56,7 +56,3 @@ These are implementation details the PRD needs but does not spell out. They do n
 | Exam lifecycle states | `draft → published → closed`, plus `results_published_at` and `revealed_at` | 05 |
 | A Class Meeting the Admin moves to another date must not be regenerated | `ClassMeeting.original_date` + `manually_edited`; unique index on `(routine_slot_id, COALESCE(original_date, date))` | 01, 04 |
 | CSRF protection for the cookie session | `SameSite=Lax` + required `X-Requested-With: cms` header on writes | 02 |
-
-## Open question for the client
-
-- **Teacher ↔ teacher direct chat** is not in the PRD's list (§5.8: student↔student, teacher↔student, Admin↔anyone). The specs follow the PRD and do not offer it. Add it to the PRD if the client wants it.

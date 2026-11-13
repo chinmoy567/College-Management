@@ -33,11 +33,11 @@ On reconnect, clients call `GET /api/chat/conversations/:id/messages?after=<last
 ### 2.1 Conversations
 | Type | Members (auto-managed) |
 |---|---|
-| `direct` | two users; created on first message; `directKey = sorted ids`. Allowed pairs (PRD §5.8): student↔student, teacher↔student, Admin↔anyone. |
+| `direct` | two users; created on first message; `directKey = sorted ids`. Allowed pairs (PRD §5.8): student↔student, teacher↔student, teacher↔teacher, Admin↔anyone. |
 | `group` (one per session-group) | all active students of the group + the mentors of its sections. Not the Admin, not course teachers (PRD §2.1). |
 | `section` (one per section) | active students of the section + its mentor + teachers of its active offerings. |
 
-Group and section conversations are created with the section/session. Teacher ↔ teacher direct chat is not in the PRD list, so it is not offered (ask the client if needed).
+Group and section conversations are created with the section/session.
 
 ### 2.2 Routes
 | Route | Rules |
