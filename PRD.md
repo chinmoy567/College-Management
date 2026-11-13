@@ -3,7 +3,7 @@
 
 | Item | Detail |
 |---|---|
-| **Document Version** | 2.10 |
+| **Document Version** | 2.11 |
 | **Date** | 13 November 2026 |
 | **Product Type** | Web-based College Management, Learning & Student Community Portal |
 | **Target Institution** | Higher Secondary College (Class 11 & 12 – HSC) |
@@ -24,6 +24,7 @@
 | 2.8 | 14 Nov 2026 | Pinned posts are **seen-once**: an Admin/Section Mentor post stays at the top for each user only until that user has seen it once, for at most 7 days. Mentor pins target one section (`pin_section_id`). Added PostView entity. |
 | 2.9 | 14 Nov 2026 | Defined "seen" (at least half of the post on screen for 1 second); one seen record covers feed and dashboard; extending a pin does not re-pin for users who already saw it; Admin/Mentor get a **Pin this post** switch (on by default). |
 | 2.10 | 14 Nov 2026 | Routine changes apply to future classes only; the Admin is responsible for a correct, conflict-free routine. Class Meeting courses moved to a ClassMeetingOffering table (no duplicates). |
+| 2.11 | 14 Nov 2026 | AI chatbox moved from Google Gemini to the **Groq** free tier: Gemini's API terms do not allow apps used by under-18s; Groq's terms allow them (the college is responsible) and Groq does not train on inputs. Client confirmation added as an open question. |
 
 ---
 
@@ -537,12 +538,14 @@ Roll  Name             Status
 ### 5.20 AI Chatbox (Student Study Assistant)
 - A chat assistant for **students only**, available from the menu and as a floating button.
 - **Purpose:** explain concepts, solve and explain problems step by step, summarize topics, generate practice questions, and help with English/Bangla writing. It is scoped to academic help, and off-topic or harmful requests are politely declined.
-- **Zero cost: powered by the free tier of the Google Gemini API** (API key created free at Google AI Studio, no credit card). Use the fast, light **Gemini "Flash" / "Flash-Lite"** model that is on the free tier at build time; the model name is a setting so it can be changed without code changes.
-- **Free-tier limits to plan around:** Google caps free requests per minute and per day for the whole project (not per student), and the exact numbers change from time to time (check AI Studio before launch). So:
+- **Zero cost: powered by the free tier of the Groq API** (GroqCloud Free plan; a payment method is only needed to upgrade). Use an open model that is on the free tier at build time (e.g. a Llama 70B-class model); the model name is a setting so it can be changed without code changes.
+- **Why Groq, not Google Gemini:** Gemini's API terms require users to be 18+ and do not allow apps that are likely to be used by under-18s; most HSC students are 16–18. Groq's Services Agreement allows apps used by minors, with the **college responsible** for following the law, and Groq does not use API inputs or outputs for training. The Groq account is owned by the college/developer (must be 18+).
+- **Free-tier limits to plan around:** Groq caps free requests and tokens per minute and per day for the **whole account** (shared by all students, not per student), and the numbers change from time to time (check the Groq console before launch and run a short load test). So:
   - Admin sets a **daily message limit per student** (e.g. 15–20) so a few students cannot use up the whole day's quota.
   - When the free quota is used up, students see *"The AI assistant is busy, please try again later"* instead of an error.
-  - On the free tier Google may use the messages to improve its products, so the portal **never sends personal data** (name, ID, phone) to the AI, only the student's question.
-- **Backup free option:** the provider is configurable, so a second free API (e.g. Groq's free tier) can be switched on if Gemini's free quota is not enough.
+  - Only one Groq account is used; never create extra free accounts to get around the limits (Groq's terms forbid this).
+- **No personal data is sent to the AI** (name, ID, phone, section), only the student's question and the chat so far.
+- **Provider is configurable** (provider + model in Settings). Any replacement provider must allow use by under-18s and must not train on student messages; Google Gemini's API is not allowed for this reason.
 - Students can start new chats, see past chats, and write in **Bangla or English**. Supports formatted math/code in answers.
 - **Safety:** server-side calls only (key never exposed), no access to other students' data, disclaimer "AI may make mistakes, verify with your teacher".
 - **During a live exam, the AI chatbox is disabled** for students taking that exam.
@@ -651,7 +654,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 | **Recorded video** | Teacher's own YouTube (unlisted) link, shown in an embedded player. No video upload. |
 | **Email** | SMTP (client-provided) with a background job queue. |
 | **Payments** | None in this version (placeholder **Pay** button). A gateway can be plugged in later. |
-| **AI** | Google Gemini API free tier (Flash / Flash-Lite), called server-side only; provider configurable. |
+| **AI** | Groq API free tier (open model, e.g. Llama 70B-class), called server-side only; provider and model configurable. |
 | **Hosting** | VPS or cloud (e.g. DigitalOcean / AWS) with Docker; daily backups. |
 
 ---
@@ -677,7 +680,7 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 6. **No payment gateway** in this version: the **Pay** button unlocks the PDF immediately (Section 5.19).
 7. **Recorded classes:** the portal does not record. Teachers record themselves, upload to YouTube and share the link; students see it automatically (Section 5.12).
 8. **Live classes** must cost nothing: teachers use free Google Meet or Jitsi Meet links (Section 5.11).
-9. **AI chatbox** must cost nothing: free Google Gemini API tier with per-student daily limits (Section 5.20).
+9. **AI chatbox** must cost nothing: free **Groq** API tier with per-student daily limits (Section 5.20). *(Changed from Gemini in v2.11 because Gemini's terms do not allow under-18 users; pending client confirmation, see open question 1.)*
 10. **Exam ranks are shown to students** (Section 5.15).
 11. **Sessions are closed only by the Admin, manually** (never automatically). The Admin sees each session's status (Active / Closed) on the Sessions page (Section 4.5).
 
@@ -687,4 +690,5 @@ Admin → Sessions → *2023–24* → *Mark Passed Out* → students logged out
 15. **Posts show the author's session, group and section**, and any logged-in user can view the author's public profile (private details stay hidden) (Section 5.7.1).
 16. **Exam ranks are by section only.** Exams are created by the course teacher; results and ranks are computed among that section's students (Section 5.15).
 
-**Open questions:** none at this time.
+**Open questions:**
+1. **AI provider (Groq):** with Groq, the college is responsible for the AI being used safely and legally by minors. Does the client accept this? If not, the AI chatbox is dropped (it is Phase 3, so nothing earlier is blocked).
