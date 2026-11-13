@@ -57,7 +57,7 @@
 | ARC-051 | Minors: no consent/privacy rule for chat, AI | Medium   | PRD §1 header, §5.10, §5.19, §3.1 | 2026-11-14 | NEW                               |
 | ARC-052 | DOB self-editable; age use and limit vague   | Low      | PRD §3.1, §5.6, §6 StudentProfile | 2026-11-14 | NEW                               |
 | ARC-053 | Room availability check scope undefined     | Low      | PRD §5.17.1, §6 ClassMeeting      | 2026-11-14 | Fixed (v2.18)                     |
-| ARC-054 | UNIQUE(routine_slot_id,date) blocks re-create after cancel | Low | PRD §6 ClassMeeting | 2026-11-14 | NEW |
+| ARC-054 | UNIQUE(routine_slot_id,date) blocks re-create after cancel | Low | PRD §6 ClassMeeting | 2026-11-14 | Closed (Admin decides) |
 
 ---
 
