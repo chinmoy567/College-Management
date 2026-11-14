@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -13,6 +14,9 @@ export function RoleShell({ role, links, children }: { role: 'teacher' | 'studen
     queryFn: () => api<{ user: { role: string } }>('/auth/me'),
     retry: false,
   });
+  const pathname = usePathname();
+  /** The exam page has no navigation (05 §8): nothing to tap away to by accident. */
+  const bare = pathname.startsWith('/student/take/');
   const allowed = me.data?.user.role === role;
   useEffect(() => {
     if (me.isError || (me.data && !allowed)) window.location.assign('/login');
@@ -25,14 +29,16 @@ export function RoleShell({ role, links, children }: { role: 'teacher' | 'studen
     );
   return (
     <div className="min-h-screen">
-      <nav aria-label={role} className="mx-auto flex max-w-3xl gap-2 px-4 pt-3">
-        {links.map((l) => (
-          <Link key={l.href} href={l.href} className="flex min-h-11 items-center rounded-lg px-4 text-base font-medium text-indigo-700 hover:bg-indigo-50">
-            {l.label}
-          </Link>
-        ))}
-      </nav>
-      <main className="mx-auto max-w-3xl p-4">{children}</main>
+      {!bare && (
+        <nav aria-label={role} className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-2 pt-3 sm:gap-2 sm:px-4">
+          {links.map((l) => (
+            <Link key={l.href} href={l.href} className="flex min-h-11 items-center whitespace-nowrap rounded-lg px-3 text-base font-medium text-indigo-700 hover:bg-indigo-50 sm:px-4">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+      <main className={bare ? 'mx-auto max-w-3xl' : 'mx-auto max-w-3xl p-4'}>{children}</main>
     </div>
   );
 }

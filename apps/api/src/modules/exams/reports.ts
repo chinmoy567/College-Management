@@ -105,6 +105,20 @@ reportRouter.get('/:id/report.pdf', idParam, asyncHandler(async (req, res) => {
 
 // ───── offering progress ─────
 export const offeringProgressRouter = Router();
+/** GET /api/exams/offerings — the offerings the signed-in teacher teaches or mentors (the exam screens' course picker). */
+offeringProgressRouter.get('/', requireRole('teacher'), asyncHandler(async (req, res) => {
+  const me = (req as unknown as { user: { id: string } }).user.id;
+  const rows = await prisma.courseOffering.findMany({
+    where: { endedAt: null, OR: [{ teacherId: me }, { section: { mentorTeacherId: me } }] },
+    include: { course: { select: { id: true, code: true, name: true } }, section: { select: { name: true, classLevel: true } } },
+    orderBy: [{ course: { code: 'asc' } }, { createdAt: 'asc' }],
+  });
+  res.json({
+    items: rows.map((o) => ({
+      id: o.id, courseId: o.courseId, course: o.course, section: `Class ${o.section.classLevel} · Section ${o.section.name}`, teaches: o.teacherId === me,
+    })),
+  });
+}));
 offeringProgressRouter.get('/:id/progress', idParam, asyncHandler(async (req, res) => {
   const o = await offeringForViewer(req, req.params.id as string);
   await revealDue(await prisma.exam.findMany({ where: { courseOfferingId: o.id, status: { not: 'draft' } }, select: { id: true, endAt: true, revealedAt: true, status: true } }));
