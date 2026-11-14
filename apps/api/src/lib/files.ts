@@ -32,7 +32,7 @@ const objects: ObjectStore = {
 };
 
 /** In-memory backend for tests and for a dev box without Supabase credentials. */
-export function createMemoryBackend(): StorageBackend & { files: Map<string, Buffer> } {
+export function createMemoryBackend(urlBase = 'https://storage.test'): StorageBackend & { files: Map<string, Buffer> } {
   const files = new Map<string, Buffer>();
   const k = (b: Bucket, key: string) => `${b}/${key}`;
   return {
@@ -50,9 +50,9 @@ export function createMemoryBackend(): StorageBackend & { files: Map<string, Buf
       return f;
     },
     async signedUrl(b, key, expiresIn, dl) {
-      return `https://storage.test/sign/${k(b, key)}?exp=${expiresIn}${dl ? `&download=${encodeURIComponent(dl)}` : ''}`;
+      return `${urlBase}/sign/${k(b, key)}?exp=${expiresIn}${dl ? `&download=${encodeURIComponent(dl)}` : ''}`;
     },
-    publicUrl: (b, key) => `https://storage.test/public/${k(b, key)}`,
+    publicUrl: (b, key) => `${urlBase}/public/${k(b, key)}`,
   };
 }
 
@@ -62,6 +62,11 @@ export async function readObject(id: string): Promise<Buffer> {
   return getBackend().get(o.bucket, o.key);
 }
 
+/** The Playwright server only (never production): files live in memory and are served from /api/e2e-files, so no bucket is needed. */
+export const E2E_STORAGE = process.env.E2E_MEMORY_STORAGE === '1' && process.env.NODE_ENV !== 'production';
+export const E2E_FILES_PATH = '/api/e2e-files';
+export let e2eMemory: (StorageBackend & { files: Map<string, Buffer> }) | null = null;
+
 let backend: StorageBackend | null = null;
 export const setStorageBackend = (b: StorageBackend | null): void => {
   backend = b;
@@ -70,8 +75,9 @@ export const setStorageBackend = (b: StorageBackend | null): void => {
 function getBackend(): StorageBackend {
   if (backend) return backend;
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
-  backend =
-    SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && process.env.NODE_ENV !== 'test'
+  backend = E2E_STORAGE
+    ? (e2eMemory = createMemoryBackend(E2E_FILES_PATH))
+    : SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && process.env.NODE_ENV !== 'test'
       ? createSupabaseBackend({
           url: SUPABASE_URL,
           serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,

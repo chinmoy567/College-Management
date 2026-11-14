@@ -33,7 +33,7 @@ test('[BOOK-05] browse, pay, the reader opens and the book is in My Books at 360
 
   await expect(page).toHaveURL(/\/read$/, { timeout: 60_000 });
   await expect(page.getByTestId('pdf-page')).toHaveText('Page 1 of 3', { timeout: 90_000 });
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByTestId('pdf-reader').getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByTestId('pdf-page')).toHaveText('Page 2 of 3');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
   const box = await page.locator('canvas').first().boundingBox();

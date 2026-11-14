@@ -22,6 +22,7 @@ import { noticesRouter, publicNoticesRouter } from './modules/notices/routes';
 import { notificationPrefsRouter, notificationsRouter } from './modules/notifications/routes';
 import { materialsRouter, onlineClassesRouter } from './modules/learning/routes';
 import { adminBooksRouter, booksRouter, publicBooksRouter } from './modules/books/routes';
+import { E2E_FILES_PATH, E2E_STORAGE, e2eMemory } from './lib/files';
 import { adminAiRouter, aiRouter } from './modules/ai/routes';
 import { communityRouter, moderationRouter, publicProfileRouter, reportsRouter } from './modules/feed/routes';
 
@@ -129,6 +130,12 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/materials', ...authChain, materialsRouter);
   app.use('/api/books', ...authChain, booksRouter);
   app.use('/api/ai', ...authChain, aiRouter);
+  if (E2E_STORAGE)
+    app.get(`${E2E_FILES_PATH}/:kind/:bucket/*`, (req, res) => {
+      const buf = e2eMemory?.files.get(`${req.params.bucket}/${(req.params as Record<string, string>)[0]}`);
+      if (!buf) return void res.status(404).end();
+      res.type(/\.pdf$/.test(req.path) ? 'application/pdf' : /\.webp$/.test(req.path) ? 'image/webp' : 'application/octet-stream').send(buf);
+    });
   app.use('/api', (_req, _res, next) => next(new AppError('NOT_FOUND', 404, 'Not found.')));
 
   const nextHandler = opts.nextHandler;
