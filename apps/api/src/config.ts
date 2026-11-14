@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import path from 'node:path';
+import { config as loadDotenv } from 'dotenv';
+loadDotenv({ path: path.resolve(__dirname, '../../../.env') });
 import { z } from 'zod';
 
 const bool = z.enum(['true', 'false']).transform((v) => v === 'true');
