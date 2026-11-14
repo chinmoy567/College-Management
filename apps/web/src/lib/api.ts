@@ -11,6 +11,15 @@ export class ApiError extends Error {
   }
 }
 
+/** 401 -> /login, FIRST_LOGIN_REQUIRED -> /complete-profile, STEP_UP_REQUIRED -> Admin step (FE-07). Wrong-password errors on the forms are left to the form. */
+export function redirectFor(code: string | undefined, status: number, path: string): void {
+  if (typeof window === 'undefined') return;
+  const here = window.location.pathname;
+  const target = code === 'FIRST_LOGIN_REQUIRED' ? '/complete-profile' : code === 'STEP_UP_REQUIRED' ? '/login?role=admin' : status === 401 && code !== 'INVALID_CREDENTIALS' && !path.startsWith('/auth/login') ? '/login' : null;
+  if (target && !here.startsWith(target.split('?')[0]!) && !PUBLIC_PATHS.some((p) => here === p)) window.location.assign(target);
+}
+const PUBLIC_PATHS = ['/', '/login', '/forgot-password', '/reset-password'];
+
 /** Fetch wrapper: same-origin cookie, CSRF header on writes, parses the shared error shape. */
 export async function api<T>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
   const { json, headers, ...rest } = init;
@@ -26,6 +35,7 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
+    redirectFor(body?.error.code, res.status, path);
     throw new ApiError(
       body?.error.code ?? 'INTERNAL_ERROR',
       res.status,
