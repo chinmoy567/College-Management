@@ -143,6 +143,7 @@ export async function deleteMaterial(actor: Actor, id: string): Promise<void> {
   const m = await loadManageable(actor, id);
   await prisma.$transaction(async (tx) => {
     await tx.material.update({ where: { id }, data: { deletedAt: new Date() } });
+    await tx.materialChunk.deleteMany({ where: { materialId: id } });
     await softDeleteObjects(m.files.map((f) => f.fileId), tx);
   });
 }

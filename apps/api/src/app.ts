@@ -22,6 +22,7 @@ import { noticesRouter, publicNoticesRouter } from './modules/notices/routes';
 import { notificationPrefsRouter, notificationsRouter } from './modules/notifications/routes';
 import { materialsRouter, onlineClassesRouter } from './modules/learning/routes';
 import { adminBooksRouter, booksRouter, publicBooksRouter } from './modules/books/routes';
+import { adminAiRouter, aiRouter } from './modules/ai/routes';
 import { communityRouter, moderationRouter, publicProfileRouter, reportsRouter } from './modules/feed/routes';
 
 export interface AppOptions {
@@ -112,6 +113,7 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/users', ...authChain, publicProfileRouter);
   app.use('/api/users', ...authChain, usersRouter);
   app.use('/api/admin/books', ...authChain, adminBooksRouter);
+  app.use('/api/admin/ai', ...authChain, adminAiRouter);
   app.use('/api/admin', ...authChain, adminStudentsRouter);
   app.use('/api/admin', ...authChain, adminAttendanceRouter);
   app.use('/api/admin', ...authChain, moderationRouter);
@@ -124,6 +126,7 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/classes/online', ...authChain, onlineClassesRouter);
   app.use('/api/materials', ...authChain, materialsRouter);
   app.use('/api/books', ...authChain, booksRouter);
+  app.use('/api/ai', ...authChain, aiRouter);
   app.use('/api', (_req, _res, next) => next(new AppError('NOT_FOUND', 404, 'Not found.')));
 
   const nextHandler = opts.nextHandler;

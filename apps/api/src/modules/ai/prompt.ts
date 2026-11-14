@@ -80,7 +80,14 @@ export function chunkText(text: string, size = 1500): string[] {
   for (const p of paragraphs) {
     if (p.length > size) {
       flush();
-      for (let i = 0; i < p.length; i += size) out.push(p.slice(i, i + size));
+      for (let i = 0; i < p.length; ) {
+        let end = Math.min(i + size, p.length);
+        // Prefer to cut at a space in the last fifth of the chunk, so words are not split.
+        const space = end < p.length ? p.lastIndexOf(' ', end) : -1;
+        if (space > i + size * 0.8) end = space;
+        out.push(p.slice(i, end).trim());
+        i = end;
+      }
       continue;
     }
     if (cur && cur.length + p.length + 2 > size) flush();
