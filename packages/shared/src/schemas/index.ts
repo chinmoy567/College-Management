@@ -4,3 +4,4 @@ export * from './academics';
 export * from './users';
 export * from './schedule';
 export * from './exams';
+export * from './community';

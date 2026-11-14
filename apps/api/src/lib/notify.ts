@@ -24,3 +24,22 @@ export async function notify(
     defer(() => emitter(userId, { id: n.id, type, text, unread }));
   }
 }
+
+/** Same as notify() for a large audience: one insert and one unread-count query instead of two queries per user. */
+export async function notifyBulk(
+  userIds: string[],
+  type: string,
+  ref: { type?: string; id?: string } | null,
+  text: string,
+  db: Db = prisma,
+): Promise<void> {
+  const ids = [...new Set(userIds)];
+  if (ids.length === 0) return;
+  const created = await db.notification.createManyAndReturn({
+    data: ids.map((userId) => ({ userId, type, refType: ref?.type, refId: ref?.id, text })),
+    select: { id: true, userId: true },
+  });
+  const counts = await db.notification.groupBy({ by: ['userId'], where: { userId: { in: ids }, readAt: null }, _count: { _all: true } });
+  const unread = new Map(counts.map((c) => [c.userId, c._count._all]));
+  for (const n of created) defer(() => emitter(n.userId, { id: n.id, type, text, unread: unread.get(n.userId) ?? 1 }));
+}
