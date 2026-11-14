@@ -10,15 +10,18 @@
   "dependencies": {
     "@cms/shared": "*",
     "@prisma/client": "^6.0.0",
+    "@supabase/supabase-js": "^2.119.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
+    "file-type": "^16.5.4",
     "helmet": "^8.0.0",
     "next": "^15.1.0",
     "pg-boss": "^10.1.0",
     "pino": "^9.5.0",
     "pino-http": "^10.3.0",
+    "sharp": "^0.35.5",
     "socket.io": "^4.8.0",
     "zod": "^3.23.0"
   },
