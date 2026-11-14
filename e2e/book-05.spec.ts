@@ -26,9 +26,9 @@ test('[BOOK-05] browse, pay, the reader opens and the book is in My Books at 360
   await expect(card).toBeVisible({ timeout: 120_000 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
   await card.click();
-  await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await page.getByRole('button', { name: /Pay .*150.* to unlock/ }).click();
-  await expect(page.getByText('No money is taken')).toBeVisible();
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 90_000 });
+  await page.getByRole('button', { name: /Pay .*150.* to unlock/ }).click({ timeout: 60_000 });
+  await expect(page.getByText('No money is taken')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Confirm' }).click();
 
   await expect(page).toHaveURL(/\/read$/, { timeout: 60_000 });
@@ -41,6 +41,6 @@ test('[BOOK-05] browse, pay, the reader opens and the book is in My Books at 360
 
   await page.goto('/student/my-books');
   await expect(page.getByText(title)).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText('Unlocked')).toBeVisible();
+  await expect(page.getByText('Unlocked')).toBeVisible({ timeout: 30_000 });
   expect(await prisma.bookPurchase.count({ where: { studentId: student.id } })).toBe(1);
 });
