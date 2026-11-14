@@ -71,3 +71,67 @@ export function createPermissions(store: PermissionStore) {
 
   return { teachesOffering, mentorsSection, teachesInSection, canManageOffering, isEnrolled, canTakeAttendance };
 }
+
+// ───── Prisma-backed store + per-request memo ─────
+import type { Request } from 'express';
+import { prisma } from '../db';
+
+/** Each call is one indexed query. Ended offerings never grant teaching rights. */
+export const prismaPermissionStore: PermissionStore = {
+  async getOffering(id) {
+    const o = await prisma.courseOffering.findUnique({ where: { id }, select: { teacherId: true, sectionId: true, endedAt: true } });
+    return o ? { teacherId: o.endedAt ? null : o.teacherId, sectionId: o.sectionId } : null;
+  },
+  async getSection(id) {
+    const s = await prisma.section.findFirst({ where: { id, deletedAt: null }, select: { mentorTeacherId: true } });
+    return s ? { mentorTeacherId: s.mentorTeacherId } : null;
+  },
+  async teachesAnyOfferingInSection(teacherId, sectionId) {
+    return !!(await prisma.courseOffering.findFirst({ where: { teacherId, sectionId, endedAt: null }, select: { id: true } }));
+  },
+  async hasActiveEnrollment(studentId, offeringId) {
+    return !!(await prisma.enrollment.findFirst({
+      where: { studentId, courseOfferingId: offeringId, status: 'active' },
+      select: { id: true },
+    }));
+  },
+  async getMeeting(id) {
+    const m = await prisma.classMeeting.findUnique({
+      where: { id },
+      select: { teacherId: true, substituteTeacherId: true, offerings: { select: { courseOffering: { select: { sectionId: true } } } } },
+    });
+    return m
+      ? {
+          teacherId: m.teacherId,
+          substituteId: m.substituteTeacherId,
+          sectionIds: [...new Set(m.offerings.map((o) => o.courseOffering.sectionId))],
+        }
+      : null;
+  },
+};
+
+/** Wraps a store so repeated lookups inside one request hit the database once (`req.actorCache`). */
+export function memoStore(store: PermissionStore, cache: Map<string, Promise<unknown>>): PermissionStore {
+  const memo = <A extends unknown[], R>(name: string, fn: (...a: A) => Promise<R>) =>
+    (...a: A): Promise<R> => {
+      const key = `${name}:${a.join('|')}`;
+      let hit = cache.get(key) as Promise<R> | undefined;
+      if (!hit) cache.set(key, (hit = fn(...a)));
+      return hit;
+    };
+  return {
+    getOffering: memo('o', store.getOffering),
+    getSection: memo('s', store.getSection),
+    teachesAnyOfferingInSection: memo('t', store.teachesAnyOfferingInSection),
+    hasActiveEnrollment: memo('e', store.hasActiveEnrollment),
+    getMeeting: memo('m', store.getMeeting),
+  };
+}
+
+const caches = new WeakMap<Request, Map<string, Promise<unknown>>>();
+/** Policy helpers for this request; lookups are memoised per request. */
+export function permissionsFor(req: Request) {
+  let cache = caches.get(req);
+  if (!cache) caches.set(req, (cache = new Map()));
+  return createPermissions(memoStore(prismaPermissionStore, cache));
+}

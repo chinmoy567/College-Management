@@ -4,6 +4,8 @@ import type { Express } from 'express';
 import type { PrismaClient, User } from '@prisma/client';
 import { hashPassword } from '../apps/api/src/lib/crypto';
 import { createApp } from '../apps/api/src/app';
+import { createSession } from '../apps/api/src/modules/auth/sessions';
+import { cookieName } from '../apps/api/src/middleware/session';
 import { setEmailSink, type EmailMessage } from '../apps/api/src/modules/mail/queue';
 
 /** Env the API needs; set once for integration tests. */
@@ -91,6 +93,8 @@ export function client(app: Express, cookie = '') {
     get: (url: string) => c.req('get', url),
     post: (url: string, body: object = {}) => c.req('post', url, body),
     patch: (url: string, body: object = {}) => c.req('patch', url, body),
+    put: (url: string, body: object = {}) => c.req('put', url, body),
+    delete: (url: string, body: object = {}) => c.req('delete', url, body),
   };
   return c;
 }
@@ -99,4 +103,21 @@ export async function loginAs(app: Express, identifier: string, password = PW) {
   const res = await request(app).post('/api/auth/login').set('X-Requested-With', 'cms').send({ identifier, password });
   const raw = (res.headers['set-cookie'] as unknown as string[] | undefined)?.[0] ?? '';
   return { res, c: client(app, raw.split(';')[0]), setCookie: raw };
+}
+
+/** A signed-in client for any existing user, without going through the login rate limits. */
+export async function clientFor(app: Express, user: User) {
+  const { token } = await createSession(user, { stepUpPending: false });
+  return client(app, `${cookieName()}=${token}`);
+}
+
+/** Admin who finished password change and TOTP set-up, with a live session. */
+export async function adminClient(prisma: PrismaClient, app: Express) {
+  const admin = await prisma.user.create({
+    data: {
+      role: 'admin', email: `${uniq('admin')}@x.test`, passwordHash: await hashPassword(PW),
+      mustChangePassword: false, totpEnabledAt: new Date(), firstLogin: false,
+    },
+  });
+  return { admin, c: await clientFor(app, admin) };
 }

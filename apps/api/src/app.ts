@@ -11,6 +11,9 @@ import { AppError } from './lib/http';
 import { authChain, csrfGuard } from './middleware/session';
 import { authedAuthRouter, publicAuthRouter } from './modules/auth/routes';
 import { meRouter } from './modules/me/routes';
+import { academicsRouter } from './modules/academics/routes';
+import { usersRouter } from './modules/users/routes';
+import { adminStudentsRouter } from './modules/admin/students';
 
 export interface AppOptions {
   /** Hand non-API requests to Next.js. */
@@ -87,6 +90,9 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/auth', publicAuthRouter);
   app.use('/api/auth', authedAuthRouter);
   app.use('/api/me', ...authChain, meRouter);
+  app.use('/api/academics', ...authChain, academicsRouter);
+  app.use('/api/users', ...authChain, usersRouter);
+  app.use('/api/admin', ...authChain, adminStudentsRouter);
   app.use('/api', (_req, _res, next) => next(new AppError('NOT_FOUND', 404, 'Not found.')));
 
   const nextHandler = opts.nextHandler;

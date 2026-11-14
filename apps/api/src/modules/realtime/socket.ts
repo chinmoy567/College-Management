@@ -4,6 +4,8 @@ import { Server } from 'socket.io';
 import { prisma } from '../../db';
 import { isLive, lookup, setRevokeListener } from '../auth/sessions';
 import { cookieName } from '../../middleware/session';
+import { setRoomHook } from '../../lib/chatMembership';
+import { setNotifyEmitter } from '../../lib/notify';
 
 interface SocketData {
   userId: string;
@@ -47,6 +49,15 @@ export function createSocketServer(server: HttpServer, opts: { revalidateMs?: nu
         socket.emit('session:revoked');
         socket.disconnect(true);
       }
+    }
+  });
+  setNotifyEmitter((userId, payload) => void io.to(`user:${userId}`).emit('notif:new', payload));
+  // Live sockets follow membership changes (07 §2.3); chat events themselves arrive in M9.
+  setRoomHook((userId, diff) => {
+    for (const [, socket] of io.sockets.sockets) {
+      if ((socket.data as SocketData).userId !== userId) continue;
+      for (const c of diff.joined) void socket.join(`conv:${c}`);
+      for (const c of diff.left) void socket.leave(`conv:${c}`);
     }
   });
   return io;
