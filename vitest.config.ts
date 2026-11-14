@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import 'dotenv/config';
 import { defineConfig } from 'vitest/config';
 
 const shared = fileURLToPath(new URL('./packages/shared/src/index.ts', import.meta.url));
@@ -6,7 +7,8 @@ const shared = fileURLToPath(new URL('./packages/shared/src/index.ts', import.me
 export default defineConfig({
   resolve: { alias: { '@cms/shared': shared } },
   test: {
-    // `unit` needs no DB. `integration` (files named *.int.test.ts) needs TEST_DATABASE_URL.
+    // `unit` needs no DB. `integration` (files named *.int.test.ts) runs only when TEST_DATABASE_URL is set,
+    // so `npm test` still passes without a database; CI and `/spec-check` always set it.
     projects: [
       {
         extends: true,
@@ -18,7 +20,7 @@ export default defineConfig({
           env: { NODE_ENV: 'test' },
         },
       },
-      {
+      ...(process.env.TEST_DATABASE_URL ? [{
         extends: true,
         test: {
           name: 'integration',
@@ -29,7 +31,7 @@ export default defineConfig({
           fileParallelism: false,
           env: { NODE_ENV: 'test' },
         },
-      },
+      }] : []),
     ],
   },
 });

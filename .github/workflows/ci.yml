@@ -24,6 +24,12 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npx prisma migrate deploy
+      - name: Schema drift check (schema.prisma vs migrations)
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE cms_shadow"
+          npm run db:drift
+        env:
+          SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cms_shadow
       - run: npm test
       - run: npm run spec:check -- --strict
       - run: npm run build
