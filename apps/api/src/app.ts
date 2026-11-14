@@ -18,6 +18,7 @@ import { scheduleRouter } from './modules/schedule/routes';
 import { adminAttendanceRouter, attendanceRouter } from './modules/attendance/routes';
 import { adminExamsRouter, examsRouter } from './modules/exams/routes';
 import { chatFilesRouter, chatRouter } from './modules/chat/routes';
+import { publicCollegeRouter } from './modules/public/routes';
 import { noticesRouter, publicNoticesRouter } from './modules/notices/routes';
 import { notificationPrefsRouter, notificationsRouter } from './modules/notifications/routes';
 import { materialsRouter, onlineClassesRouter } from './modules/learning/routes';
@@ -106,6 +107,7 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/auth', authedAuthRouter);
   app.use('/api/public/notices', publicNoticesRouter);
   app.use('/api/public/books', publicBooksRouter);
+  app.use('/api/public/college', publicCollegeRouter);
   app.use('/api/me', ...authChain, meRouter);
   app.use('/api/me', ...authChain, notificationPrefsRouter);
   app.use('/api/chat', ...authChain, chatRouter);
