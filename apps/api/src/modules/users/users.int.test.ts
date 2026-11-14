@@ -168,7 +168,10 @@ describe('[ACAD-03] CSV import', () => {
       `Dup Roll,1,${mail('d')},${sess.name},science,A`,
       `,6,${mail('n')},${sess.name},science,A`,
     ];
-    const before = await prisma.user.count();
+    // Count only this file's rows: other test files create users in the same database at the same time.
+    const emails = rows.map((r) => r.split(',')[2]!).filter(Boolean);
+    const countMine = () => prisma.user.count({ where: { email: { in: emails } } });
+    const before = await countMine();
     const dry = await csvUpload('/api/users/import/students?dryRun=true', header + rows.join('\n'));
     expect(dry.status).toBe(200);
     expect(dry.body.total).toBe(7);
@@ -178,7 +181,7 @@ describe('[ACAD-03] CSV import', () => {
     const real = await csvUpload('/api/users/import/students', header + rows.join('\n'));
     expect(real.status).toBe(400);
     expect(real.body.errors).toHaveLength(6);
-    expect(await prisma.user.count()).toBe(before);
+    expect(await countMine()).toBe(before);
     // deny and bad uploads
     expect((await csvUpload('/api/users/import/students', header, await clientFor(app, await makeTeacher(prisma)))).status).toBe(403);
     expect((await request(app).post('/api/users/import/students').set('X-Requested-With', 'cms').set('Cookie', admin.c.cookie)).status).toBe(400);
