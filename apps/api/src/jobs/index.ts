@@ -21,6 +21,9 @@ export async function registerJob<T extends object>(
   });
 }
 
+/** True once pg-boss is running; exam code uses it to skip scheduling in tests (correctness never depends on a job). */
+export const jobsRunning = (): boolean => boss !== undefined;
+
 export async function stopJobs(): Promise<void> {
   await boss?.stop();
   boss = undefined;

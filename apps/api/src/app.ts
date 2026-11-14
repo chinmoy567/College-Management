@@ -16,6 +16,7 @@ import { usersRouter } from './modules/users/routes';
 import { adminStudentsRouter } from './modules/admin/students';
 import { scheduleRouter } from './modules/schedule/routes';
 import { adminAttendanceRouter, attendanceRouter } from './modules/attendance/routes';
+import { adminExamsRouter, examsRouter } from './modules/exams/routes';
 
 export interface AppOptions {
   /** Hand non-API requests to Next.js. */
@@ -98,8 +99,10 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/users', ...authChain, usersRouter);
   app.use('/api/admin', ...authChain, adminStudentsRouter);
   app.use('/api/admin', ...authChain, adminAttendanceRouter);
+  app.use('/api/admin/exams', ...authChain, adminExamsRouter);
   app.use('/api/schedule', ...authChain, scheduleRouter);
   app.use('/api/attendance', ...authChain, attendanceRouter);
+  app.use('/api/exams', ...authChain, examsRouter);
   app.use('/api', (_req, _res, next) => next(new AppError('NOT_FOUND', 404, 'Not found.')));
 
   const nextHandler = opts.nextHandler;

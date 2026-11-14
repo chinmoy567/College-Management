@@ -8,6 +8,7 @@ import { prisma } from './db';
 import { startJobs, stopJobs } from './jobs';
 import { registerEmailWorker } from './modules/mail/queue';
 import { registerMeetingJob } from './modules/schedule/job';
+import { registerExamJobs } from './modules/exams/jobs';
 import { createSocketServer } from './modules/realtime/socket';
 
 async function main() {
@@ -26,6 +27,7 @@ async function main() {
   await startJobs(config.DATABASE_URL);
   await registerEmailWorker();
   await registerMeetingJob();
+  await registerExamJobs();
 
   server.listen(config.PORT, () => logger.info({ port: config.PORT }, 'server listening'));
 
