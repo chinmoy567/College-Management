@@ -11,6 +11,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { SETTING_DEFAULTS, SETTING_KEYS } from '../packages/shared/src/settings';
 
 export interface SeedEnv {
+  [key: string]: string | undefined;
   SEED_ADMIN_EMAIL?: string;
   SEED_ADMIN_PASSWORD?: string;
   SEED_DEMO?: string;
