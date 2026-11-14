@@ -1,0 +1,38 @@
+{
+  "name": "college-management",
+  "private": true,
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w @cms/shared",
+    "dev": "npm run build:shared && npm run dev -w @cms/api",
+    "build": "npm run build:shared && npm run build -w @cms/web && npm run build -w @cms/api",
+    "start": "node apps/api/dist/server.js",
+    "typecheck": "npm run build:shared && npm run typecheck -w @cms/shared -w @cms/api -w @cms/web",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "spec:check": "tsx scripts/spec-check.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "tsx prisma/seed.ts --demo"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.2.7"
+  }
+}
