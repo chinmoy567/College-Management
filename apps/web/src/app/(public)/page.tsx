@@ -32,7 +32,6 @@ export default async function Landing() {
     <>
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
         <div className="flex items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {college?.logoUrl && <img src={college.logoUrl} alt="" width={36} height={36} className="h-9 w-9 rounded-full object-cover" />}
           <span className="text-lg font-semibold">{name}</span>
         </div>
@@ -84,7 +83,6 @@ export default async function Landing() {
             <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
               {books.items.map((b) => (
                 <li key={b.id} className="w-32 shrink-0 snap-start">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {b.coverUrl && <img src={b.coverUrl} alt="" loading="lazy" width={128} height={170} className="h-44 w-32 rounded-lg object-cover" />}
                   <p className="mt-1 line-clamp-2 text-base">{b.title}</p>
                 </li>

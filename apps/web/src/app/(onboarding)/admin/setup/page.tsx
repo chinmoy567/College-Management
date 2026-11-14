@@ -82,7 +82,6 @@ function Totp({ done }: { done: (codes: string[]) => void }) {
       <h1 className="text-2xl font-semibold">Step 2: two-step login</h1>
       <p className="text-base text-slate-700">Scan this QR code with an authenticator app, then enter the 6-digit code.</p>
       {qr.isPending ? <ListSkeleton rows={1} /> : qr.isError ? <p role="alert" className="text-base text-red-700">Could not start setup. Reload the page.</p> : (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={qr.data.qrDataUrl} alt="Authenticator QR code" width={200} height={200} className="mx-auto" />
       )}
       <Field label="6-digit code"><Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value)} /></Field>

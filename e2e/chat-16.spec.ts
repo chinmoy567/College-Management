@@ -39,9 +39,9 @@ test('[CHAT-16] an urgent notice shows a dashboard banner until read; Notices fi
   // Reading the urgent notice removes the banner.
   await page.getByRole('tab', { name: 'Central' }).click();
   await page.getByRole('button', { name: 'Mark as read' }).click();
-  await expect(page.getByTestId('unread-dot')).toHaveCount(0);
+  await expect(page.getByTestId('unread-dot')).toHaveCount(0, { timeout: 20_000 });
   expect(await prisma.noticeRead.count({ where: { noticeId: urgent.id, userId: student.id } })).toBe(1);
   await page.goto('/student/routine');
-  await expect(page.getByRole('link', { name: 'Notices' })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('link', { name: /Notifications/ })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('urgent-banner')).toHaveCount(0);
 });

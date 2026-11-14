@@ -1,13 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { RoleShell } from '@/components/RoleShell';
+import { AppShell } from '@/components/AppShell';
 
 export default function TeacherLayout({ children }: { children: ReactNode }) {
-  return <RoleShell role="teacher" links={[
-        { href: '/teacher/attendance', label: 'Attendance' },
-        { href: '/teacher/content', label: 'Content' },
-        { href: '/teacher/exams', label: 'Exams' },
-        { href: '/feed', label: 'Feed' },
-      ]}>{children}</RoleShell>;
+  return <AppShell role="teacher">{children}</AppShell>;
 }
