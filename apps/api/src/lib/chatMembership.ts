@@ -14,6 +14,9 @@ export const setRoomHook = (fn: RoomHook): void => {
   roomHook = fn;
 };
 
+/** Tells live sockets of the user to join/leave rooms (also used when a direct chat is created). */
+export const applyRoomDiff = (userId: string, diff: RoomDiff): void => roomHook(userId, diff);
+
 /** Conversation row for a group or section. Idempotent. */
 export async function ensureConversation(db: Db, type: 'group' | 'section', refId: string): Promise<string> {
   const c = await db.conversation.upsert({ where: { type_refId: { type, refId } }, create: { type, refId }, update: {} });

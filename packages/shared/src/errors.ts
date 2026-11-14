@@ -27,6 +27,8 @@ export const ERROR_CODES = [
   'MEETING_HAS_ATTENDANCE',
   'RATE_LIMITED',
   'MUTED',
+  'BLOCKED',
+  'BLOCKED_WORD',
   'INTERNAL_ERROR',
 ] as const;
 

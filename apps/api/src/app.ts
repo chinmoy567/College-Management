@@ -17,6 +17,9 @@ import { adminStudentsRouter } from './modules/admin/students';
 import { scheduleRouter } from './modules/schedule/routes';
 import { adminAttendanceRouter, attendanceRouter } from './modules/attendance/routes';
 import { adminExamsRouter, examsRouter } from './modules/exams/routes';
+import { chatFilesRouter, chatRouter } from './modules/chat/routes';
+import { noticesRouter, publicNoticesRouter } from './modules/notices/routes';
+import { notificationPrefsRouter, notificationsRouter } from './modules/notifications/routes';
 import { communityRouter, moderationRouter, publicProfileRouter, reportsRouter } from './modules/feed/routes';
 
 export interface AppOptions {
@@ -95,7 +98,13 @@ export function createApp(opts: AppOptions = {}): Express {
   // Public auth routes first (never behind the session chain), then the session-protected ones.
   app.use('/api/auth', publicAuthRouter);
   app.use('/api/auth', authedAuthRouter);
+  app.use('/api/public/notices', publicNoticesRouter);
   app.use('/api/me', ...authChain, meRouter);
+  app.use('/api/me', ...authChain, notificationPrefsRouter);
+  app.use('/api/chat', ...authChain, chatRouter);
+  app.use('/api/files', ...authChain, chatFilesRouter);
+  app.use('/api/notices', ...authChain, noticesRouter);
+  app.use('/api/notifications', ...authChain, notificationsRouter);
   app.use('/api/academics', ...authChain, academicsRouter);
   app.use('/api/users', ...authChain, publicProfileRouter);
   app.use('/api/users', ...authChain, usersRouter);
