@@ -20,6 +20,7 @@
     "test:e2e": "playwright test",
     "spec:check": "tsx scripts/spec-check.ts",
     "db:migrate": "prisma migrate deploy",
+    "db:drift": "tsx scripts/db-drift-check.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed.ts --demo"
   },
