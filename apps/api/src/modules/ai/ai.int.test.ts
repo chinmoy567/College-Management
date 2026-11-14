@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { DEFAULT_AI_MODEL } from '@cms/shared';
 import { prisma } from '../../db';
 import { setClock } from '../../lib/clock';
 import { AppError } from '../../lib/http';
@@ -304,7 +305,7 @@ describe('AI study assistant', () => {
     await prisma.setting.deleteMany({ where: { key: { in: ['ai_model', 'ai_provider'] } } });
     invalidateAiSettings();
     await say(s, conv, 'fourth');
-    expect(fake.calls.at(-1)!.model).toBe('llama-3.3-70b-versatile');
+    expect(fake.calls.at(-1)!.model).toBe(DEFAULT_AI_MODEL);
 
     // the key and the SDK exist only in apps/api; nothing in the web app or its build mentions them
     const web = path.resolve(__dirname, '../../../../web');

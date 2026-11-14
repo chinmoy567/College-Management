@@ -7,8 +7,8 @@ export interface SettingDef {
   readonly default: unknown;
 }
 
-/** Groq production model, Llama 70B-class, checked against console.groq.com/docs/models on 2026-11-14. */
-export const DEFAULT_AI_MODEL = 'llama-3.3-70b-versatile';
+/** Groq chat model. Checked against the live Groq models list on 2026-11-15: llama-3.3-70b-versatile is no longer available to this account. The Admin can change it in Settings. */
+export const DEFAULT_AI_MODEL = 'openai/gpt-oss-120b';
 
 export const SETTING_DEFAULTS = {
   attendance_threshold: 75,
