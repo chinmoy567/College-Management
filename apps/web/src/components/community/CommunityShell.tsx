@@ -13,7 +13,8 @@ const HOME = { admin: '/admin', teacher: '/teacher/attendance', student: '/stude
 
 export const useMe = () =>
   useQuery({
-    queryKey: ['me'],
+    // A different key from the role shells: they cache the raw `{ user }` response under ['me'].
+    queryKey: ['me', 'user'],
     queryFn: async () => (await api<{ user: Me & { stepUpPending?: boolean } }>('/auth/me')).user,
     retry: false,
   });
