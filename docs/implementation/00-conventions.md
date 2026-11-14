@@ -46,7 +46,7 @@ Module folder template (used by `cms-new-module`): `routes.ts` (authenticate →
 - `next.config` `output` default (served by Express via `next({ dev, dir })`), not standalone.
 
 ### 2.5 Testing tooling
-- **Vitest** workspace config: `unit` (no DB) and `integration` projects. Integration uses a disposable Postgres 15: locally Docker `postgres:15`, in CI a service container. `globalSetup` runs `prisma migrate reset --force --skip-seed` once per run; each test file wraps work in a transaction or truncates touched tables (`TRUNCATE … CASCADE`) in `beforeEach`.
+- **Vitest** workspace config: `unit` (no DB) and `integration` projects. Integration uses a disposable Postgres 15: locally Docker `postgres:15`, in CI a service container. `globalSetup` creates a fresh empty database on the `TEST_DATABASE_URL` server, runs `prisma migrate deploy` on it and drops it after the run (no `migrate reset`, so existing data is never touched); each test file wraps work in a transaction or truncates touched tables (`TRUNCATE … CASCADE`) in `beforeEach`.
 - `test/factories.ts`: `makeAdmin()`, `makeTeacher()`, `makeStudent({ sectionId })`, `loginAs(user)` → supertest agent with cookie + CSRF header. Grows with each milestone.
 - **Playwright**: projects `phone` (360×740, default) and `desktop` (1280×800). `webServer` starts the app against the test DB with demo seed.
 - `scripts/spec-check.ts`: parse `**PREFIX-NN**` from `docs/spec/*.md`, grep `[PREFIX-NN]` in `**/*.test.ts` and `e2e/**/*.spec.ts`, print covered/missing, `--spec NN`, `--strict`. `scripts/spec-check.config.json` lists finished milestones for CI strict mode.

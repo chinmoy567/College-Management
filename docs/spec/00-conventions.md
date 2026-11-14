@@ -98,7 +98,7 @@ Modules: `auth, users, academics, schedule, attendance, feed, chat, notices, not
 
 ## 9. Testing
 
-- Vitest for unit + integration (API tests with supertest against a disposable Postgres; `prisma migrate reset` per run).
+- Vitest for unit + integration (API tests with supertest against a disposable Postgres; each run creates its own empty database from `TEST_DATABASE_URL`, applies `prisma migrate deploy` and drops it afterwards; integration tests run only when `TEST_DATABASE_URL` is set).
 - Playwright for a few critical end-to-end paths at 360 × 740 viewport (login, take attendance, take exam, chat send).
 - Every spec ends with an **Acceptance** list of IDs (`AUTH-01`, `SCH-05` …). Each ID needs at least one test whose name starts with the ID in brackets:
   ```ts
