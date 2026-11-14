@@ -1,6 +1,7 @@
 import { Prisma, type Role } from '@prisma/client';
 import { SECTION_MAX } from '@cms/shared';
 import { prisma } from '../../db';
+import { transaction } from '../../lib/afterCommit';
 import { SECTION_FULL_MESSAGE, activeStudentCount, lockSection } from '../../lib/activeStudent';
 import { audit } from '../../lib/audit';
 import { chatMembership } from '../../lib/chatMembership';
@@ -83,7 +84,7 @@ export async function insertStudent(tx: Tx, input: NewStudent, sessionName: stri
 export async function createStudent(actorId: string, input: NewStudent & { password?: string }, ip?: string) {
   const password = resolvePassword(input.password, input.loginId ?? null);
   const passwordHash = await hashPassword(password);
-  const created = await prisma.$transaction(async (tx) => {
+  const created = await transaction(async (tx) => {
     const sec = await lockSection(tx, input.sectionId);
     if (!sec || sec.deleted) throw new AppError('NOT_FOUND', 404, 'Section not found.');
     await closedSessionGuard({ sectionId: input.sectionId }, tx);
@@ -121,7 +122,7 @@ export async function insertTeacher(tx: Tx, input: NewTeacher, passwordHash: str
 export async function createTeacher(actorId: string, input: NewTeacher & { password?: string }, ip?: string) {
   const password = resolvePassword(input.password, input.loginId ?? null);
   const passwordHash = await hashPassword(password);
-  const created = await prisma.$transaction(async (tx) => {
+  const created = await transaction(async (tx) => {
     const t = await insertTeacher(tx, input, passwordHash);
     await audit(actorId, 'teacher.create', 'user', t.id, undefined, ip, tx);
     return t;
@@ -150,7 +151,7 @@ export interface UserPatch {
 }
 
 export async function editUser(actorId: string, userId: string, patch: UserPatch, ip?: string): Promise<{ emailChanged: boolean; email: string | null }> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const u = await managedUser(tx, userId);
     const isStudent = u.role === 'student';
     if (isStudent) await closedSessionGuard({ studentId: userId }, tx);
@@ -202,30 +203,30 @@ export async function editUser(actorId: string, userId: string, patch: UserPatch
 export async function resetPassword(actorId: string, userId: string, typed: string | undefined, ip?: string): Promise<string> {
   const u = await prisma.user.findFirst({ where: { id: userId, role: { in: ['student', 'teacher'] }, status: { not: 'deleted' } } });
   if (!u) throw new AppError('NOT_FOUND', 404, 'User not found.');
-  if (u.role === 'student') await closedSessionGuard({ studentId: userId });
   const password = resolvePassword(typed, u.loginId);
   const passwordHash = await hashPassword(password);
-  await prisma.$transaction(async (tx) => {
+  await transaction(async (tx) => {
+    if (u.role === 'student') await closedSessionGuard({ studentId: userId }, tx);
     await tx.user.update({ where: { id: userId }, data: { passwordHash, mustChangePassword: true, firstLogin: true } });
+    await revokeAllSessions(userId, undefined, tx); // same transaction: never a new password with live old sessions
     await audit(actorId, 'user.reset_password', 'user', userId, undefined, ip, tx);
   });
-  await revokeAllSessions(userId);
   return password;
 }
 
 export async function deactivate(actorId: string, userId: string, ip?: string): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  await transaction(async (tx) => {
     const u = await managedUser(tx, userId);
     if (u.role === 'student') await closedSessionGuard({ studentId: userId }, tx);
     if (u.status !== 'active') throw new AppError('CONFLICT', 409, 'Only an active account can be deactivated.');
     await tx.user.update({ where: { id: userId }, data: { status: 'inactive' } });
+    await revokeAllSessions(userId, undefined, tx);
     await audit(actorId, 'user.deactivate', 'user', userId, undefined, ip, tx);
   });
-  await revokeAllSessions(userId);
 }
 
 export async function reactivate(actorId: string, userId: string, ip?: string): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  await transaction(async (tx) => {
     const u = await managedUser(tx, userId);
     if (u.status !== 'inactive') throw new AppError('CONFLICT', 409, 'Only an inactive account can be reactivated.');
     if (u.student) {
@@ -243,12 +244,14 @@ export async function reactivate(actorId: string, userId: string, ip?: string): 
 
 /** Permanent delete = anonymise (§5.5). Posts, comments and messages stay under "Deleted user". */
 export async function anonymise(actorId: string, userId: string, confirmLoginId: string, ip?: string): Promise<void> {
-  await prisma.$transaction(
+  await transaction(
     async (tx) => {
       const u = await tx.user.findFirst({ where: { id: userId, role: { in: ['student', 'teacher'] } } });
       if (!u || u.status === 'deleted') throw new AppError('NOT_FOUND', 404, 'User not found.');
       if (!u.loginId || u.loginId.toLowerCase() !== confirmLoginId.toLowerCase())
         throw new AppError('VALIDATION_ERROR', 400, 'Type the login ID to confirm.', { confirmLoginId: 'mismatch' });
+      const attempt = await tx.examAttempt.count({ where: { studentId: userId, status: 'in_progress' } });
+      if (attempt > 0) throw new AppError('ATTEMPT_IN_PROGRESS', 409, 'This student has an exam in progress. Delete after it ends.');
       if (u.role === 'teacher') {
         const running = await tx.courseOffering.count({
           where: { teacherId: userId, endedAt: null, section: { deletedAt: null, group: { session: { status: 'active' } } } },
@@ -280,11 +283,11 @@ export async function anonymise(actorId: string, userId: string, confirmLoginId:
         await tx.teacherProfile.update({ where: { userId }, data: { name: 'Deleted user', bio: null, designation: null, subjects: [] } });
       }
       await chatMembership.sync(userId, tx);
+      await revokeAllSessions(userId, undefined, tx);
       await audit(actorId, 'user.anonymise', 'user', userId, { role: u.role }, ip, tx);
     },
     { timeout: 30_000 },
   );
-  await revokeAllSessions(userId);
 }
 
 // ───── move & promote ─────
@@ -293,7 +296,7 @@ export async function moveStudents(
   input: { studentIds?: string[]; wholeSectionId?: string; targetSectionId: string },
   ip?: string,
 ): Promise<{ moved: number }> {
-  return prisma.$transaction(
+  return transaction(
     async (tx) => {
       const target = await lockSection(tx, input.targetSectionId);
       if (!target || target.deleted) throw new AppError('NOT_FOUND', 404, 'Target section not found.');

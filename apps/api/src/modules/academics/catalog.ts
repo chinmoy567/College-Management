@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { chapterBody, chapterOrderBody, chapterPatchBody, courseBody, coursePatchBody, id } from '@cms/shared';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../db';
+import { transaction } from '../../lib/afterCommit';
 import { audit } from '../../lib/audit';
 import { AppError, asyncHandler, validate } from '../../lib/http';
 import { type AuthedRequest, requireRole } from '../../middleware/session';
@@ -41,7 +42,7 @@ catalogRouter.post(
     const b = req.body as z.infer<typeof courseBody>;
     if (await prisma.course.findUnique({ where: { code: b.code } }))
       throw new AppError('CONFLICT', 409, 'A course with this code already exists.', { code: 'duplicate' });
-    const course = await prisma.$transaction(async (tx) => {
+    const course = await transaction(async (tx) => {
       const c = await tx.course.create({ data: b });
       await audit((req as AuthedRequest).actor.id, 'course.create', 'course', c.id, { groupType: b.groupType, classLevel: b.classLevel }, ip(req), tx);
       return c;
@@ -57,12 +58,17 @@ catalogRouter.patch(
   asyncHandler(async (req, res) => {
     const { id: cid } = req.params as { id: string };
     const { archived, ...fields } = req.body as z.infer<typeof coursePatchBody>;
-    const course = await prisma.$transaction(async (tx) => {
+    const course = await transaction(async (tx) => {
       const cur = await tx.course.findUnique({ where: { id: cid } });
       if (!cur) throw new AppError('NOT_FOUND', 404, 'Course not found.');
       if (fields.code && fields.code !== cur.code && (await tx.course.findUnique({ where: { code: fields.code } })))
         throw new AppError('CONFLICT', 409, 'A course with this code already exists.', { code: 'duplicate' });
-      // A used course is archived instead of being changed under running offerings' feet.
+      const shapeChange =
+        (fields.groupType !== undefined && fields.groupType !== cur.groupType) ||
+        (fields.classLevel !== undefined && fields.classLevel !== cur.classLevel) ||
+        (fields.isOptional !== undefined && fields.isOptional !== cur.isOptional);
+      if (shapeChange && (await tx.courseOffering.count({ where: { courseId: cid } })) > 0)
+        throw new AppError('CONFLICT', 409, 'This course is already offered. Archive it and create a new course instead.');
       const c = await tx.course.update({
         where: { id: cid },
         data: { ...fields, ...(archived === undefined ? {} : { archivedAt: archived ? new Date() : null }) },
@@ -109,7 +115,7 @@ catalogRouter.post(
       });
       if (!teaches) throw new AppError('FORBIDDEN', 403, 'You do not teach this course.');
     }
-    const chapter = await prisma.$transaction(async (tx) => {
+    const chapter = await transaction(async (tx) => {
       await tx.$queryRaw(Prisma.sql`SELECT id FROM courses WHERE id = ${cid} FOR UPDATE`);
       if (await tx.chapter.findUnique({ where: { courseId_name: { courseId: cid, name } } }))
         throw new AppError('CONFLICT', 409, 'This course already has a chapter with that name.', { name: 'duplicate' });
@@ -129,7 +135,7 @@ catalogRouter.patch(
   asyncHandler(async (req, res) => {
     const { id: chid } = req.params as { id: string };
     const { name } = req.body as { name: string };
-    await prisma.$transaction(async (tx) => {
+    await transaction(async (tx) => {
       const ch = await tx.chapter.findUnique({ where: { id: chid } });
       if (!ch) throw new AppError('NOT_FOUND', 404, 'Chapter not found.');
       if (await tx.chapter.findFirst({ where: { courseId: ch.courseId, name, id: { not: chid } } }))
@@ -147,7 +153,7 @@ catalogRouter.delete(
   validate({ params: idParam }),
   asyncHandler(async (req, res) => {
     const { id: chid } = req.params as { id: string };
-    await prisma.$transaction(async (tx) => {
+    await transaction(async (tx) => {
       const ch = await tx.chapter.findUnique({
         where: { id: chid },
         include: { _count: { select: { recordedClasses: true, materials: true, questions: true, examQuestions: true } } },
@@ -168,7 +174,7 @@ catalogRouter.put(
   asyncHandler(async (req, res) => {
     const { id: cid } = req.params as { id: string };
     const { ids } = req.body as { ids: string[] };
-    await prisma.$transaction(async (tx) => {
+    await transaction(async (tx) => {
       const existing = await tx.chapter.findMany({ where: { courseId: cid }, select: { id: true } });
       const same = existing.length === ids.length && new Set(ids).size === ids.length && existing.every((c) => ids.includes(c.id));
       if (!same) throw new AppError('VALIDATION_ERROR', 400, 'Send every chapter of the course exactly once.', { ids: 'mismatch' });

@@ -1,4 +1,5 @@
-import type { LoginSession, User } from '@prisma/client';
+import type { LoginSession, Prisma, User } from '@prisma/client';
+import { defer } from '../../lib/afterCommit';
 import { prisma } from '../../db';
 import { randomToken, sha256 } from '../../lib/crypto';
 
@@ -61,10 +62,10 @@ export async function revoke(id: string): Promise<void> {
 }
 
 /** The single choke point for ending sessions (02 §1). */
-export async function revokeAllSessions(userId: string, exceptSessionId?: string): Promise<void> {
-  await prisma.loginSession.updateMany({
+export async function revokeAllSessions(userId: string, exceptSessionId?: string, db: Prisma.TransactionClient = prisma): Promise<void> {
+  await db.loginSession.updateMany({
     where: { userId, revokedAt: null, ...(exceptSessionId ? { id: { not: exceptSessionId } } : {}) },
     data: { revokedAt: new Date() },
   });
-  onRevoke(userId, exceptSessionId);
+  defer(() => onRevoke(userId, exceptSessionId));
 }

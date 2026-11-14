@@ -25,6 +25,7 @@ export function slipsCsv(slips: Slip[]): Buffer {
 }
 
 const FONT = process.env.SLIP_FONT_PATH ?? path.resolve(__dirname, '../../../assets/NotoSansBengali-Regular.ttf');
+if (!existsSync(FONT)) console.warn(`WARNING: Bangla font missing at ${FONT}; credential slip PDFs cannot show Bangla names.`);
 
 /** Printable slips, 6 per A4 page. pdfkit is loaded lazily (memory on the free plan). */
 export async function slipsPdf(slips: Slip[]): Promise<Buffer> {
@@ -79,8 +80,9 @@ export function stashSlips(actorId: string, slips: Slip[]): { token: string; exp
 export async function takeSlips(actorId: string, token: string, format: 'pdf' | 'csv'): Promise<Buffer | null> {
   const e = store.get(token);
   if (!e || e.expires < Date.now() || e.actorId !== actorId || e.taken.has(format)) return null;
-  e.taken.add(format);
   const out = format === 'pdf' ? await slipsPdf(e.slips) : slipsCsv(e.slips);
+  if (e.taken.has(format)) return null; // a parallel request won
+  e.taken.add(format);
   if (e.taken.size === 2) store.delete(token);
   return out;
 }

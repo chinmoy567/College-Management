@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { SECTION_MAX, normaliseSessionName } from '@cms/shared';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db';
+import { transaction } from '../../lib/afterCommit';
 import { audit } from '../../lib/audit';
 import { hashPassword } from '../../lib/crypto';
 import { AppError } from '../../lib/http';
@@ -48,6 +49,7 @@ interface StudentPlan {
   roll: string;
   email: string;
   sectionId: string;
+  sessionId: string;
   sessionName: string;
   placement: string;
 }
@@ -65,15 +67,15 @@ async function validateStudents(db: Tx, raw: Record<string, string>[]): Promise<
     const roll = (r.roll ?? '').trim();
     const email = (r.email ?? '').trim().toLowerCase();
     let bad = false;
-    if (!name) {
-      err(row, 'name', 'Name is required.');
+    if (!name || name.length > 120) {
+      err(row, 'name', name ? 'Name is too long (120 characters at most).' : 'Name is required.');
       bad = true;
     }
-    if (!roll) {
-      err(row, 'roll', 'Roll is required.');
+    if (!roll || roll.length > 20) {
+      err(row, 'roll', roll ? 'Roll is too long (20 characters at most).' : 'Roll is required.');
       bad = true;
     }
-    if (!emailSchema.safeParse(email).success) {
+    if (!emailSchema.safeParse(email).success || email.length > 200) {
       err(row, 'email', 'Enter a valid email.');
       bad = true;
     }
@@ -90,7 +92,7 @@ async function validateStudents(db: Tx, raw: Record<string, string>[]): Promise<
     if (sess.status === 'closed') return void err(row, 'session', 'This session is closed.');
     if (bad) return;
     resolved.push({
-      row, name, roll, email, sectionId: section.id, sessionName: sess.name, classLevel: section.classLevel,
+      row, name, roll, email, sectionId: section.id, sessionId: sess.id, sessionName: sess.name, classLevel: section.classLevel,
       placement: `${sess.name} · ${group.type} · ${section.classLevel}-${section.name}`,
     });
   });
@@ -152,10 +154,13 @@ export async function importStudents(actorId: string, buffer: Buffer, ip?: strin
   const pre = await validateStudents(prisma, rows);
   if (pre.errors.length) throw new ImportInvalid(pre.errors);
   const creds = await hashAll(rows.length);
-  return prisma.$transaction(
+  return transaction(
     async (tx) => {
       // Lock every affected section in sorted id order (no deadlocks between two imports), then re-validate.
       const ids = [...new Set(pre.plans.map((p) => p.sectionId))].sort();
+      // Share-lock the sessions first: a concurrent session close waits for us (or we see it closed on re-validation).
+      const sessionIds = [...new Set(pre.plans.map((p) => p.sessionId))].sort();
+      for (const sid of sessionIds) await tx.$queryRaw`SELECT id FROM sessions WHERE id = ${sid} FOR SHARE`;
       for (const id of ids) await tx.$queryRaw`SELECT id FROM sections WHERE id = ${id} FOR UPDATE`;
       const again = await validateStudents(tx, rows);
       if (again.errors.length) throw new ImportInvalid(again.errors);
@@ -195,15 +200,18 @@ async function validateTeachers(db: Tx, raw: Record<string, string>[]): Promise<
     const name = (r.name ?? '').trim();
     const email = (r.email ?? '').trim().toLowerCase();
     const before = errors.length;
-    if (!name) errors.push({ row, field: 'name', message: 'Name is required.' });
-    if (!emailSchema.safeParse(email).success) errors.push({ row, field: 'email', message: 'Enter a valid email.' });
+    if (!name || name.length > 120) errors.push({ row, field: 'name', message: name ? 'Name is too long (120 characters at most).' : 'Name is required.' });
+    const designation = (r.designation ?? '').trim();
+    const subjects = (r.subjects ?? '').split(';').map((s) => s.trim()).filter(Boolean);
+    if (designation.length > 120) errors.push({ row, field: 'designation', message: 'Designation is too long (120 characters at most).' });
+    if (subjects.length > 20 || subjects.some((s) => s.length > 60)) errors.push({ row, field: 'subjects', message: 'At most 20 subjects of 60 characters each.' });
+    if (email.length > 200 || !emailSchema.safeParse(email).success) errors.push({ row, field: 'email', message: 'Enter a valid email.' });
     else if (seen.has(email)) errors.push({ row, field: 'email', message: `Duplicate email (also row ${seen.get(email)}).` });
     else if (taken.has(email)) errors.push({ row, field: 'email', message: 'This email is already used.' });
     if (!seen.has(email)) seen.set(email, row);
     if (errors.length === before)
       plans.push({
-        row, name, email, designation: (r.designation ?? '').trim() || undefined,
-        subjects: (r.subjects ?? '').split(';').map((s) => s.trim()).filter(Boolean),
+        row, name, email, designation: designation || undefined, subjects,
       });
   });
   return { plans, errors };
@@ -220,7 +228,7 @@ export async function importTeachers(actorId: string, buffer: Buffer, ip?: strin
   const pre = await validateTeachers(prisma, rows);
   if (pre.errors.length) throw new ImportInvalid(pre.errors);
   const creds = await hashAll(rows.length);
-  return prisma.$transaction(
+  return transaction(
     async (tx) => {
       const again = await validateTeachers(tx, rows);
       if (again.errors.length) throw new ImportInvalid(again.errors);

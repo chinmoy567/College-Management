@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db';
+import { defer } from './afterCommit';
 
 type Db = Prisma.TransactionClient;
 export interface RoomDiff {
@@ -99,7 +100,7 @@ export async function sync(userId: string, db: Db = prisma): Promise<RoomDiff> {
       diff.left.push(m.conversationId);
     }
   }
-  if (diff.joined.length || diff.left.length) roomHook(userId, diff);
+  if (diff.joined.length || diff.left.length) defer(() => roomHook(userId, diff));
   return diff;
 }
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { SECTION_MAX, closeSessionBody, id, sectionCreateBody, sectionPatchBody, sessionBody } from '@cms/shared';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../db';
+import { transaction } from '../../lib/afterCommit';
 import { ACTIVE_STUDENT_WHERE, activeStudentCount, lockSection } from '../../lib/activeStudent';
 import { audit } from '../../lib/audit';
 import { chatMembership } from '../../lib/chatMembership';
@@ -77,7 +78,7 @@ sessionsRouter.post(
     const actor = (req as AuthedRequest).actor;
     if (await prisma.session.findUnique({ where: { name } }))
       throw new AppError('CONFLICT', 409, 'A session with this name already exists.', { name: 'duplicate' });
-    const created = await prisma.$transaction(async (tx) => {
+    const created = await transaction(async (tx) => {
       const session = await tx.session.create({ data: { name } });
       const groups = [];
       for (const type of ['science', 'commerce', 'arts'] as const) {
@@ -102,7 +103,7 @@ sessionsRouter.patch(
     const { id: sid } = req.params as { id: string };
     const { name } = req.body as { name: string };
     const actor = (req as AuthedRequest).actor;
-    await prisma.$transaction(async (tx) => {
+    await transaction(async (tx) => {
       if (!(await tx.session.findUnique({ where: { id: sid } }))) throw new AppError('NOT_FOUND', 404, 'Session not found.');
       await closedSessionGuard({ sessionId: sid }, tx);
       const dup = await tx.session.findFirst({ where: { name, id: { not: sid } } });
@@ -134,7 +135,7 @@ sessionsRouter.post(
     const { id: gid } = req.params as { id: string };
     const { name, classLevel } = req.body as { name: string; classLevel: 11 | 12 };
     const actor = (req as AuthedRequest).actor;
-    const section = await prisma.$transaction(async (tx) => {
+    const section = await transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>(Prisma.sql`SELECT id FROM groups WHERE id = ${gid} FOR UPDATE`);
       if (!locked[0]) throw new AppError('NOT_FOUND', 404, 'Group not found.');
       await closedSessionGuard({ groupId: gid }, tx);
@@ -151,7 +152,7 @@ sessionsRouter.post(
 
 /** Assign, replace or clear the Section Mentor in one transaction (§2). */
 export async function setMentor(actorId: string, sectionId: string, teacherId: string | null, ipAddr?: string): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  await transaction(async (tx) => {
     const sec = await lockSection(tx, sectionId);
     if (!sec || sec.deleted) throw new AppError('NOT_FOUND', 404, 'Section not found.');
     await closedSessionGuard({ sectionId }, tx);
@@ -182,7 +183,7 @@ sessionsRouter.patch(
     const body = req.body as { name?: string; mentorTeacherId?: string | null };
     const actor = (req as AuthedRequest).actor;
     if (body.name !== undefined) {
-      await prisma.$transaction(async (tx) => {
+      await transaction(async (tx) => {
         const sec = await tx.section.findFirst({ where: { id: sid, deletedAt: null } });
         if (!sec) throw new AppError('NOT_FOUND', 404, 'Section not found.');
         await closedSessionGuard({ sectionId: sid }, tx);
@@ -204,7 +205,7 @@ sessionsRouter.delete(
   asyncHandler(async (req, res) => {
     const { id: sid } = req.params as { id: string };
     const actor = (req as AuthedRequest).actor;
-    await prisma.$transaction(async (tx) => {
+    await transaction(async (tx) => {
       const sec = await lockSection(tx, sid);
       if (!sec || sec.deleted) throw new AppError('NOT_FOUND', 404, 'Section not found.');
       await closedSessionGuard({ sectionId: sid }, tx);

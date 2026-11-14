@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db';
+import { defer } from './afterCommit';
 
 type Db = Prisma.TransactionClient;
 type Emitter = (userId: string, payload: { id: string; type: string; text: string; unread: number }) => void;
@@ -20,6 +21,6 @@ export async function notify(
   for (const userId of new Set(userIds)) {
     const n = await db.notification.create({ data: { userId, type, refType: ref?.type, refId: ref?.id, text } });
     const unread = await db.notification.count({ where: { userId, readAt: null } });
-    emitter(userId, { id: n.id, type, text, unread });
+    defer(() => emitter(userId, { id: n.id, type, text, unread }));
   }
 }

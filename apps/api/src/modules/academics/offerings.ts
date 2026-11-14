@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Prisma, type CourseOffering } from '@prisma/client';
 import { id, offeringCopyBody, offeringPatchBody, offeringStudentsBody, offeringsPutBody } from '@cms/shared';
 import { prisma } from '../../db';
+import { transaction } from '../../lib/afterCommit';
 import { lockSection } from '../../lib/activeStudent';
 import { audit } from '../../lib/audit';
 import { chatMembership } from '../../lib/chatMembership';
@@ -172,7 +173,7 @@ offeringsRouter.put(
     const actor = (req as AuthedRequest).actor;
     if (new Set(items.map((i) => i.courseId)).size !== items.length)
       throw new AppError('VALIDATION_ERROR', 400, 'A course can be listed once.', { items: 'duplicate_course' });
-    const summary = await prisma.$transaction(
+    const summary = await transaction(
       async (tx) => {
         const section = await loadSection(tx, sid);
         const courses = await tx.course.findMany({ where: { id: { in: items.map((i) => i.courseId) } } });
@@ -216,7 +217,7 @@ offeringsRouter.patch(
     const { id: oid } = req.params as { id: string };
     const { teacherId } = req.body as { teacherId: string };
     const actor = (req as AuthedRequest).actor;
-    await prisma.$transaction(async (tx) => {
+    await transaction(async (tx) => {
       const o = await tx.courseOffering.findUnique({ where: { id: oid } });
       if (!o || o.endedAt) throw new AppError('NOT_FOUND', 404, 'Offering not found.');
       await loadSection(tx, o.sectionId);
@@ -237,7 +238,7 @@ offeringsRouter.post(
     const { id: targetId } = req.params as { id: string };
     const { fromSectionId } = req.body as { fromSectionId: string };
     const actor = (req as AuthedRequest).actor;
-    const out = await prisma.$transaction(async (tx) => {
+    const out = await transaction(async (tx) => {
       const target = await loadSection(tx, targetId);
       const source = await tx.section.findFirst({ where: { id: fromSectionId, deletedAt: null }, select: { id: true } });
       if (!source) throw new AppError('NOT_FOUND', 404, 'Source section not found.');
@@ -273,7 +274,7 @@ offeringsRouter.put(
     const { id: oid } = req.params as { id: string };
     const { studentIds } = req.body as { studentIds: string[] };
     const actor = (req as AuthedRequest).actor;
-    await prisma.$transaction(async (tx) => {
+    await transaction(async (tx) => {
       const o = await tx.courseOffering.findUnique({ where: { id: oid }, include: { course: true } });
       if (!o || o.endedAt) throw new AppError('NOT_FOUND', 404, 'Offering not found.');
       await loadSection(tx, o.sectionId);

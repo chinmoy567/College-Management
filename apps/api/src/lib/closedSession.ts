@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../db';
 import { AppError } from './http';
 
@@ -26,6 +26,10 @@ export async function sessionIdOf(db: Db, t: SessionTarget): Promise<string | nu
 export async function closedSessionGuard(t: SessionTarget, db: Db = prisma): Promise<void> {
   const sid = await sessionIdOf(db, t);
   if (!sid) return; // the caller's own lookup reports NOT_FOUND
-  const s = await db.session.findUnique({ where: { id: sid }, select: { status: true } });
-  if (s?.status === 'closed') throw new AppError('SESSION_CLOSED', 409, 'This session is closed. Its data is read-only.');
+  // Inside a transaction, FOR SHARE makes a concurrent close-session (FOR UPDATE) wait for us, or us for it.
+  const rows =
+    db === prisma
+      ? await db.session.findMany({ where: { id: sid }, select: { status: true } })
+      : await db.$queryRaw<{ status: string }[]>(Prisma.sql`SELECT status::text AS status FROM sessions WHERE id = ${sid} FOR SHARE`);
+  if (rows[0]?.status === 'closed') throw new AppError('SESSION_CLOSED', 409, 'This session is closed. Its data is read-only.');
 }
