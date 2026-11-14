@@ -7,6 +7,7 @@ import { logger } from './lib/logger';
 import { prisma } from './db';
 import { startJobs, stopJobs } from './jobs';
 import { registerEmailWorker } from './modules/mail/queue';
+import { registerMeetingJob } from './modules/schedule/job';
 import { createSocketServer } from './modules/realtime/socket';
 
 async function main() {
@@ -24,6 +25,7 @@ async function main() {
   const io = createSocketServer(server); // chat events arrive in M9
   await startJobs(config.DATABASE_URL);
   await registerEmailWorker();
+  await registerMeetingJob();
 
   server.listen(config.PORT, () => logger.info({ port: config.PORT }, 'server listening'));
 

@@ -34,3 +34,10 @@ export async function enqueue(
   if (!boss) throw new Error('Jobs not started');
   await boss.send(name, data, { retryLimit: 3, retryBackoff: true, ...opts });
 }
+
+/** Cron schedule (pg-boss) in a time zone; replaces an existing schedule of the same name. */
+export async function scheduleJob(name: string, cron: string, tz: string): Promise<void> {
+  if (!boss) throw new Error('Jobs not started');
+  await boss.createQueue(name);
+  await boss.schedule(name, cron, {}, { tz });
+}
