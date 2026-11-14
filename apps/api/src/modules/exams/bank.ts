@@ -177,6 +177,6 @@ bankRouter.post('/import', (req, res, next) =>
     if (q.dryRun === 'true' || q.dryRun === '1') return void res.json({ dryRun: true, valid: rows.length });
     await prisma.$transaction(async (tx) => {
       for (const r of rows) await createQuestion(me(req), r, tx);
-    });
+    }, { timeout: 60_000, maxWait: 10_000 });
     res.status(201).json({ created: rows.length });
   }));

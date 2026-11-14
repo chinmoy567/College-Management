@@ -54,14 +54,14 @@ export function examView(e: Exam, totalMarks = numberOf(e.totalMarks)) {
 }
 
 /** Teacher view of one exam, including the snapshot questions and their correct answers. */
-async function teacherDetail(e: Exam) {
+async function teacherDetail(e: Exam, hideKey = false) {
   const questions = await prisma.examQuestion.findMany({ where: { examId: e.id }, orderBy: { order: 'asc' } });
   const total = e.status === 'draft' ? questions.reduce((s, q) => s + Number(q.marks), 0) : numberOf(e.totalMarks);
   return {
     ...examView(e, total),
     questions: questions.map((q) => ({
       id: q.id, order: q.order, questionId: q.questionId, type: q.type, text: q.text, options: q.options as Opt[],
-      correct: q.correct as string[], marks: Number(q.marks), chapterId: q.chapterId, isCancelled: q.isCancelled,
+      correct: hideKey ? null : (q.correct as string[]), marks: Number(q.marks), chapterId: q.chapterId, isCancelled: q.isCancelled,
     })),
   };
 }
@@ -113,7 +113,10 @@ lifecycleRouter.get('/:id', idParam, asyncHandler(async (req, res) => {
   const exam = await examForViewer(req, req.params.id as string);
   if (exam.status === 'draft' && exam.courseOffering.teacherId !== r.user.id) throw new AppError('NOT_FOUND', 404, 'Exam not found.');
   await ensureRevealed(exam.id);
-  res.json(await teacherDetail(await prisma.exam.findUniqueOrThrow({ where: { id: exam.id } })));
+  const fresh = await prisma.exam.findUniqueOrThrow({ where: { id: exam.id } });
+  // Mentors and the Admin see the answer key only after the window has ended.
+  const hideKey = exam.courseOffering.teacherId !== r.user.id && fresh.endAt > now();
+  res.json(await teacherDetail(fresh, hideKey));
 }));
 
 // ───── questions (draft, or published before start) ─────

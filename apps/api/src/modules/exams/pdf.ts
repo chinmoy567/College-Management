@@ -6,7 +6,7 @@ const FONT = process.env.SLIP_FONT_PATH ?? path.resolve(__dirname, '../../../ass
 /** Spreadsheet formula guard: a cell that starts with = + - @ is read as a formula by Excel. */
 export const csvCell = (v: string | number | null | undefined): string => {
   const s = v === null || v === undefined ? '' : String(v);
-  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  const safe = /^\s*[=+\-@]/.test(s) ? `'${s}` : s;
   return `"${safe.replace(/"/g, '""')}"`;
 };
 /** UTF-8 with BOM so Excel shows Bangla correctly. */
