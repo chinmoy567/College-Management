@@ -41,6 +41,8 @@ export interface StorageBackend {
   /** Must fail if the key already exists (never overwrite). */
   put(bucket: Bucket, key: string, body: Buffer, contentType: string): Promise<void>;
   remove(bucket: Bucket, key: string): Promise<void>;
+  /** Server-side read of a stored object (jobs such as book previews and text extraction). */
+  get(bucket: Bucket, key: string): Promise<Buffer>;
   signedUrl(bucket: Bucket, key: string, expiresIn: number, downloadName?: string): Promise<string>;
   publicUrl(bucket: Bucket, key: string): string;
 }

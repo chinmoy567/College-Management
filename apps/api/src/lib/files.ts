@@ -44,11 +44,22 @@ export function createMemoryBackend(): StorageBackend & { files: Map<string, Buf
     async remove(b, key) {
       files.delete(k(b, key));
     },
+    async get(b, key) {
+      const f = files.get(k(b, key));
+      if (!f) throw new Error('missing');
+      return f;
+    },
     async signedUrl(b, key, expiresIn, dl) {
       return `https://storage.test/sign/${k(b, key)}?exp=${expiresIn}${dl ? `&download=${encodeURIComponent(dl)}` : ''}`;
     },
     publicUrl: (b, key) => `https://storage.test/public/${k(b, key)}`,
   };
+}
+
+/** Reads an object's bytes server-side (jobs only; never returned to a client). */
+export async function readObject(id: string): Promise<Buffer> {
+  const o = await prisma.storageObject.findUniqueOrThrow({ where: { id } });
+  return getBackend().get(o.bucket, o.key);
 }
 
 let backend: StorageBackend | null = null;

@@ -18,6 +18,11 @@ export function createSupabaseBackend(opts: {
       const { error } = await from(bucket).remove([key]);
       if (error) throw new Error(`storage remove failed: ${error.message}`);
     },
+    async get(bucket, key) {
+      const { data, error } = await from(bucket).download(key);
+      if (error || !data) throw new Error(`storage download failed: ${error?.message ?? 'unknown'}`);
+      return Buffer.from(await data.arrayBuffer());
+    },
     async signedUrl(bucket, key, expiresIn, downloadName) {
       const { data, error } = await from(bucket).createSignedUrl(key, expiresIn, {
         ...(downloadName ? { download: downloadName } : {}),

@@ -19,6 +19,7 @@ function fakes(start = new Date('2026-01-01T00:00:00Z')) {
       files.set(`${b}/${k}`, body);
     },
     async remove(b, k) { files.delete(`${b}/${k}`); },
+    async get(b, k) { return files.get(`${b}/${k}`)!; },
     async signedUrl(b: Bucket, k, expiresIn, download) {
       signed.push({ key: k, expiresIn, ...(download ? { download } : {}) });
       return `https://signed.example/${b}/${k}?t=1`;

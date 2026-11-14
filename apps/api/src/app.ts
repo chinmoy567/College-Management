@@ -21,6 +21,7 @@ import { chatFilesRouter, chatRouter } from './modules/chat/routes';
 import { noticesRouter, publicNoticesRouter } from './modules/notices/routes';
 import { notificationPrefsRouter, notificationsRouter } from './modules/notifications/routes';
 import { materialsRouter, onlineClassesRouter } from './modules/learning/routes';
+import { adminBooksRouter, booksRouter, publicBooksRouter } from './modules/books/routes';
 import { communityRouter, moderationRouter, publicProfileRouter, reportsRouter } from './modules/feed/routes';
 
 export interface AppOptions {
@@ -100,6 +101,7 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/auth', publicAuthRouter);
   app.use('/api/auth', authedAuthRouter);
   app.use('/api/public/notices', publicNoticesRouter);
+  app.use('/api/public/books', publicBooksRouter);
   app.use('/api/me', ...authChain, meRouter);
   app.use('/api/me', ...authChain, notificationPrefsRouter);
   app.use('/api/chat', ...authChain, chatRouter);
@@ -109,6 +111,7 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/academics', ...authChain, academicsRouter);
   app.use('/api/users', ...authChain, publicProfileRouter);
   app.use('/api/users', ...authChain, usersRouter);
+  app.use('/api/admin/books', ...authChain, adminBooksRouter);
   app.use('/api/admin', ...authChain, adminStudentsRouter);
   app.use('/api/admin', ...authChain, adminAttendanceRouter);
   app.use('/api/admin', ...authChain, moderationRouter);
@@ -120,6 +123,7 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/exams', ...authChain, examsRouter);
   app.use('/api/classes/online', ...authChain, onlineClassesRouter);
   app.use('/api/materials', ...authChain, materialsRouter);
+  app.use('/api/books', ...authChain, booksRouter);
   app.use('/api', (_req, _res, next) => next(new AppError('NOT_FOUND', 404, 'Not found.')));
 
   const nextHandler = opts.nextHandler;
