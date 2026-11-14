@@ -15,7 +15,7 @@ Source: PRD §5.14, §5.15, §5.20 (AI off during exam). Skill: `cms-exams-atten
 | `GET /api/exams/bank?courseId&chapterId&q&cursor` | Teacher's own questions for a course they teach. |
 | `POST /api/exams/bank` | `{ courseId, chapterId?, type: single|multiple, text, options: [{text}] (2–6), correct: [index...], marks (default 1, 0.5 steps, max 100) }` → server assigns stable option ids `o1..o6`. `single` needs exactly 1 correct; `multiple` needs ≥ 1. |
 | `PATCH/DELETE /api/exams/bank/:id` | Edits never change published exams (snapshot). Delete = archive. |
-| `POST /api/exams/bank/import` | CSV `text,option1..option6,correct(1;3),marks,chapter` with dry run, all-or-nothing. |
+| `POST /api/exams/bank/import?courseId&dryRun=true` | multipart `file`: CSV `text,option1..option6,correct(1;3),marks,chapter` (chapter = name in the course), at most 500 rows, dry run, all-or-nothing (`400` with `errors: [{row, field, message}]`). |
 
 Text-based MCQ only: no images, no written answers, no student uploads (PRD §5.14.1).
 
@@ -28,7 +28,10 @@ Text-based MCQ only: no images, no written answers, no student uploads (PRD §5.
 | `POST /api/exams` | `{ offeringId, kind, title, instructions?, startAt, endAt, durationMin ∈ {15,30,45,60,90,120}, passMarks, maxAttempts (exam: 1; quiz: 1–10 or 0 = unlimited), shuffleQuestions, shuffleOptions, showAnswersAfterEnd, resultMode: instant|manual }`. `startAt > now`, `endAt > startAt`. |
 | `PUT /api/exams/:id/questions` | `{ items: [{ questionId } | { inline question }], order }`. Draft or published-before-start only. |
 | `POST /api/exams/:id/publish` | Needs ≥ 1 question and `startAt > now`. Copies questions into `ExamQuestion` (snapshot), sets `totalMarks = Σ marks`, `passMarks <= totalMarks`, status `published`; schedules jobs (`exam.starting_soon` at start − 15 min, `exam.close_check` at `endAt`). Notifies enrolled students (`exam_published`). |
-| `PATCH /api/exams/:id` | Before `startAt`: any field; a change to questions re-copies the snapshot. After `startAt`: `409 EXAM_LOCKED` except §6. |
+| `PATCH /api/exams/:id` | Before `startAt`: any field (`items` replaces the questions and re-copies the snapshot, same as `PUT .../questions`). After `startAt`: `409 EXAM_LOCKED` except §6. |
+| `GET /api/exams?offeringId` · `GET /api/exams/:id` | Teacher of the offering (drafts included, with correct answers), mentor of its section and Admin (published exams only). A student gets a summary of their own exam with no questions (§4.3). |
+
+A draft has no questions yet, so its `totalMarks` column holds `max(Σ marks, passMarks)` (the database requires `passMarks <= totalMarks`); publish sets the real total and rejects `passMarks > Σ marks`.
 | `DELETE /api/exams/:id` | Draft, or published with no attempts and before start. |
 
 Reminder: no exams during the maintenance window (PRD §8) — the form warns if the window overlaps `Settings.maintenance_window` (optional setting).
@@ -36,12 +39,12 @@ Reminder: no exams during the maintenance window (PRD §8) — the form warns if
 ## 4. Taking an exam
 
 ### 4.1 Start — `POST /api/exams/:id/attempts`
-One transaction with `SELECT ... FOR UPDATE` on the exam row for this student:
+One transaction: `SELECT ... FOR SHARE` on the exam row (blocks a concurrent delete/edit without serialising other students) plus a per-student advisory lock (`pg_advisory_xact_lock`), so starts of one student are serialised and 500 students starting together do not queue behind one row lock:
 1. Student has an active enrollment in the offering; exam `published`; `startAt <= now < endAt` (`409 EXAM_NOT_OPEN`).
 2. No `in_progress` attempt (unique partial index) — if one exists, return it (resume).
 3. Attempts used < `maxAttempts` (unless 0) else `409 NO_ATTEMPTS_LEFT`. Quiz: previous attempt must be submitted.
 4. `deadlineAt = min(now + durationMin, endAt)`; `sectionId` = student's current section; `questionOrder` = shuffled (Fisher–Yates, server) per settings; insert attempt.
-5. Schedule job `exam.auto_submit` `{ attemptId }` at `deadlineAt` (singleton key = attemptId).
+5. Schedule job `exam.auto_submit` `{ attemptId }` at `deadlineAt`. The handler is idempotent and re-schedules itself when it fires before a moved deadline, so duplicate jobs are harmless and no singleton key is used.
 6. Return questions **without `correct`**, in `questionOrder`, plus `deadlineAt` and `serverNow`.
 
 Questions are never returned before the student's own attempt starts (PRD §5.14.1).
@@ -100,7 +103,7 @@ Nothing else in a started exam can be edited.
 - **Per exam:** students ranked by score (exam: the single attempt; quiz: best attempt) using competition ranking (`RANK()` → 1, 2, 2, 4). Only available after reveal and results published.
 - **Overall rank per course offering:** for each student enrolled (active) in the offering, `avg(percentage)` over all **Exams** (`kind=exam`) of the offering with results published; a missed exam = 0%. Quizzes excluded. `RANK()` over that average within the section.
 - **Grade:** percentage → `Settings.grading_scale`.
-- **Strong/weak chapters:** per student, correctness % grouped by `ExamQuestion.chapterId` across published exams/quizzes; top 3 / bottom 3 with ≥ 3 questions.
+- **Strong/weak chapters:** per student, correctness % grouped by `ExamQuestion.chapterId` over the exams/quizzes whose results the student may see (cancelled questions ignored); top 3 / bottom 3 among chapters with ≥ 3 questions. With fewer than 6 such chapters the sorted list is split in half (strong = upper half, weak = lower half) so a chapter is never both.
 
 | Route | Who | Returns |
 |---|---|---|
@@ -110,7 +113,7 @@ Nothing else in a started exam can be edited.
 | `GET /api/exams/:id/report` | teacher, mentor, Admin | distribution (10 buckets), highest/avg/lowest, per-question correctness %, did-not-attend list, attempts with integrity counts |
 | `GET /api/exams/:id/report.csv` / `.pdf` | same | export |
 | `GET /api/exams/offerings/:id/progress` | teacher, mentor, Admin | per-student overall %, rank, below-pass list |
-| `GET /api/admin/exams/performance?by=session|group|section|course` | Admin | college-wide averages, participation |
+| `GET /api/admin/exams/performance?by=session|group|section|course` | Admin (everyone else gets `404`, like all `/api/admin/*`) | `items: [{ key, label, exams, averagePct, participationPct }]` over exams whose results are published (best attempt per student) |
 
 ## 8. Exam page contract (frontend)
 

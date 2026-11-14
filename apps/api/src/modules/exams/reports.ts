@@ -9,7 +9,7 @@ import { examForViewer, offeringForViewer } from './access';
 import { gradeFor, percent } from './logic';
 import { csvFile, simplePdf } from './pdf';
 import { bestAttempts, courseStandings, gradeScale } from './ranks';
-import { ensureRevealed } from './reveal';
+import { ensureRevealed, revealDue } from './reveal';
 
 /** Teacher / mentor / Admin views (05 §7): exam report, offering progress, college-wide performance. */
 export const reportRouter = Router();
@@ -107,6 +107,7 @@ reportRouter.get('/:id/report.pdf', idParam, asyncHandler(async (req, res) => {
 export const offeringProgressRouter = Router();
 offeringProgressRouter.get('/:id/progress', idParam, asyncHandler(async (req, res) => {
   const o = await offeringForViewer(req, req.params.id as string);
+  await revealDue(await prisma.exam.findMany({ where: { courseOfferingId: o.id, status: { not: 'draft' } }, select: { id: true, endAt: true, revealedAt: true, status: true } }));
   const [{ exams, rows, scores }, scale] = await Promise.all([courseStandings(o.id), gradeScale()]);
   const belowPass = rows.flatMap((r) => {
     const mine = scores.get(r.studentId) ?? new Map<string, number>();
