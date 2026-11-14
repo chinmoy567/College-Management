@@ -90,7 +90,7 @@ sessionsRouter.post(
       }
       await audit(actor.id, 'session.create', 'session', session.id, { groups: 3 }, ip(req), tx);
       return { id: session.id, name: session.name, status: session.status, groups };
-    });
+    }, { timeout: 30_000, maxWait: 10_000 }); // ~17 sequential queries; the 5 s default expires on a remote DB
     res.status(201).json(created);
   }),
 );
