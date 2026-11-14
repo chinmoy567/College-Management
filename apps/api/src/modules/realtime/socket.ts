@@ -93,7 +93,7 @@ export function createSocketServer(server: HttpServer, opts: { revalidateMs?: nu
     });
 
     socket.on('presence:ping', () => {
-      void prisma.user.update({ where: { id: data.userId }, data: { lastSeenAt: new Date() } }).catch(() => {});
+      void prisma.loginSession.update({ where: { id: data.loginSessionId }, data: { lastSeenAt: new Date() } }).catch(() => {});
     });
   });
 

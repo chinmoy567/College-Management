@@ -84,7 +84,7 @@ export async function resolveAudience(scope: 'central' | 'class', a: NoticeAudie
     const t = await prisma.teacherProfile.findMany({
       where: {
         user: { status: 'active' },
-        ...(filtered ? { OR: [{ offerings: { some: { endedAt: null, section: sectionFilter } } }, { mentoredSection: { is: sectionFilter } }] } : {}),
+        ...(filtered ? { OR: [{ offeringTeachers: { some: { endedAt: null, section: sectionFilter } } }, { mentoredSection: { is: sectionFilter } }] } : {}),
       },
       select: { userId: true },
     });

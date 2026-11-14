@@ -84,7 +84,7 @@ export interface MessageView {
   id: string;
   conversationId: string;
   senderId: string;
-  sender: { id: string; name: string; avatarUrl: string | null };
+  sender: { id: string | null; name: string; avatarUrl: string | null };
   text: string | null;
   deleted: boolean;
   attachment: { id: string; url: string; name: string | null; mime: string } | null;

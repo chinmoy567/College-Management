@@ -10,6 +10,7 @@ import { invalidateBannedWords, normaliseWord } from '../../lib/bannedWords';
 import { AppError, asyncHandler, validate } from '../../lib/http';
 import { decodeCursor, encodeCursor } from '../../lib/pagination';
 import { notify } from '../../lib/notify';
+import { markDeleted, reportedContext } from '../chat/service';
 import { requireRole } from '../../middleware/session';
 import { NOT_FOUND, actorOf } from './common';
 import { notifyComment, notifyPinAudience } from './notices';
@@ -89,8 +90,15 @@ reportsRouter.post(
       const u = await prisma.user.findUnique({ where: { id: b.targetId }, select: { status: true } });
       if (!u || u.status === 'deleted') throw NOT_FOUND();
     } else {
-      // Message reports need the message and its conversation (milestone M9, spec 07 §4).
-      throw NOT_FOUND();
+      // The reporter must be a member of the conversation (07 §2.2); nobody reports their own message.
+      const msg = await prisma.message.findUnique({ where: { id: b.targetId }, select: { conversationId: true, senderId: true, deletedAt: true } });
+      if (!msg || msg.deletedAt) throw NOT_FOUND();
+      const member = await prisma.conversationMember.findUnique({
+        where: { conversationId_userId: { conversationId: msg.conversationId, userId: actor.id } },
+        select: { userId: true },
+      });
+      if (!member) throw NOT_FOUND();
+      if (msg.senderId === actor.id) throw new AppError('VALIDATION_ERROR', 400, 'You cannot report your own message.', { targetId: 'Not allowed' });
     }
     const reason = b.text ? `${b.reason}: ${b.text}` : b.reason;
     await prisma.report.create({ data: { reporterId: actor.id, targetType: b.targetType, targetId: b.targetId, reason } });
@@ -133,25 +141,28 @@ moderationRouter.get(
       const groups = new Map<string, typeof reports>();
       for (const r of reports) groups.set(`${r.targetType}:${r.targetId}`, [...(groups.get(`${r.targetType}:${r.targetId}`) ?? []), r]);
       const ids = (t: string) => [...groups.values()].filter((g) => g[0]!.targetType === t).map((g) => g[0]!.targetId);
-      const [posts, comments, users] = await Promise.all([
+      const [posts, comments, users, messages] = await Promise.all([
         prisma.post.findMany({ where: { id: { in: ids('post') } }, select: { id: true, text: true, authorId: true, status: true } }),
         prisma.comment.findMany({ where: { id: { in: ids('comment') } }, select: { id: true, text: true, authorId: true, status: true } }),
         prisma.user.findMany({ where: { id: { in: ids('user') } }, select: { id: true, role: true } }),
+        prisma.message.findMany({ where: { id: { in: ids('message') } }, select: { id: true, senderId: true, deletedAt: true } }),
       ]);
+      const mm = new Map(messages.map((m) => [m.id, m]));
       const pm = new Map(posts.map((p) => [p.id, p]));
       const cm = new Map(comments.map((c) => [c.id, c]));
       const um = new Map(users.map((u) => [u.id, u]));
       for (const [key, g] of groups) {
         const f = g[0]!;
         const c = f.targetType === 'post' ? pm.get(f.targetId) : f.targetType === 'comment' ? cm.get(f.targetId) : undefined;
-        const gone = f.targetType === 'user' ? !um.has(f.targetId) : f.targetType === 'message' ? true : !c;
-        if (gone && f.targetType !== 'message') continue;
+        const msg = f.targetType === 'message' ? mm.get(f.targetId) : undefined;
+        const gone = f.targetType === 'user' ? !um.has(f.targetId) : f.targetType === 'message' ? !msg : !c;
+        if (gone) continue;
         items.push({
           key, kind: 'report', targetType: f.targetType, targetId: f.targetId,
-          preview: c ? clip(c.text) : f.targetType === 'user' ? 'User account' : 'Message',
-          authorId: c ? c.authorId : f.targetType === 'user' ? f.targetId : null,
+          preview: c ? clip(c.text) : f.targetType === 'user' ? 'User account' : 'Reported message (open to see it with the messages around it)',
+          authorId: c ? c.authorId : f.targetType === 'user' ? f.targetId : (msg?.senderId ?? null),
           reasons: g.map((r) => r.reason), reporterCount: new Set(g.map((r) => r.reporterId)).size,
-          removed: c ? c.status === 'removed' : false, createdAt: f.createdAt,
+          removed: c ? c.status === 'removed' : msg ? !!msg.deletedAt : false, createdAt: f.createdAt,
         });
       }
     }
@@ -180,10 +191,11 @@ moderationRouter.get(
 
 moderationRouter.post(
   '/moderation/:targetType/:targetId',
-  validate({ params: z.object({ targetType: z.enum(['post', 'comment', 'user']), targetId: id }), body: moderationActionBody }),
+  validate({ params: z.object({ targetType: z.enum(['post', 'comment', 'user', 'message']), targetId: id }), body: moderationActionBody }),
   asyncHandler(async (req, res) => {
     const actor = actorOf(req);
-    const { targetType, targetId } = req.params as { targetType: 'post' | 'comment' | 'user'; targetId: string };
+    const { targetType, targetId } = req.params as { targetType: 'post' | 'comment' | 'user' | 'message'; targetId: string };
+    let deletedMessageId: string | null = null;
     const b = req.body as ModerationActionBody;
     /** Pins to announce after the approving transaction commits. */
     const pendingPinNotice: Parameters<typeof notifyPinAudience>[0][] = [];
@@ -196,6 +208,11 @@ moderationRouter.post(
         const u = await tx.user.findUnique({ where: { id: targetId }, select: { id: true, status: true } });
         if (!u || u.status === 'deleted') throw NOT_FOUND();
         authorId = u.id;
+      } else if (targetType === 'message') {
+        const mg = await tx.message.findUnique({ where: { id: targetId }, select: { senderId: true, deletedAt: true } });
+        if (!mg) throw NOT_FOUND();
+        authorId = mg.senderId;
+        status = mg.deletedAt ? 'removed' : 'published';
       } else {
         const c = targetType === 'post'
           ? await tx.post.findUnique({ where: { id: targetId }, select: { authorId: true, status: true } })
@@ -225,7 +242,12 @@ moderationRouter.post(
       } else if (b.action === 'delete' || b.action === 'delete_warn') {
         if (targetType === 'user') throw new AppError('VALIDATION_ERROR', 400, 'A user cannot be deleted here.', { action: 'Not allowed' });
         const rid = (await firstReport())?.id;
-        await removeContent({ kind: targetType, id: targetId, byId: actor.id, byAdmin: true, tx });
+        if (targetType === 'message') {
+          if (status !== 'removed') await tx.message.update({ where: { id: targetId }, data: { deletedAt: t } });
+          await closeReports('actioned');
+          await notify([authorId], 'content_removed', { type: 'message', id: targetId }, 'Your message was removed by the Admin.', tx);
+          deletedMessageId = targetId;
+        } else await removeContent({ kind: targetType, id: targetId, byId: actor.id, byAdmin: true, tx });
         if (b.action === 'delete_warn') {
           await tx.userSanction.create({ data: { userId: authorId, type: 'warn', reason: b.reason, relatedReportId: rid, createdBy: actor.id } });
           await notify([authorId], 'warning', { type: targetType, id: targetId }, 'You have received a warning from the Admin.', tx);
@@ -239,9 +261,19 @@ moderationRouter.post(
       }
       await audit(actor.id, `moderation.${b.action}`, targetType, targetId, changes, req.ip, tx);
     });
+    if (deletedMessageId) await markDeleted(deletedMessageId); // tells the room (idempotent re-set of deletedAt)
     for (const p of pendingPinNotice) await notifyPinAudience(p);
     for (const c of pendingComment) await notifyComment(c);
     res.json({ ok: true });
+  }),
+);
+
+/** The reported message with 10 before and 10 after, only while a report is open (07 §2.4). No other chat browsing. */
+moderationRouter.get(
+  '/moderation/message/:messageId/context',
+  validate({ params: z.object({ messageId: id }) }),
+  asyncHandler(async (req, res) => {
+    res.json(await reportedContext(req.params.messageId as string));
   }),
 );
 
