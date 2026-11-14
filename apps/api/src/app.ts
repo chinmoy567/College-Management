@@ -20,6 +20,7 @@ import { adminExamsRouter, examsRouter } from './modules/exams/routes';
 import { chatFilesRouter, chatRouter } from './modules/chat/routes';
 import { noticesRouter, publicNoticesRouter } from './modules/notices/routes';
 import { notificationPrefsRouter, notificationsRouter } from './modules/notifications/routes';
+import { materialsRouter, onlineClassesRouter } from './modules/learning/routes';
 import { communityRouter, moderationRouter, publicProfileRouter, reportsRouter } from './modules/feed/routes';
 
 export interface AppOptions {
@@ -117,6 +118,8 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/schedule', ...authChain, scheduleRouter);
   app.use('/api/attendance', ...authChain, attendanceRouter);
   app.use('/api/exams', ...authChain, examsRouter);
+  app.use('/api/classes/online', ...authChain, onlineClassesRouter);
+  app.use('/api/materials', ...authChain, materialsRouter);
   app.use('/api', (_req, _res, next) => next(new AppError('NOT_FOUND', 404, 'Not found.')));
 
   const nextHandler = opts.nextHandler;

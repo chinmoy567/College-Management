@@ -10,6 +10,7 @@ import { registerEmailWorker } from './modules/mail/queue';
 import { registerMeetingJob } from './modules/schedule/job';
 import { registerExamJobs } from './modules/exams/jobs';
 import { registerNoticeJobs } from './modules/notices/jobs';
+import { registerLearningJobs } from './modules/learning/jobs';
 import { registerPushWorker } from './lib/push';
 import { createSocketServer } from './modules/realtime/socket';
 
@@ -31,6 +32,7 @@ async function main() {
   await registerMeetingJob();
   await registerExamJobs();
   await registerNoticeJobs();
+  await registerLearningJobs();
   await registerPushWorker();
 
   server.listen(config.PORT, () => logger.info({ port: config.PORT }, 'server listening'));
