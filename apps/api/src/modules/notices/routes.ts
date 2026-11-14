@@ -6,7 +6,7 @@ import { AppError, asyncHandler, validate } from '../../lib/http';
 import type { UploadedFile } from '../../lib/files';
 import { requireRole } from '../../middleware/session';
 import { actorOf } from '../feed/common';
-import { createNotice, deleteNotice, listNotices, markNoticeRead, publicNotices, updateNotice, urgentUnread } from './service';
+import { audienceOptions, createNotice, deleteNotice, listNotices, markNoticeRead, publicNotices, updateNotice, urgentUnread } from './service';
 
 const parser = multer({ storage: multer.memoryStorage(), limits: { fileSize: UPLOAD_LIMITS.documentBytes, files: 5, fields: 20, fieldSize: 60_000 } }).array('attachments', 5);
 const upload: RequestHandler = (req, res, next) => {
@@ -37,6 +37,7 @@ noticesRouter.get(
   }),
 );
 // Fixed path before the :id routes.
+noticesRouter.get('/audience-options', requireRole('admin', 'teacher'), asyncHandler(async (req, res) => void res.json(await audienceOptions(actorOf(req)))));
 noticesRouter.get('/urgent-unread', asyncHandler(async (req, res) => void res.json(await urgentUnread(actorOf(req)))));
 
 noticesRouter.post(

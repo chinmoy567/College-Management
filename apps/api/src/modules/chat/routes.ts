@@ -2,6 +2,8 @@ import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { UPLOAD_LIMITS, blockBody, cursorQuery, directBody, id, messageBody, messagesQuery } from '@cms/shared';
+import { prisma } from '../../db';
+import { loadAuthors, authorOf } from '../../lib/authorLine';
 import { storeUpload } from '../../lib/files';
 import { AppError, asyncHandler, validate } from '../../lib/http';
 import { consume, HOUR } from '../../lib/rateLimit';
@@ -26,6 +28,25 @@ chatRouter.get(
       }
     }
     res.json(await listConversations(actorOf(req), q.limit, cur));
+  }),
+);
+
+/** People to start a direct chat with (07 §2.1: every pair is allowed). Names only, active accounts. */
+chatRouter.get(
+  '/people',
+  validate({ query: z.object({ q: z.string().trim().min(2).max(60) }) }),
+  asyncHandler(async (req, res) => {
+    const { q } = req.query as { q: string };
+    const me = actorOf(req).id;
+    const rows = await prisma.user.findMany({
+      where: {
+        status: 'active', id: { not: me },
+        OR: [{ student: { is: { name: { contains: q, mode: 'insensitive' } } } }, { teacher: { is: { name: { contains: q, mode: 'insensitive' } } } }],
+      },
+      select: { id: true }, take: 20,
+    });
+    const authors = await loadAuthors(rows.map((r) => r.id));
+    res.json({ items: rows.map((r) => authorOf(authors, r.id)) });
   }),
 );
 

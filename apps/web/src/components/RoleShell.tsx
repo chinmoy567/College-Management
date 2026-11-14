@@ -6,6 +6,8 @@ import { useEffect, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ListSkeleton } from '@/components/ui';
+import { TopLinks } from '@/components/chat/TopLinks';
+import { UrgentBanner } from '@/components/chat/UrgentBanner';
 
 /** Guard (UX only, the API enforces roles) + simple top links for the teacher and student areas. */
 export function RoleShell({ role, links, children }: { role: 'teacher' | 'student'; links: { href: string; label: string }[]; children: ReactNode }) {
@@ -29,6 +31,7 @@ export function RoleShell({ role, links, children }: { role: 'teacher' | 'studen
     );
   return (
     <div className="min-h-screen">
+      {!bare && <UrgentBanner />}
       {!bare && (
         <nav aria-label={role} className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-2 pt-3 sm:gap-2 sm:px-4">
           {links.map((l) => (
@@ -36,6 +39,7 @@ export function RoleShell({ role, links, children }: { role: 'teacher' | 'studen
               {l.label}
             </Link>
           ))}
+          <TopLinks />
         </nav>
       )}
       <main className={bare ? 'mx-auto max-w-3xl' : 'mx-auto max-w-3xl p-4'}>{children}</main>

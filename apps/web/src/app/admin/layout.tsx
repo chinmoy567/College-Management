@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ListSkeleton, cn } from '@/components/ui';
+import { UrgentBanner } from '@/components/chat/UrgentBanner';
 
 const tabs = [
   { href: '/admin/sessions', label: 'Sessions' },
@@ -36,6 +37,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   return (
     <div className="min-h-screen pb-20 md:pb-0">
+      <UrgentBanner />
       <nav
         aria-label="Admin"
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white md:static md:mx-auto md:flex md:max-w-3xl md:gap-2 md:border-0 md:px-4 md:pt-3"

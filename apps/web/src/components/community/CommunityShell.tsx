@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { Me } from '@/lib/community';
 import { ListSkeleton } from '@/components/ui';
+import { TopLinks } from '@/components/chat/TopLinks';
+import { UrgentBanner } from '@/components/chat/UrgentBanner';
 
 const HOME = { admin: '/admin', teacher: '/teacher/attendance', student: '/student/routine' } as const;
 
@@ -31,6 +33,7 @@ export function CommunityShell({ children }: { children: (me: Me) => ReactNode }
     );
   return (
     <div className="min-h-screen">
+      <UrgentBanner />
       <nav aria-label="Community" className="mx-auto flex max-w-2xl gap-1 overflow-x-auto px-2 pt-3">
         <Link href={HOME[me.data.role]} className="flex min-h-11 items-center rounded-lg px-3 text-base font-medium text-indigo-700 hover:bg-indigo-50">
           ← Home
@@ -38,6 +41,7 @@ export function CommunityShell({ children }: { children: (me: Me) => ReactNode }
         <Link href="/feed" className="flex min-h-11 items-center rounded-lg px-3 text-base font-medium text-indigo-700 hover:bg-indigo-50">
           Feed
         </Link>
+        <TopLinks />
         {me.data.role === 'admin' && (
           <Link href="/admin/moderation" className="flex min-h-11 items-center rounded-lg px-3 text-base font-medium text-indigo-700 hover:bg-indigo-50">
             Moderation

@@ -243,3 +243,25 @@ export async function deleteNotice(me: Actor, noticeId: string) {
   await prisma.notice.update({ where: { id: noticeId }, data: { deletedAt: now() } });
   await softDeleteObjects(n.attachments.map((a) => a.fileId));
 }
+
+/** What the composer can offer: sessions and groups for the Admin; own offerings and sections for a teacher. */
+export async function audienceOptions(me: Actor) {
+  if (me.role === 'admin') {
+    const sessions = await prisma.session.findMany({ where: { status: 'active' }, orderBy: { name: 'desc' }, select: { id: true, name: true, groups: { select: { id: true, type: true } } } });
+    return { sessions: sessions.map((s) => ({ id: s.id, name: s.name, groups: s.groups })), offerings: [], sections: [] };
+  }
+  const offerings = await prisma.courseOffering.findMany({
+    where: { teacherId: me.id, endedAt: null, section: { deletedAt: null, group: { session: { status: 'active' } } } },
+    select: { id: true, course: { select: { name: true } }, section: { select: { id: true, name: true, classLevel: true, group: { select: { type: true } } } } },
+  });
+  const mentored = await prisma.section.findMany({ where: { mentorTeacherId: me.id, deletedAt: null, group: { session: { status: 'active' } } }, select: { id: true, name: true, classLevel: true, group: { select: { type: true } } } });
+  const label = (s: { name: string; classLevel: number; group: { type: string } }) => `Class ${s.classLevel} ${s.group.type} ${s.name}`;
+  const sections = new Map<string, string>();
+  for (const o of offerings) sections.set(o.section.id, label(o.section));
+  for (const m of mentored) sections.set(m.id, `${label(m)} (my section)`);
+  return {
+    sessions: [],
+    offerings: offerings.map((o) => ({ id: o.id, label: `${o.course.name} - ${label(o.section)}` })),
+    sections: [...sections].map(([id, label]) => ({ id, label })),
+  };
+}

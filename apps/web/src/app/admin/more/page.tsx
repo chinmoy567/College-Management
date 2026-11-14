@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { Card, PageTitle } from '@/components/ui';
 
 const links = [
+  { href: '/messages', label: 'Messages', hint: 'Chat with teachers and students' },
+  { href: '/notices', label: 'Notices', hint: 'Publish and read notices' },
+  { href: '/notifications', label: 'Notifications', hint: 'Your alerts' },
   { href: '/feed', label: 'Feed', hint: 'Posts, pinned announcements and comments' },
   { href: '/admin/moderation', label: 'Moderation', hint: 'Reports, held posts, mutes and banned words' },
   { href: '/admin/schedule', label: 'Schedule', hint: 'Calendar, holidays and extra classes' },
