@@ -7,3 +7,5 @@ export * from './exams';
 export * from './community';
 export * from './chat';
 export * from './learning';
+export * from './books';
+export * from './ai';
