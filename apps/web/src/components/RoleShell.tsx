@@ -43,6 +43,11 @@ export function RoleShell({ role, links, children }: { role: 'teacher' | 'studen
         </nav>
       )}
       <main className={bare ? 'mx-auto max-w-3xl' : 'mx-auto max-w-3xl p-4'}>{children}</main>
+      {role === 'student' && !bare && !pathname.startsWith('/student/ai') && (
+        <Link href="/student/ai" aria-label="AI study helper" className="fixed bottom-4 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white shadow-lg">
+          AI
+        </Link>
+      )}
     </div>
   );
 }

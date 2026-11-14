@@ -16,6 +16,8 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         { href: '/student/previous-questions', label: 'Past papers' },
         { href: '/student/exams', label: 'Exams' },
         { href: '/student/progress', label: 'Progress' },
+        { href: '/student/books', label: 'Books' },
+        { href: '/student/ai', label: 'AI helper' },
         { href: '/feed', label: 'Feed' },
       ]}
     >

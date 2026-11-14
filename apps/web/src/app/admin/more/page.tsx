@@ -8,6 +8,8 @@ const links = [
   { href: '/feed', label: 'Feed', hint: 'Posts, pinned announcements and comments' },
   { href: '/admin/moderation', label: 'Moderation', hint: 'Reports, held posts, mutes and banned words' },
   { href: '/admin/library', label: 'College library', hint: 'Free recordings, notes and previous questions for everyone' },
+  { href: '/admin/books', label: 'Book shop', hint: 'Catalog, purchases and the most unlocked books' },
+  { href: '/admin/ai', label: 'AI usage', hint: 'Messages per day and per section (no chat content)' },
   { href: '/admin/schedule', label: 'Schedule', hint: 'Calendar, holidays and extra classes' },
   { href: '/admin/mentors', label: 'Section Mentors', hint: 'Sections without a mentor' },
   { href: '/admin/students/new', label: 'Add student', hint: 'One student with a credential slip' },

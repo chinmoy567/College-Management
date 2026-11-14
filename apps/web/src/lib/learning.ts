@@ -33,10 +33,10 @@ export const materialFileHref = (id: string, fileId: string, action: 'view' | 'd
 export const previousFileHref = (id: string, fileId: string, action: 'view' | 'download' = 'view'): string => `/api/materials/previous-questions/${id}/files/${fileId}?action=${action}`;
 
 /** multipart POST with upload progress (fetch has none). Sends the same CSRF header as api(). */
-export function uploadForm<T>(path: string, form: FormData, onProgress: (pct: number) => void): Promise<T> {
+export function uploadForm<T>(path: string, form: FormData, onProgress: (pct: number) => void, method: 'POST' | 'PATCH' = 'POST'): Promise<T> {
   return new Promise((resolve, reject) => {
     const x = new XMLHttpRequest();
-    x.open('POST', `/api${path}`);
+    x.open(method, `/api${path}`);
     x.withCredentials = true;
     x.setRequestHeader('X-Requested-With', 'cms');
     x.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
