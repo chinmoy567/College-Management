@@ -34,6 +34,8 @@ export function createApp(opts: AppOptions = {}): Express {
     const nonce = randomBytes(16).toString('base64');
     res.locals.nonce = nonce;
     req.headers['x-nonce'] = nonce;
+    // Next.js takes the nonce for its own scripts from the request's CSP header, not from x-nonce.
+    req.headers['content-security-policy'] = `script-src 'nonce-${nonce}'`;
     next();
   });
 
