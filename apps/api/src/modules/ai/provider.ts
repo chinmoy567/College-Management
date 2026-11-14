@@ -38,12 +38,14 @@ export class FakeProvider implements ChatProvider {
   /** Fail after the first chunk instead of before it. */
   failMidStream = false;
   delayMs = 0;
+  chunkDelayMs = 0;
   async *stream(messages: ChatMessage[], opts: StreamOpts): AsyncIterable<string> {
     this.calls.push({ messages, model: opts.model });
     if (this.delayMs) await new Promise((r) => setTimeout(r, this.delayMs));
     if (this.fail && !this.failMidStream) throw this.fail;
     for (const [i, c] of this.chunks.entries()) {
       yield c;
+      if (this.chunkDelayMs) await new Promise((r) => setTimeout(r, this.chunkDelayMs));
       if (this.fail && i === 0) throw this.fail;
     }
   }
@@ -81,8 +83,14 @@ let override: ChatProvider | null = null;
 export const setProvider = (p: ChatProvider | null): void => {
   override = p;
 };
+/** The e2e server (never production): a slow scripted answer with math, so streaming and KaTeX can be checked without Groq. */
+const e2eFake = new FakeProvider();
+e2eFake.chunks = ['Here is the ', 'energy formula: $E = mc^2$.\n\n', '- Step one\n', '- Step two\n'];
+e2eFake.chunkDelayMs = 400;
+
 export function providerFor(name: string): ChatProvider {
   if (override) return override;
+  if (process.env.E2E_FAKE_AI === '1' && process.env.NODE_ENV !== 'production') return e2eFake;
   const make = providers[name];
   if (!make) throw new Error(`Unsupported AI provider "${name}"`);
   return make();

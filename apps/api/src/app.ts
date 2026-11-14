@@ -65,6 +65,8 @@ export function createApp(opts: AppOptions = {}): Express {
           imgSrc: ["'self'", 'data:', 'blob:', ...supa],
           frameSrc: ['https://www.youtube-nocookie.com', 'https://drive.google.com'],
           connectSrc: ["'self'", 'wss:', ...supa],
+          // The PDF reader runs pdf.js in a same-origin web worker (09 section 1.2).
+          workerSrc: ["'self'", 'blob:'],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
         },

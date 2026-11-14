@@ -16,7 +16,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run build:shared && npm run start:e2e -w @cms/api',
     url: `http://localhost:${port}/api/health`,
-    env: { PORT: String(port) },
+    env: { PORT: String(port), E2E_FAKE_AI: '1' },
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
