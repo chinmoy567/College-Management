@@ -23,6 +23,9 @@ const parser = multer({
 ]);
 export const mediaUpload: RequestHandler = (req, res, next) => {
   if (!req.is('multipart/form-data')) return next();
+  // Bounds memory: 10 images x 5 MB + one 20 MB PDF, plus form overhead.
+  if (Number(req.headers['content-length'] ?? 0) > MAX_IMAGES * UPLOAD_LIMITS.imageBytes + UPLOAD_LIMITS.documentBytes + 1_000_000)
+    return next(new AppError('VALIDATION_ERROR', 400, 'The upload is too large.', { images: 'size' }));
   parser(req, res, (e: unknown) => {
     if (!e) return next();
     const code = (e as { code?: string }).code;

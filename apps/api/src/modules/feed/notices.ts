@@ -4,7 +4,7 @@ import { notify, notifyBulk } from '../../lib/notify';
 
 export async function pinDays(): Promise<number> {
   const s = await prisma.setting.findUnique({ where: { key: 'pin_days' } });
-  return typeof s?.value === 'number' && s.value > 0 ? s.value : PIN_DAYS_DEFAULT;
+  return typeof s?.value === 'number' && s.value > 0 ? Math.min(s.value, PIN_DAYS_DEFAULT) : PIN_DAYS_DEFAULT // PRD §5.7.2: at most 7 days;
 }
 
 /** Who gets a `pinned_post` notification: everyone active (Admin pin) or the active students of the section (mentor pin). */

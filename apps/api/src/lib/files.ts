@@ -9,12 +9,10 @@ const toRow = (o: StorageObject): StorageObjectRow => ({
   contentType: o.mime, sizeBytes: o.size, filename: o.originalName, deletedAt: o.deletedAt,
 });
 
-/** `uploadedBy` is set per call through this holder, because ObjectStore.create has no actor argument. */
-let uploader = 'system';
 const objects: ObjectStore = {
   async create(r) {
     const o = await prisma.storageObject.create({
-      data: { bucket: r.bucket, key: r.key, mime: r.contentType, size: r.sizeBytes, originalName: r.filename, uploadedBy: uploader },
+      data: { bucket: r.bucket, key: r.key, mime: r.contentType, size: r.sizeBytes, originalName: r.filename, uploadedBy: 'system' },
     });
     return toRow(o);
   },
@@ -87,11 +85,12 @@ export async function storeUpload(
   file: UploadedFile,
 ): Promise<string> {
   const p = await processUpload(kind, file.buffer, file.originalname);
-  uploader = uploadedBy;
   const row = await storage().save({
     purpose, body: p.body, ext: p.ext, contentType: p.contentType,
     filename: kind === 'image' ? null : file.originalname.slice(0, 200),
   });
+  // ObjectStore.create has no actor argument; set it on the row right after, with no shared state between requests.
+  await prisma.storageObject.update({ where: { id: row.id }, data: { uploadedBy } });
   return row.id;
 }
 
