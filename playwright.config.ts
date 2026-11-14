@@ -14,7 +14,7 @@ export default defineConfig({
   ],
   // Starts the app against the test DB (demo seed added in M1).
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run build:shared && npm run start:e2e -w @cms/api',
     url: `http://localhost:${port}/api/health`,
     env: { PORT: String(port) },
     reuseExistingServer: !process.env.CI,
