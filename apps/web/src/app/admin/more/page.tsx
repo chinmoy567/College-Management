@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Card, PageTitle } from '@/components/ui';
 
 const links = [
+  { href: '/feed', label: 'Feed', hint: 'Posts, pinned announcements and comments' },
+  { href: '/admin/moderation', label: 'Moderation', hint: 'Reports, held posts, mutes and banned words' },
   { href: '/admin/schedule', label: 'Schedule', hint: 'Calendar, holidays and extra classes' },
   { href: '/admin/mentors', label: 'Section Mentors', hint: 'Sections without a mentor' },
   { href: '/admin/students/new', label: 'Add student', hint: 'One student with a credential slip' },

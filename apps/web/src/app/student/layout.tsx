@@ -12,6 +12,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         { href: '/student/attendance', label: 'Attendance' },
         { href: '/student/exams', label: 'Exams' },
         { href: '/student/progress', label: 'Progress' },
+        { href: '/feed', label: 'Feed' },
       ]}
     >
       {children}
