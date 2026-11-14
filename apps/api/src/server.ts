@@ -1,12 +1,13 @@
 import http from 'node:http';
 import path from 'node:path';
 import next from 'next';
-import { Server as IOServer } from 'socket.io';
 import { loadConfig } from './config';
 import { createApp } from './app';
 import { logger } from './lib/logger';
 import { prisma } from './db';
 import { startJobs, stopJobs } from './jobs';
+import { registerEmailWorker } from './modules/mail/queue';
+import { createSocketServer } from './modules/realtime/socket';
 
 async function main() {
   const config = loadConfig();
@@ -20,8 +21,9 @@ async function main() {
     supabaseOrigin: new URL(config.SUPABASE_URL).origin,
   });
   const server = http.createServer(app);
-  const io = new IOServer(server); // auth + rooms arrive in M2/M9
+  const io = createSocketServer(server); // chat events arrive in M9
   await startJobs(config.DATABASE_URL);
+  await registerEmailWorker();
 
   server.listen(config.PORT, () => logger.info({ port: config.PORT }, 'server listening'));
 

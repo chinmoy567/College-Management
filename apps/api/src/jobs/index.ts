@@ -25,3 +25,12 @@ export async function stopJobs(): Promise<void> {
   await boss?.stop();
   boss = undefined;
 }
+
+export async function enqueue(
+  name: string,
+  data: object,
+  opts: { priority?: number; startAfter?: Date; retryLimit?: number } = {},
+): Promise<void> {
+  if (!boss) throw new Error('Jobs not started');
+  await boss.send(name, data, { retryLimit: 3, retryBackoff: true, ...opts });
+}

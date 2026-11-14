@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import express, { type Express, type Request, type Response } from 'express';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import type { Logger } from 'pino';
@@ -7,6 +8,9 @@ import { logger as defaultLogger } from './lib/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { healthRouter } from './modules/health/routes';
 import { AppError } from './lib/http';
+import { authChain, csrfGuard } from './middleware/session';
+import { authedAuthRouter, publicAuthRouter } from './modules/auth/routes';
+import { meRouter } from './modules/me/routes';
 
 export interface AppOptions {
   /** Hand non-API requests to Next.js. */
@@ -76,7 +80,13 @@ export function createApp(opts: AppOptions = {}): Express {
   );
   app.use(express.json({ limit: '1mb' }));
 
+  app.use(cookieParser());
   app.use('/api/health', healthRouter);
+  app.use('/api', csrfGuard);
+  // Public auth routes first (never behind the session chain), then the session-protected ones.
+  app.use('/api/auth', publicAuthRouter);
+  app.use('/api/auth', authedAuthRouter);
+  app.use('/api/me', ...authChain, meRouter);
   app.use('/api', (_req, _res, next) => next(new AppError('NOT_FOUND', 404, 'Not found.')));
 
   const nextHandler = opts.nextHandler;
