@@ -235,7 +235,7 @@ describe('materials', () => {
     expect(await prisma.material.count()).toBe(before);
     // images are accepted and re-encoded; too large an image is refused
     expect((await upload(t, f, [{ name: 'pic.png', buf: png }])).status).toBe(201);
-    const big = await sharp({ create: { width: 3000, height: 3000, channels: 3, noise: { type: 'gaussian', mean: 128, sigma: 60 } } }).png().toBuffer();
+    const big = await sharp({ create: { width: 3000, height: 3000, channels: 3, background: '#808080', noise: { type: 'gaussian', mean: 128, sigma: 60 } } }).png().toBuffer();
     expect(big.length).toBeGreaterThan(5 * 1024 * 1024);
     expect((await upload(t, f, [{ name: 'big.png', buf: big }])).status).toBe(400);
     // more than 10 files
