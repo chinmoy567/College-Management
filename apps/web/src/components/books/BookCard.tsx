@@ -9,7 +9,6 @@ export function BookCard({ book, href }: { book: BookCardRow; href: string }) {
   return (
     <Link href={href} data-testid={`book-${book.id}`}>
       <Card className="flex h-full gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         {book.coverUrl ? <img src={book.coverUrl} alt="" loading="lazy" className="h-28 w-20 shrink-0 rounded-md object-cover" /> : <div aria-hidden className="h-28 w-20 shrink-0 rounded-md bg-slate-200" />}
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-lg font-semibold leading-snug">{book.title}</p>

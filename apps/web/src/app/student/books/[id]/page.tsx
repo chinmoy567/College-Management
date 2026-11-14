@@ -34,7 +34,6 @@ export default function Book() {
       <PageTitle>{b.title}</PageTitle>
       <Card className="flex flex-col gap-3">
         <div className="flex gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {b.coverUrl ? <img src={b.coverUrl} alt={`Cover of ${b.title}`} className="h-40 w-28 shrink-0 rounded-md object-cover" /> : <div aria-hidden className="h-40 w-28 shrink-0 rounded-md bg-slate-200" />}
           <div className="flex min-w-0 flex-col gap-1">
             <p className="text-base text-slate-700">by {b.author}</p>
