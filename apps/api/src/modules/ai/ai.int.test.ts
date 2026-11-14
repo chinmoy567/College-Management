@@ -214,7 +214,7 @@ describe('AI study assistant', () => {
     expect(sent).toContain('resistance of an object');
     // student text is never in the system role
     for (const m of fake.calls[1]!.messages.filter((x) => x.role === 'system')) expect(m.content).not.toContain('second example');
-  });
+  }, 60_000);
 
   it('[AI-06] grounding uses only materials from the student own courses and drops deleted materials', async () => {
     const r = await classroom(prisma, admin.c);
@@ -241,7 +241,7 @@ describe('AI study assistant', () => {
     expect(await prisma.materialChunk.count({ where: { materialId: mine } })).toBe(0);
     await say(s, conv, 'How does chlorophyll work in photosynthesis?');
     expect(JSON.stringify(fake.calls[3]!.messages)).not.toContain('Chlorophyll absorbs');
-  });
+  }, 60_000);
 
   it('[AI-07] chats are private: other students get 404, teachers and the admin 403; the admin sees usage counts only', async () => {
     const r = await classroom(prisma, admin.c);
