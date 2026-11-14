@@ -30,3 +30,24 @@ describe('app', () => {
     expect(r.body.error.code).toBe('NOT_FOUND');
   });
 });
+
+describe('request logging', () => {
+  it('[CONV-06] logs never contain bodies, query strings, cookies or message text', async () => {
+    const { Writable } = await import('node:stream');
+    const { createLogger } = await import('./lib/logger');
+    const lines: string[] = [];
+    const dest = new Writable({ write(c, _e, cb) { lines.push(String(c)); cb(); } });
+    const a = createApp({ logger: createLogger(dest) });
+    a.post('/api/echo-test', (_req, res) => res.json({ ok: true }));
+    await request(a)
+      .post('/api/echo-test?search=secret-query')
+      .set('Cookie', 'cms_session=sess-abc')
+      .set('Authorization', 'Bearer tok-xyz')
+      .send({ body: 'my private chat message', password: 'pw-999', prompt: 'ai question text' });
+    const out = lines.join('');
+    expect(out).toContain('/api/echo-test');
+    for (const s of ['my private chat message', 'pw-999', 'ai question text', 'secret-query', 'sess-abc', 'tok-xyz']) {
+      expect(out).not.toContain(s);
+    }
+  });
+});

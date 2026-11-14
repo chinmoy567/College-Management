@@ -2,7 +2,8 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import express, { type Express, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
-import { logger } from './lib/logger';
+import type { Logger } from 'pino';
+import { logger as defaultLogger } from './lib/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { healthRouter } from './modules/health/routes';
 import { AppError } from './lib/http';
@@ -12,6 +13,8 @@ export interface AppOptions {
   nextHandler?: (req: Request, res: Response) => unknown;
   dev?: boolean;
   supabaseOrigin?: string;
+  /** Override the request logger (tests capture its output). */
+  logger?: Logger;
 }
 
 export function createApp(opts: AppOptions = {}): Express {
@@ -58,7 +61,7 @@ export function createApp(opts: AppOptions = {}): Express {
   });
   app.use(
     pinoHttp({
-      logger,
+      logger: opts.logger ?? defaultLogger,
       genReqId: (req) => (req as Request & { id: string }).id,
       // Request bodies are never logged (CONV-06); only method + path.
       serializers: {
