@@ -37,8 +37,9 @@ export async function extractMaterialText(materialId: string, fileId: string): P
   });
   const index = m?.files.findIndex((f) => f.fileId === fileId) ?? -1;
   if (!m || index < 0) return 0;
-  const text = await pdfText(await readObject(fileId));
-  const chunks = text.replace(/\u0000/g, '').trim().length < 20 ? [] : chunkText(text).slice(0, MAX_CHUNKS_PER_FILE);
+  // Postgres text cannot hold NUL characters, which some PDFs produce.
+  const text = (await pdfText(await readObject(fileId))).split('\0').join('');
+  const chunks = text.trim().length < 20 ? [] : chunkText(text).slice(0, MAX_CHUNKS_PER_FILE);
   const base = index * FILE_RANGE;
   await prisma.$transaction([
     prisma.materialChunk.deleteMany({ where: { materialId, chunkNo: { gte: base, lt: base + FILE_RANGE } } }),
