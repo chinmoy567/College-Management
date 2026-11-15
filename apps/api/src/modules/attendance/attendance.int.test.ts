@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { prisma } from '../../db';
-import { adminClient, classroom, clientFor, makeApp, makeTeacher, pastMeeting } from '../../../../../test/m5kit';
+import { adminClient, classroom, clientFor, makeApp, makeCourse, makeTeacher, pastMeeting } from '../../../../../test/m5kit';
 
 const app = makeApp();
 let admin: Awaited<ReturnType<typeof adminClient>>;
@@ -129,6 +129,19 @@ describe('percentage', () => {
     expect((await (await clientFor(app, s!)).get(`/api/attendance/offerings/${c.offering.id}/summary`)).status).toBe(403);
     const t = await (await clientFor(app, c.teacher)).get(`/api/attendance/offerings/${c.offering.id}/low`);
     expect(t.body.students.map((x: { studentId: string }) => x.studentId)).toContain(s!.id);
+  });
+
+  it('[SCH-11] a student who moved sees only current courses in the attendance card; ended enrollments are hidden', async () => {
+    const c = await classroom(prisma, admin.c, 1);
+    const kid = c.students[0]!;
+    const oldCourse = await makeCourse(prisma);
+    const oldOffering = await prisma.courseOffering.create({ data: { sectionId: c.sectionId, courseId: oldCourse.id, teacherId: c.teacher.id } });
+    await prisma.enrollment.create({ data: { courseOfferingId: oldOffering.id, studentId: kid.id, status: 'ended', endedAt: new Date() } });
+    const mine = await (await clientFor(app, kid)).get('/api/attendance/me');
+    expect(mine.status).toBe(200);
+    const ids = mine.body.courses.map((x: { offeringId: string }) => x.offeringId);
+    expect(ids).toEqual([c.offering.id]);
+    expect(ids).not.toContain(oldOffering.id);
   });
 });
 

@@ -131,7 +131,8 @@ attendanceRouter.get('/me', requireRole('student'), asyncHandler(async (req, res
   const [rows, th, offerings] = await Promise.all([
     aggregate({ studentIds: [me] }),
     getThresholds(),
-    prisma.courseOffering.findMany({ where: { enrollments: { some: { studentId: me } } }, include: { course: true } }),
+    // current courses only: ended enrollments (e.g. after moving class/section) are history, not shown as courses
+    prisma.courseOffering.findMany({ where: { endedAt: null, enrollments: { some: { studentId: me, status: 'active' } } }, include: { course: true } }),
   ]);
   const byOffering = new Map(rows.map((r) => [r.offeringId, r]));
   res.json({
