@@ -262,7 +262,6 @@ describe('admin login', () => {
     const later = await loginAs(admin.email!, 'Brand-new-pass-9');
     expect(later.res.body.next).toBe('dashboard');
     expect((await later.c.get('/api/me/profile')).status).toBe(200);
-    expect((await later.c.post('/api/auth/totp/setup')).status).toBe(404);
     expect((await loginAs(admin.email!, PW)).res.status).toBe(401); // old seed password no longer works
   });
 

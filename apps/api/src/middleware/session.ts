@@ -53,7 +53,7 @@ export const sessionMiddleware: RequestHandler = async (req, res, next) => {
 };
 
 const FIRST_LOGIN_OK = [/^\/api\/auth\//, /^\/api\/me\/complete-profile$/];
-const ADMIN_PW_OK = [/^\/api\/auth\/(me|logout|admin\/)/];
+const ADMIN_PW_OK = [/^\/api\/auth\/(me$|logout$|admin\/)/];
 
 /** First-login users may call only auth routes and complete-profile (AUTH-04). */
 export const firstLoginGate: RequestHandler = (req, _res, next) => {

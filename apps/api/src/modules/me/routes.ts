@@ -63,7 +63,7 @@ meRouter.post(
     await prisma.token.create({
       data: { userId: r.user.id, purpose: 'email_change', newEmail, tokenHash: sha256(raw), expiresAt: new Date(Date.now() + 30 * 60_000) },
     });
-    const link = `${process.env.APP_URL}/api/auth/email/verify?token=${raw}`;
+    const link = `${process.env.APP_URL ?? ''}/api/auth/email/verify?token=${raw}`;
     await queueEmail({ to: newEmail, link, ...tpl.changeEmail(link) }, 'high'); // sent to the NEW address
     res.json({ ok: true });
   }),

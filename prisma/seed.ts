@@ -35,6 +35,7 @@ export async function seedAdmin(prisma: PrismaClient, env: SeedEnv): Promise<voi
       email,
       role: 'admin',
       passwordHash: await argon2.hash(password, { type: argon2.argon2id }),
+      emailVerifiedAt: new Date(), // the deployer sets this address, so forgot-password works for the Admin
       mustChangePassword: true,
     },
   });

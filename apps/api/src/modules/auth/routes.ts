@@ -140,6 +140,8 @@ publicAuthRouter.get(
     const t = await consumeToken(raw, purpose);
     if (purpose === 'email_change') {
       if (!t.newEmail) throw new AppError('TOKEN_EXPIRED', 410, 'This link is not valid.');
+      if (await prisma.user.findUnique({ where: { email: t.newEmail } }))
+        throw new AppError('CONFLICT', 409, 'That email is already in use.');
       await prisma.user.update({ where: { id: t.userId }, data: { email: t.newEmail, emailVerifiedAt: new Date() } });
       await revokeAllSessions(t.userId);
     } else {
