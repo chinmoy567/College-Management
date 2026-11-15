@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build:shared": "npm run build -w @cms/shared",
+    "predev": "node scripts/free-port.mjs 3000",
     "dev": "npm run build:shared && npm run dev -w @cms/api",
     "build": "npm run build:shared && npm run build -w @cms/web && npm run build -w @cms/api",
     "start": "node apps/api/dist/server.js",
