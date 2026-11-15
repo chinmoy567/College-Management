@@ -83,8 +83,8 @@ The **Admin** controls the academic structure and all accounts, and decides **wh
 ### 2.2 Admin
 - Single super-user. Logs in with **email + password**. **There is only one Admin account by design** (client decision); no second Admin and no other recovery path. The Admin keeps the login email safe.
 - First login uses a **seed password** set during deployment; the system forces a password change.
-- **Two-step login:** the Admin turns on an authenticator app (TOTP, e.g. Google Authenticator) at first login and gets **10 one-time backup codes** to print and keep safe. Every Admin login asks for the password and a code.
-- Can reset own password via email (the authenticator code or a backup code is still needed).
+- No authenticator app or backup codes (client decision): Admin login is email + password only.
+- Can change own password and own email (new email is verified by link) in the profile, and can reset the password via email (forgot password).
 
 ### 2.3 Teacher
 - Account created by Admin with a **User ID and initial password**.
@@ -236,7 +236,7 @@ The top-right **Login** button opens the same form with no role pre-selected.
 Rules:
 1. It is **one login form** for everyone: **User ID or Email** + **Password**.
 2. The pre-selected role is only a convenience (label and wording). **The server decides the role from the account**, never from the button. If someone uses the wrong button, they still land on the dashboard of their real role, or get a clear message "This is a Teacher account" and are sent to the right login. Never show which accounts exist (same generic error for a wrong ID or password).
-3. **Admin** also enters a one-time code from the authenticator app (or a backup code) after the password (4.6).
+3. **Admin** logs in with the same form (email + password). On the very first login the seed password must be changed before anything else.
 4. **First login** for a Teacher or Student: forced "Complete Your Profile" step (new password + mobile) before the dashboard (4.2).
 5. After success, the person goes to their **role dashboard** (Admin, Teacher / Section Mentor, Student; see 5.2).
 6. Already logged in: opening the landing page shows an **Open my dashboard** button instead of the login buttons.
@@ -669,7 +669,7 @@ Roll  Name             Status
 
 | Entity | Key Fields |
 |---|---|
-| **User** | id, login_id, email, email_verified_at, mobile, password_hash, role (admin/teacher/student), status (active/inactive/passed_out/deleted), first_login, avatar_url, totp_secret and backup_code_hashes (Admin only) |
+| **User** | id, login_id, email, email_verified_at, mobile, password_hash, role (admin/teacher/student), status (active/inactive/passed_out/deleted), first_login, avatar_url |
 | **StudentProfile** | user_id, name, name_locked, section_id (current section; session, group and class are read from the section, never stored twice), roll, bio, dob, address, guardian_contact |
 | **TeacherProfile** | user_id, name, designation, subjects[], bio |
 | **Session** | id, name, status, created_at |
