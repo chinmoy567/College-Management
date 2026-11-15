@@ -18,6 +18,12 @@ const TEACHERS: [string, string, string][] = [
   ['Arts', 'Shirin Sultana', 'civics'],
   ['Arts', 'Habibur Rahman', 'economics'],
   ['Arts', 'Rokeya Khanom', 'sociology'],
+  ['Arts', 'Mahbub Alam', 'islamic history'],
+  ['Arts', 'Maulana Anwar Hossain', 'islamic studies'],
+  ['Arts', 'Salim Reza', 'logic'],
+  ['Arts', 'Nazma Akter', 'social work'],
+  ['Arts', 'Dilruba Haque', 'psychology'],
+  ['Science/Commerce', 'Kamrul Hasan', 'agriculture'],
 ];
 
 const pw = () => randomBytes(6).toString('base64url') + '#7a';
