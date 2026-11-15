@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDhakaDate } from '@/lib/dhaka';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
@@ -69,7 +70,7 @@ function NoticeList({ me }: { me: Me }) {
               {n.priority !== 'normal' && <Badge tone={n.priority === 'urgent' ? 'red' : 'amber'}>{n.priority === 'urgent' ? 'Urgent' : 'Important'}</Badge>}
               <Badge>{n.scope === 'central' ? 'Central' : 'Class'}</Badge>
             </div>
-            <p className="text-sm text-slate-600">{n.author.name}{n.author.line ? ` · ${n.author.line}` : ''} · {n.publishedAt ? new Date(n.publishedAt).toLocaleDateString() : ''}</p>
+            <p className="text-sm text-slate-600">{n.author.name}{n.author.line ? ` · ${n.author.line}` : ''} · {n.publishedAt ? formatDhakaDate(n.publishedAt) : ''}</p>
             {/* bodyHtml is sanitised on the server with an allow-list (07 §3.2). */}
             <div className="prose-sm mt-2 text-base [&_a]:text-indigo-700 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: n.bodyHtml }} />
             {n.attachments.length > 0 && (

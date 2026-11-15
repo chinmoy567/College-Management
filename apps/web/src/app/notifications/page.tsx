@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDhaka } from '@/lib/dhaka';
 import Link from 'next/link';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -49,7 +50,7 @@ function List() {
           <Link key={n.id} href={hrefOf(n)} onClick={() => !n.read && void markOne(n.id)}>
             <Card className={`min-h-11 ${n.read ? '' : 'border-indigo-300 bg-indigo-50'}`} data-testid="notification">
               <p className={`text-base ${n.read ? '' : 'font-semibold'}`}>{n.text}</p>
-              <p className="text-sm text-slate-500">{new Date(n.createdAt).toLocaleString()}</p>
+              <p className="text-sm text-slate-500">{formatDhaka(n.createdAt)}</p>
             </Card>
           </Link>
         ))}

@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDhakaTime } from '@/lib/dhaka';
 import Link from 'next/link';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
@@ -23,7 +24,7 @@ interface Msg {
   failed?: boolean;
 }
 
-const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const time = formatDhakaTime;
 
 function Thread({ id, me }: { id: string; me: Me }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
