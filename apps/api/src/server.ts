@@ -12,6 +12,7 @@ import { registerExamJobs } from './modules/exams/jobs';
 import { registerNoticeJobs } from './modules/notices/jobs';
 import { registerLearningJobs } from './modules/learning/jobs';
 import { registerBookJobs } from './modules/books/jobs';
+import { registerMaintenanceJobs } from './jobs/maintenance';
 import { registerPushWorker } from './lib/push';
 import { createSocketServer } from './modules/realtime/socket';
 
@@ -36,14 +37,15 @@ async function main() {
   await registerLearningJobs();
   await registerBookJobs();
   await registerPushWorker();
+  await registerMaintenanceJobs();
 
   server.listen(config.PORT, () => logger.info({ port: config.PORT }, 'server listening'));
 
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'shutting down');
-    server.close();
-    await stopJobs();
-    await io.close();
+    server.close(); // stop accepting
+    await io.close(); // close sockets
+    await stopJobs(); // boss.stop({ graceful: true })
     await prisma.$disconnect();
     process.exit(0);
   };

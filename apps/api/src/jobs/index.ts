@@ -4,7 +4,7 @@ import { logger } from '../lib/logger';
 let boss: PgBoss | undefined;
 
 export async function startJobs(databaseUrl: string): Promise<PgBoss> {
-  boss = new PgBoss(databaseUrl);
+  boss = new PgBoss({ connectionString: databaseUrl, schema: 'pgboss', max: 3 });
   boss.on('error', (err) => logger.error({ err }, 'pg-boss error'));
   await boss.start();
   return boss;
@@ -25,7 +25,7 @@ export async function registerJob<T extends object>(
 export const jobsRunning = (): boolean => boss !== undefined;
 
 export async function stopJobs(): Promise<void> {
-  await boss?.stop();
+  await boss?.stop({ graceful: true });
   boss = undefined;
 }
 

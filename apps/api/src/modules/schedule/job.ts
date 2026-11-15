@@ -10,4 +10,6 @@ export async function registerMeetingJob(): Promise<void> {
     logger.info(r, 'meetings generated');
   });
   await scheduleJob('meetings.generate', '30 0 * * *', DISPLAY_TZ);
+  // Boot catch-up (11 §1): the free server may have slept through 00:30. Idempotent.
+  generateMeetings().then((r) => logger.info(r, 'meetings catch-up'), (err) => logger.error({ err }, 'meetings catch-up failed'));
 }
