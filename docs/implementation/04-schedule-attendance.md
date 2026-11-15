@@ -55,6 +55,13 @@ The heart of this spec is the **Class Meeting** row: routine slots are templates
 | SCH-16 | Playwright `[SCH-16] student attendance card colours + calendar` |
 | SCH-17 | Playwright `[SCH-17] admin adds holiday + extra class, student routine shows them` |
 
+### Demo schedule data (dev / demo only)
+
+Run after `db:seed:demo` and the offering scripts (`seed-offerings`, `seed-courses-full`, `seed-students-90`): `npm run db:seed:routine`.
+- `db:seed:demo` seeds 8 periods (45 min, break after Period 3) and 11 rooms (7 classrooms incl. a spare, Physics/Chemistry/Biology/Computer labs).
+- `prisma/seed-routine.ts` plans a Sun-Thu routine for every section that has offerings with `prisma/seed-routine-plan.ts` (deterministic, no room, teacher or section clash), writes it as `demo-slot-*` routine slots and generates 14 days of meetings. It refuses to run if the Admin already built slots for those offerings.
+- Tests: `[SCH-DEMO-01..03]` (planner unit + DB integration), `[SCH-DEMO-04]` (Playwright, 360 px).
+
 ## 5. Definition of done (M5)
 
 "Generation is idempotent; % rules tested" — SCH-01/02/11 green; all SCH IDs green (SCH-13 fully at M6); `/spec-check 04` complete.
