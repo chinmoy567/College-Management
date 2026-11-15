@@ -1,8 +1,11 @@
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
+import multer from 'multer';
 import { z } from 'zod';
-import { routineCopyBody, slotBody, slotPatch, id, type WeekdayName } from '@cms/shared';
+import { UPLOAD_LIMITS, routineCopyBody, slotBody, slotPatch, id, type WeekdayName } from '@cms/shared';
 import { prisma } from '../../db';
 import { audit } from '../../lib/audit';
+import { closedSessionGuard } from '../../lib/closedSession';
+import { signMany, softDeleteObjects, storeUpload, type UploadedFile } from '../../lib/files';
 import { AppError, asyncHandler, validate } from '../../lib/http';
 import { notify } from '../../lib/notify';
 import { type AuthedRequest, requireRole } from '../../middleware/session';
@@ -89,9 +92,8 @@ async function checkRefs(periodId?: string, roomId?: string | null) {
     throw new AppError('VALIDATION_ERROR', 400, 'Room not found.', { roomId: 'Not found' });
 }
 
-routineRouter.get('/routine', validate({ query: z.object({ sectionId: id }) }), asyncHandler(async (req, res) => {
-  const { sectionId } = req.query as unknown as { sectionId: string };
-  const r = req as AuthedRequest;
+/** Who may view a section's routine: Admin, its students, its mentor and its course teachers. */
+async function assertCanViewSection(r: AuthedRequest, sectionId: string): Promise<void> {
   if (r.user.role === 'student') {
     const me = await prisma.studentProfile.findUnique({ where: { userId: r.user.id }, select: { sectionId: true } });
     if (me?.sectionId !== sectionId) throw new AppError('FORBIDDEN', 403, 'Not allowed.');
@@ -99,6 +101,11 @@ routineRouter.get('/routine', validate({ query: z.object({ sectionId: id }) }), 
     const ok = await prisma.section.findFirst({ where: { id: sectionId, OR: [{ mentorTeacherId: r.user.id }, { offerings: { some: { teacherId: r.user.id, endedAt: null } } }] } });
     if (!ok) throw new AppError('FORBIDDEN', 403, 'Not allowed.');
   }
+}
+
+routineRouter.get('/routine', validate({ query: z.object({ sectionId: id }) }), asyncHandler(async (req, res) => {
+  const { sectionId } = req.query as unknown as { sectionId: string };
+  await assertCanViewSection(req as AuthedRequest, sectionId);
   const slots = await prisma.routineSlot.findMany({
     where: { deletedAt: null, offerings: { some: { courseOffering: { sectionId, endedAt: null } } } },
     include: slotInclude,
@@ -158,6 +165,59 @@ routineRouter.delete('/routine/slots/:id', adminOnly, idParam, asyncHandler(asyn
   await audit(actorId(req), 'routine.slot_delete', 'routine_slot', cur.id);
   await generateMeetings(); // removes future unattended meetings of the deleted slot; past ones stay
   await notifyRoutineChange(cur.offerings.map((o) => o.courseOfferingId));
+  res.json({ ok: true });
+}));
+
+// ───── routine image/PDF upload (PRD 5.17 alternative; 04 §2) ─────
+const uploadParser = multer({ storage: multer.memoryStorage(), limits: { fileSize: UPLOAD_LIMITS.documentBytes, files: 1, fields: 5, fieldSize: 1_000 } }).single('file');
+const uploadMw: RequestHandler = (req, res, next) =>
+  uploadParser(req, res, (e: unknown) => (e ? next(new AppError('VALIDATION_ERROR', 400, 'Send one image or PDF, 20 MB at most.', { file: 'upload' })) : next()));
+
+const uploadView = (u: { id: string; createdAt: Date }, file: { mime: string; originalName: string | null }, url: string | undefined) => ({
+  id: u.id, createdAt: u.createdAt, mime: file.mime, name: file.originalName, url: url ?? null,
+});
+
+routineRouter.post('/routine/upload', adminOnly, uploadMw, validate({ body: z.object({ sectionId: id }) }), asyncHandler(async (req, res) => {
+  const { sectionId } = req.body as { sectionId: string };
+  const file = (req as unknown as { file?: UploadedFile }).file;
+  if (!file) throw new AppError('VALIDATION_ERROR', 400, 'Choose a file.', { file: 'required' });
+  const section = await prisma.section.findFirst({ where: { id: sectionId, deletedAt: null }, select: { id: true } });
+  if (!section) throw new AppError('NOT_FOUND', 404, 'Section not found.');
+  await closedSessionGuard({ sectionId });
+  const fileId = await storeUpload(actorId(req), 'routine_file', 'routine', file);
+  // One routine file per section: a new upload replaces the old one.
+  const old = await prisma.routineUpload.findMany({ where: { sectionId, deletedAt: null }, select: { id: true, fileId: true } });
+  const row = await prisma.$transaction(async (tx) => {
+    if (old.length) {
+      await tx.routineUpload.updateMany({ where: { id: { in: old.map((o) => o.id) } }, data: { deletedAt: new Date() } });
+      await softDeleteObjects(old.map((o) => o.fileId), tx);
+    }
+    return tx.routineUpload.create({ data: { sectionId, fileId }, include: { file: true } });
+  });
+  await audit(actorId(req), 'routine.upload', 'section', sectionId, { uploadId: row.id });
+  const offerings = await prisma.courseOffering.findMany({ where: { sectionId, endedAt: null }, select: { id: true } });
+  await notifyRoutineChange(offerings.map((o) => o.id), 'A new class routine file was uploaded.');
+  const urls = await signMany([fileId]);
+  res.status(201).json({ upload: uploadView(row, row.file, urls.get(fileId)) });
+}));
+
+routineRouter.get('/routine/uploads', validate({ query: z.object({ sectionId: id }) }), asyncHandler(async (req, res) => {
+  const { sectionId } = req.query as unknown as { sectionId: string };
+  await assertCanViewSection(req as AuthedRequest, sectionId);
+  const rows = await prisma.routineUpload.findMany({ where: { sectionId, deletedAt: null, file: { deletedAt: null } }, include: { file: true }, orderBy: { createdAt: 'desc' } });
+  const urls = await signMany(rows.map((r) => r.fileId));
+  res.json({ uploads: rows.map((r) => uploadView(r, r.file, urls.get(r.fileId))) });
+}));
+
+routineRouter.delete('/routine/upload/:id', adminOnly, idParam, asyncHandler(async (req, res) => {
+  const cur = await prisma.routineUpload.findFirst({ where: { id: req.params.id, deletedAt: null } });
+  if (!cur) throw new AppError('NOT_FOUND', 404, 'Upload not found.');
+  await closedSessionGuard({ sectionId: cur.sectionId });
+  await prisma.$transaction(async (tx) => {
+    await tx.routineUpload.update({ where: { id: cur.id }, data: { deletedAt: new Date() } });
+    await softDeleteObjects([cur.fileId], tx);
+  });
+  await audit(actorId(req), 'routine.upload_delete', 'section', cur.sectionId, { uploadId: cur.id });
   res.json({ ok: true });
 }));
 

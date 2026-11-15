@@ -226,3 +226,43 @@ describe('online classes (04 §5)', () => {
     expect((await prisma.classMeeting.findUniqueOrThrow({ where: { id: m.id } })).onlineClassId).toBeNull();
   });
 });
+
+describe('routine image/PDF upload', () => {
+  const pdf = async () => {
+    const { PDFDocument } = await import('pdf-lib');
+    const d = await PDFDocument.create();
+    d.addPage([200, 200]);
+    return Buffer.from(await d.save());
+  };
+  const png = async () => (await import('sharp')).default({ create: { width: 30, height: 30, channels: 3, background: '#336699' } }).png().toBuffer();
+  const send = (who: { req: typeof admin.c.req }, sectionId: string, file: Buffer, filename: string) =>
+    who.req('post', '/api/schedule/routine/upload').field('sectionId', sectionId).attach('file', file, { filename });
+
+  it('[SCH-18] Admin uploads a routine PDF or image per section; a new upload replaces the old one; others cannot upload', async () => {
+    const c = await classroom(prisma, admin.c);
+    const a = await send(admin.c, c.sectionId, await pdf(), 'routine.pdf');
+    expect(a.status, JSON.stringify(a.body)).toBe(201);
+    expect(a.body.upload.mime).toBe('application/pdf');
+    const b = await send(admin.c, c.sectionId, await png(), 'routine.png');
+    expect(b.status, JSON.stringify(b.body)).toBe(201);
+    expect(b.body.upload.mime).toBe('image/webp'); // images are re-encoded
+
+    const student = await clientFor(app, c.students[0]!);
+    const list = await student.get(`/api/schedule/routine/uploads?sectionId=${c.sectionId}`);
+    expect(list.status).toBe(200);
+    expect(list.body.uploads).toHaveLength(1);
+    expect(list.body.uploads[0].id).toBe(b.body.upload.id);
+
+    // wrong type and non-admins are refused
+    const bad = await send(admin.c, c.sectionId, Buffer.from('not a real file'), 'x.pdf');
+    expect(bad.status).toBe(400);
+    const teacher = await clientFor(app, c.teacher);
+    for (const who of [teacher, student]) expect((await send(who, c.sectionId, await pdf(), 'r.pdf')).status).toBe(403);
+    // a student of another section cannot read it
+    const other = await classroom(prisma, admin.c);
+    expect((await (await clientFor(app, other.students[0]!)).get(`/api/schedule/routine/uploads?sectionId=${c.sectionId}`)).status).toBe(403);
+
+    expect((await admin.c.delete(`/api/schedule/routine/upload/${b.body.upload.id}`)).status).toBe(200);
+    expect((await admin.c.get(`/api/schedule/routine/uploads?sectionId=${c.sectionId}`)).body.uploads).toHaveLength(0);
+  });
+});

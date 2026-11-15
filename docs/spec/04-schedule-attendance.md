@@ -145,3 +145,5 @@ Calendar day colour: all present / partly absent / absent / no class.
 - **SCH-15** (UI) Attendance sheet at 360 px: everyone Present by default, tap cycles status, Submit is sticky, a failed submit keeps the draft and shows "Not sent, retry".
 - **SCH-16** (UI) Student attendance card shows overall and per-course % with correct colours; the calendar colours days and shows periods on tap.
 - **SCH-17** (UI) Admin Schedule Manager: add a holiday and an extra class from the calendar, see them on the student routine.
+- **SCH-18** Admin uploads a routine image/PDF per section (content-checked, images re-encoded); a new upload replaces the old one; students/teachers of that section can view it, others and non-admin writers get 403.
+- **SCH-19** (UI) Admin Schedule Manager: manage periods and rooms, build a section routine (add/edit/delete a slot, clash warnings, copy from another section) and upload a routine file; the student routine shows the result at 360 px.

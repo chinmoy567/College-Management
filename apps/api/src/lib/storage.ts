@@ -15,6 +15,7 @@ export const PURPOSES = {
   comment_image: 'private',
   chat_file: 'private',
   notice_file: 'private',
+  routine_file: 'private',
   material: 'private',
   previous_question: 'private',
   book_pdf: 'private',

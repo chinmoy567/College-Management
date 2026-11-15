@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import { UPLOAD_LIMITS } from '@cms/shared';
 import { AppError } from './http';
 
-export type UploadKind = 'image' | 'document' | 'book_pdf';
+export type UploadKind = 'image' | 'document' | 'book_pdf' | 'routine';
 
 const ALLOWED: Record<UploadKind, { mimes: string[]; maxBytes: number }> = {
   image: { mimes: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: UPLOAD_LIMITS.imageBytes },
@@ -21,6 +21,8 @@ const ALLOWED: Record<UploadKind, { mimes: string[]; maxBytes: number }> = {
     maxBytes: UPLOAD_LIMITS.documentBytes,
   },
   book_pdf: { mimes: ['application/pdf'], maxBytes: UPLOAD_LIMITS.bookPdfBytes },
+  // Routine upload: a photo or a PDF of the timetable (PRD 5.17).
+  routine: { mimes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], maxBytes: UPLOAD_LIMITS.documentBytes },
 };
 
 const OFFICE_EXT = new Set(['doc', 'docx', 'ppt', 'pptx']);
@@ -48,7 +50,7 @@ export async function processUpload(kind: UploadKind, buffer: Buffer, originalNa
     throw new AppError('VALIDATION_ERROR', 400, 'This file type is not allowed.', { file: 'type' });
   }
 
-  if (kind === 'image') {
+  if (kind === 'image' || (kind === 'routine' && type!.mime.startsWith('image/'))) {
     // Rotate by EXIF, cap the long edge at 1600 px, WebP q80, metadata stripped (sharp drops it by default).
     const body = await sharp(buffer)
       .rotate()
