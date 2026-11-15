@@ -12,7 +12,50 @@ interface Today {
 }
 interface Week {
   routineFiles?: { id: string; mime: string; name: string | null; url: string | null }[];
-  slots: { id: string; day: string; period: { name: string; startTime: string; endTime: string }; room: { name: string } | null; offerings: { course: { code: string; name: string }; teacher: { name: string } }[] }[];
+  slots: { id: string; day: string; period: { id: string; name: string; startTime: string; endTime: string }; room: { name: string } | null; offerings: { course: { code: string; name: string }; teacher: { name: string } }[] }[];
+}
+type WeekSlot = Week['slots'][number];
+
+const GRID_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu'];
+
+function FullWeekTable({ slots }: { slots: WeekSlot[] }) {
+  const periods = [...new Map(slots.map((s) => [s.period.id, s.period])).values()].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  return (
+    <div data-testid="week-grid" className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <table className="w-full min-w-[40rem] border-collapse text-base">
+        <thead>
+          <tr>
+            <th scope="col" className="sticky left-0 z-10 min-h-11 border-b border-r border-slate-200 bg-white p-2 text-left">Period</th>
+            {GRID_DAYS.map((d) => <th key={d} scope="col" data-testid="week-day" className="min-h-11 border-b border-slate-200 p-2 text-left capitalize">{d}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {periods.map((p) => (
+            <tr key={p.id}>
+              <th scope="row" className="sticky left-0 z-10 min-h-11 border-b border-r border-slate-200 bg-white p-2 text-left font-medium">
+                {p.name}<br /><span className="text-sm font-normal text-slate-500">{p.startTime}–{p.endTime}</span>
+              </th>
+              {GRID_DAYS.map((d) => {
+                const cell = slots.filter((s) => s.day === d && s.period.id === p.id);
+                return (
+                  <td key={d} className="min-h-11 border-b border-slate-200 p-1 align-top">
+                    {cell.length === 0 ? (
+                      <span aria-label="No class" className="block min-h-11 p-2 text-slate-300">–</span>
+                    ) : cell.map((s) => (
+                      <div key={s.id} data-testid="week-cell" title={s.offerings.map((o) => o.course.name).join(', ')} className="mb-1 min-h-11 rounded-lg bg-indigo-50 p-2">
+                        <span className="block font-semibold">{s.offerings.map((o) => o.course.code).join(' + ')}</span>
+                        {s.room && <span className="block break-words text-sm text-slate-600">{s.room.name}</span>}
+                      </div>
+                    ))}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export default function StudentRoutine() {
@@ -88,6 +131,14 @@ export default function StudentRoutine() {
             </div>
           );
         })}
+      </section>
+
+      <section aria-label="Full week routine" className="mt-6">
+        <h2 className="mb-2 text-xl font-semibold">Full week routine</h2>
+        {week.isPending && <ListSkeleton rows={2} />}
+        {week.isError && <ErrorState message={errMsg(week.error)} onRetry={() => void week.refetch()} />}
+        {week.data && !week.data.slots.some((s) => GRID_DAYS.includes(s.day)) && <EmptyState title="No classes in your week" />}
+        {week.data && week.data.slots.some((s) => GRID_DAYS.includes(s.day)) && <FullWeekTable slots={week.data.slots.filter((s) => GRID_DAYS.includes(s.day))} />}
       </section>
     </>
   );
