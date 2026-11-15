@@ -59,17 +59,34 @@ export async function seedRoutine(prisma: PrismaClient, opts: { sectionIds?: str
   const periods = await prisma.period.findMany({ where: { id: { startsWith: 'seed-period-' }, deletedAt: null } });
   const periodId = (n: number) => periods.find((p) => p.id === `seed-period-${n}`)!.id;
 
+  // Batched writes (few round trips, the dev DB is remote): read what exists, create the missing, fix only what differs.
   const counters = new Map<string, number>();
-  const keep: string[] = [];
-  for (const s of plan) {
+  const wanted = plan.map((s) => {
     const n = (counters.get(s.sectionKey) ?? 0) + 1;
     counters.set(s.sectionKey, n);
-    const id = slotId(s.sectionKey, n);
-    keep.push(id);
-    const data = { day: s.day, periodId: periodId(s.period), roomId: demoRoomId(s.roomKey), deletedAt: null };
-    await prisma.routineSlot.upsert({ where: { id }, create: { id, ...data }, update: data });
-    await prisma.routineSlotOffering.deleteMany({ where: { routineSlotId: id } });
-    await prisma.routineSlotOffering.create({ data: { routineSlotId: id, courseOfferingId: s.offeringId } });
+    return { id: slotId(s.sectionKey, n), day: s.day, periodId: periodId(s.period), roomId: demoRoomId(s.roomKey), offeringId: s.offeringId };
+  });
+  const keep = wanted.map((w) => w.id);
+  const existing = await prisma.routineSlot.findMany({
+    where: { id: { in: keep } },
+    include: { offerings: true },
+  });
+  const have = new Map(existing.map((e) => [e.id, e]));
+  const fresh = wanted.filter((w) => !have.has(w.id));
+  if (fresh.length) {
+    await prisma.routineSlot.createMany({ data: fresh.map((w) => ({ id: w.id, day: w.day, periodId: w.periodId, roomId: w.roomId })) });
+    await prisma.routineSlotOffering.createMany({ data: fresh.map((w) => ({ routineSlotId: w.id, courseOfferingId: w.offeringId })) });
+  }
+  for (const w of wanted) {
+    const e = have.get(w.id);
+    if (!e) continue;
+    if (e.day !== w.day || e.periodId !== w.periodId || e.roomId !== w.roomId || e.deletedAt) {
+      await prisma.routineSlot.update({ where: { id: w.id }, data: { day: w.day, periodId: w.periodId, roomId: w.roomId, deletedAt: null } });
+    }
+    if (e.offerings.length !== 1 || e.offerings[0]!.courseOfferingId !== w.offeringId) {
+      await prisma.routineSlotOffering.deleteMany({ where: { routineSlotId: w.id } });
+      await prisma.routineSlotOffering.create({ data: { routineSlotId: w.id, courseOfferingId: w.offeringId } });
+    }
   }
   // demo slots of these sections from an older plan that are no longer part of it
   await prisma.routineSlot.updateMany({
