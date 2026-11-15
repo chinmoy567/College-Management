@@ -238,7 +238,7 @@ Each box is a folder in `apps/api/src/modules/`. Arrows mean "calls the service 
 
 ```mermaid
 flowchart TB
-    auth["auth<br/>login, TOTP, sessions,<br/>tokens, profile"]
+    auth["auth<br/>login, sessions,<br/>tokens, profile"]
     users["users<br/>accounts, import, move,<br/>pass-out, anonymise"]
     academics["academics<br/>sessions, groups, sections,<br/>courses, offerings, mentors"]
     schedule["schedule<br/>periods, rooms, routine,<br/>holidays, meetings"]
@@ -297,17 +297,15 @@ Every `/api` request goes through the same chain. Public routes are mounted befo
 
 ```mermaid
 flowchart LR
-    req["HTTP request"] --> pub{"public route?<br/>health, login, TOTP login,<br/>forgot/reset, verify, /api/public"}
+    req["HTTP request"] --> pub{"public route?<br/>health, login,<br/>forgot/reset, verify, /api/public"}
     pub -->|yes| rl1["rate limit"] --> handler
     pub -->|no| csrf{"write method?<br/>needs X-Requested-With: cms"}
     csrf -->|missing| e403a["403"]
     csrf -->|ok| sess{"session cookie valid?<br/>hash lookup, not revoked,<br/>not expired, user active"}
     sess -->|no| e401["401 SESSION_ENDED<br/>cookie cleared"]
-    sess -->|yes| first{"first_login?"}
-    first -->|"yes, not an auth route"| e403b["403 FIRST_LOGIN_REQUIRED"]
-    first -->|no| stepup{"Admin step-up<br/>or TOTP not set?"}
-    stepup -->|"yes, not a TOTP route"| e403c["403"]
-    stepup -->|no| role{"requireRole"}
+    sess -->|yes| first{"first_login or Admin<br/>must change password?"}
+    first -->|"yes, not an auth route<br/>(Admin: seed password not changed)"| e403b["403 FIRST_LOGIN_REQUIRED"]
+    first -->|no| role{"requireRole"}
     role -->|denied| e403d["403 FORBIDDEN"]
     role -->|ok| zod["Zod validate<br/>unknown keys stripped"]
     zod -->|invalid| e400["400 VALIDATION_ERROR<br/>with fields"]
@@ -423,7 +421,6 @@ erDiagram
         enum role
         enum status
         bool firstLogin
-        string totpSecretEnc
     }
     STUDENT_PROFILE {
         string userId PK
@@ -458,7 +455,6 @@ erDiagram
         string tokenHash UK
         datetime expiresAt
         datetime revokedAt
-        bool stepUpPending
     }
 ```
 
@@ -659,7 +655,7 @@ erDiagram
 
 ## 11. Authentication and sessions
 
-### 11.1 Login (teacher / student, and Admin with TOTP)
+### 11.1 Login (teacher, student and Admin)
 
 ```mermaid
 sequenceDiagram
@@ -677,17 +673,10 @@ sequenceDiagram
         API-->>B: 401 INVALID_CREDENTIALS (same for both)
     else inactive or passed out
         API-->>B: 403 with specific message
-    else student or teacher
+    else student, teacher or admin
         API->>DB: create LoginSession (store sha256 of token)
         API-->>B: Set-Cookie cms_session (httpOnly, Secure, SameSite=Lax)
-        Note over B,API: next = complete_profile on first login, else dashboard
-    else admin
-        API->>DB: create session with stepUpPending = true
-        API-->>B: next = totp (or totp_setup)
-        B->>API: POST /api/auth/login/totp with code
-        API->>API: verify code, reject reused time-step
-        API->>DB: clear stepUpPending (5 wrong codes revoke session)
-        API-->>B: next = dashboard
+        Note over B,API: next = complete_profile (teacher/student) or change_password (Admin) on first login, else dashboard
     end
     opt first login (teacher / student)
         B->>API: POST /api/me/complete-profile (new password, mobile)
@@ -700,10 +689,7 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> StepUp: Admin password OK
-    [*] --> Active: Teacher/Student password OK
-    StepUp --> Active: correct TOTP or backup code
-    StepUp --> Revoked: 5 wrong codes
+    [*] --> Active: password OK (all roles)
     Active --> Active: request (sliding 30 days, refresh max every 10 min)
     Active --> Expired: Admin 12 h / others 30 days idle
     Active --> Revoked: logout, password change, email change,<br/>deactivate, pass-out, delete, Admin reset
@@ -1243,8 +1229,7 @@ flowchart TB
         cookie["httpOnly, Secure, SameSite=Lax cookie<br/>only sha256 of the token in DB"]
         csrf["CSRF: X-Requested-With: cms on writes"]
         argon["argon2 passwords, password policy"]
-        totp["Admin TOTP + 10 backup codes,<br/>secret AES-256-GCM encrypted"]
-        rl["rate limits in PostgreSQL<br/>login, TOTP, forgot, chat, AI, uploads, reports"]
+        rl["rate limits in PostgreSQL<br/>login, forgot, chat, AI, uploads, reports"]
     end
     subgraph authz["Authorization"]
         role["role check"]
@@ -1275,7 +1260,7 @@ flowchart TB
 flowchart TB
     rootL["Root layout<br/>fonts, theme, CSP nonce, Query provider"]
     rootL --> public["(public)<br/>landing, login, forgot, reset, verify"]
-    rootL --> onboard["(onboarding)<br/>complete-profile, admin setup (password + TOTP)"]
+    rootL --> onboard["(onboarding)<br/>complete-profile, admin setup (new password)"]
     rootL --> appL["(app) layout<br/>auth guard via /api/auth/me,<br/>role shell, socket provider, bottom nav"]
     appL --> adminR["/admin/…<br/>dashboard, sessions, sections, courses,<br/>teachers, students, 360°, schedule,<br/>notices, moderation, books, reports, settings"]
     appL --> teacherR["/teacher/…<br/>today, courses workspace, attendance,<br/>exams, bank, routine, mentor section"]

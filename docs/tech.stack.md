@@ -68,7 +68,6 @@ Rules:
 | Validation | Zod (shared with the frontend) |
 | Passwords | argon2 |
 | Login sessions | Own `LoginSession` table (PRD §4.6): random token in an `httpOnly`, `Secure`, `SameSite=Lax` cookie, only its hash stored. Checked on every request and when a socket connects. |
-| Admin two-step login | otplib (TOTP) + hashed backup codes |
 | Rate limiting | express-rate-limit with a small PostgreSQL store |
 | Background jobs | **pg-boss** (exam auto-submit, email queue, Class Meeting generation, scheduled notices, pin expiry) |
 | Email | Nodemailer → Gmail SMTP (rate-limited by the job queue) |

@@ -36,9 +36,6 @@ Other specs needed these columns, but spec 01 §2 did not list them. They have b
 
 | Needed by | Column | Why |
 |---|---|---|
-| 02 §3 TOTP replay protection | `User.totpLastStep Int?` | "Reject the same time-step twice" needs the last accepted step stored |
-| 02 §3 "5 wrong codes → session revoked" | `LoginSession.totpFailures Int @default(0)` | Counter per step-up session |
-| 02 §3 TOTP setup "stores encrypted (pending)" | `User.totpPendingSecretEnc String?` | Secret before `enable`, so a half-finished setup never replaces an active one |
 | 04 §6.1 "Idempotent by `clientDraftId`" | `ClassMeeting.lastClientDraftId String?` | Detect a repeated submit of the same draft |
 | 03 §5.1 Login ID `S-<year>-<seq>` / `T-<seq>` | counter rows in `Setting` (`login_seq:S-2024`, `login_seq:T`), locked `FOR UPDATE` | No new table needed; documented so it isn't invented twice |
 

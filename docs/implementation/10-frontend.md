@@ -16,7 +16,7 @@ The frontend is not one milestone. M4 builds the **shell, design system and shar
 5. **Navigation** (§3): per-role bottom tab bar (5 max) + "More" drawer (`vaul`); top bar with title, bell (live unread count), avatar; sidebar at `lg` (FE-04).
 6. **Shared components** (§4) built now, with Storybook-free "kitchen sink" page at `/dev/components` (dev only): `ResponsiveDialog`, `DataCards`, `EmptyState`, `ErrorState`, `Skeleton`, `StatusPill`, `CountdownBadge`, `DhakaTime`, `FileUpload`, `RoleGate`, `AuthorLine`. Feature components (`PostCard`, `AttendanceSheet`, `ExamTimer`, `ChatThread`, `PdfReader`…) are built in their milestones.
 7. **Public pages**: landing (server component, `/api/public/*`, revalidate 5 min; role buttons; "Open my dashboard" when logged in; no heavy libraries) (FE-03), login, forgot/reset/verify.
-8. **Onboarding**: complete-profile, Admin setup (new password → TOTP QR → backup codes).
+8. **Onboarding**: complete-profile, Admin setup (new password).
 9. **Dashboards with empty widgets** for Admin, Teacher, Student (filled as modules land), `/profile`.
 10. **Motion**: one `motion` wrapper for page/sheet transitions (150–300 ms, transform/opacity), `useReducedMotion` → off; `ExamLayout` has no motion provider at all (FE-08).
 

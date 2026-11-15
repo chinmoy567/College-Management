@@ -34,7 +34,7 @@ Goal: a running skeleton where every later module drops in without touching the 
 | `middleware/errorHandler.ts` | Maps `AppError`, `ZodError` → 400 with `fields`, Prisma `P2002` → 409, `P2025` → 404; anything else → 500 generic, logged with stack server-side only (CONV-01). |
 | `lib/pagination.ts` | `paginate(query, { cursor, limit })` — opaque base64url cursor of `(createdAt, id)`; returns `{ items, nextCursor }` (CONV-03). |
 | `lib/time.ts` | `dhakaDate(now)`, `toUtc(date, time)`, `formatDhaka(ts)`, `weekdayOf(dhakaDate)` with `date-fns-tz` (CONV-07). |
-| `lib/logger.ts` | pino with `redact` paths for `password`, `token`, `cookie`, `authorization`, `totp`, `code`, `backupCode`, `GROQ_API_KEY`, `SMTP_PASS`; request body logging **off** (CONV-06). |
+| `lib/logger.ts` | pino with `redact` paths for `password`, `token`, `cookie`, `authorization`, `GROQ_API_KEY`, `SMTP_PASS`; request body logging **off** (CONV-06). |
 | `lib/permissions.ts` | Signatures of all 8 helpers (00 §4); bodies filled in M2/M3. |
 | `jobs/index.ts` | pg-boss start (after DB ready), `registerJob(name, handler, opts)`, `boss.stop()` on shutdown. |
 | `modules/health/routes.ts` | `GET /api/health` → `SELECT 1` → `200 ok` (OPS-01). |

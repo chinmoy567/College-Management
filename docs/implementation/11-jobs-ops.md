@@ -31,7 +31,7 @@ Spec: `docs/spec/11-jobs-ops.md` · PRD §8, §9, tech.stack §3, §7–9. Agent
 
 ## 4. First cloud deploy (right after M4, repeated each milestone)
 
-Following `cms-deploy-cloud`: Supabase project (Mumbai/Singapore), buckets `public` + `private`, run migrations with `DIRECT_URL`, seed Admin; Render free web service from `render.yaml`, env vars set in the dashboard, health check `/api/health`; UptimeRobot every 10 min. Smoke: login as Admin → TOTP setup on the live URL. A live demo early catches Render/Supabase surprises (SMTP blocking, memory) long before launch.
+Following `cms-deploy-cloud`: Supabase project (Mumbai/Singapore), buckets `public` + `private`, run migrations with `DIRECT_URL`, seed Admin; Render free web service from `render.yaml`, env vars set in the dashboard, health check `/api/health`; UptimeRobot every 10 min. Smoke: login as Admin → change the seed password on the live URL. A live demo early catches Render/Supabase surprises (SMTP blocking, memory) long before launch.
 
 ## 5. M12 — hardening & launch
 

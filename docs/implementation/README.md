@@ -43,7 +43,7 @@ The spec milestones are clean on paper, but several helpers are needed before th
 | pg-boss bootstrap (`jobs/index.ts`) | 11 §1 | M0 | Boss start/stop, `registerJob()` helper, graceful shutdown |
 | `email.send` job + `EmailQuota` | 07 §5 | M2 (verify, reset) | Real queue with priority + daily quota + "log link when SMTP fails" |
 | `lib/storage.ts` upload pipeline | 00 §7 | M2 (avatar) | Images only (sharp → WebP), `StorageObject`, signed URLs. Documents added in M6 |
-| `audit()` | 00 §2 | M2 (Admin TOTP/settings) | Final version |
+| `audit()` | 00 §2 | M2 (Admin settings) | Final version |
 | `revokeAllSessions()` + socket disconnect | 02 §1, 07 §1 | M2 | Socket.IO server with auth handshake + `user:<id>` room only |
 | `notify()` helper | 07 §4 | M3 (assignments), M5 (absent) | Insert `Notification` + emit `notif:new`. Email/push fan-out added in M9 |
 | `chatMembership.sync()` | 07 §2.3 | M3 (student create/move, mentor change) | DB membership rows + socket room join/leave. Chat routes come in M9 |
