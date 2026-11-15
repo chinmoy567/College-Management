@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { PAGINATION } from '../constants';
 
-export const id = z.string().regex(/^c[a-z0-9]{20,30}$/, 'Invalid id');
+/** cuid (generated) or seeded slug ids such as demo-session-1; URL-safe characters only. */
+export const id = z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Invalid id');
 export const dhakaDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 export const cursorQuery = z.object({
   cursor: z.string().max(200).optional(),
