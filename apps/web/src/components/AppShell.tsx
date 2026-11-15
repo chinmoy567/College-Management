@@ -87,7 +87,7 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
       </aside>
 
       <header className="sticky top-0 z-30 flex min-h-14 items-center justify-between border-b border-slate-200 bg-white px-3">
-        <Link href={root} className="text-lg font-semibold lg:hidden">College</Link>
+        <Link href={root} className="flex min-h-11 min-w-11 items-center text-lg font-semibold lg:hidden">College</Link>
         <span className="hidden lg:block" />
         <div className="flex items-center gap-1">
           <Bell />
