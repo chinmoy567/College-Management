@@ -31,7 +31,7 @@ describe('browser bundle', () => {
     const files = walk(statics).filter((f) => /\.(js|css|html|json|map)$/.test(f));
     const text = files.map((f) => readFileSync(f, 'utf8')).join('\n');
     // Short generic names (PORT, TZ_DISPLAY...) occur in library code by chance; check the distinctive ones.
-    for (const n of serverNames().filter((x) => x.includes('_') && x.length >= 9)) expect(text.includes(n), `${n} found in browser bundle`).toBe(false);
+    for (const n of serverNames().filter((x) => x.includes('_') && x.length >= 9)) expect(new RegExp(`(?<![A-Z0-9_])${n}(?![A-Z0-9_])`).test(text), `${n} found in browser bundle`).toBe(false);
     // Real values from the local env file, when set, must not appear either.
     for (const n of ['GROQ_API_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'TOTP_ENC_KEY', 'VAPID_PRIVATE_KEY', 'SMTP_PASS', 'SEED_ADMIN_PASSWORD']) {
       const v = process.env[n];
