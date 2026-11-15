@@ -22,7 +22,10 @@
     "db:migrate": "prisma migrate deploy",
     "db:drift": "tsx scripts/db-drift-check.ts",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:demo": "tsx prisma/seed.ts --demo"
+    "db:seed:demo": "tsx prisma/seed.ts --demo",
+    "load:seed": "tsx load/seed.ts",
+    "load:exam": "tsx load/exam.ts",
+    "load:chat": "tsx load/chat.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
