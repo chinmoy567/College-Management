@@ -2,7 +2,7 @@
  * Idempotent base seed (docs/spec/01-database.md §5).
  *  - the single Admin from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD (throws if another Admin exists)
  *  - the Settings rows with their defaults (existing values are never overwritten)
- *  - example periods, only when SEED_DEMO=true
+ *  - example periods and rooms, only when SEED_DEMO=true (the demo routine is prisma/seed-routine.ts)
  * `--demo` (npm run db:seed:demo) also runs prisma/seed-demo.ts.
  */
 import 'dotenv/config';
@@ -52,22 +52,54 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
 
 const t = (hhmm: string) => new Date(`1970-01-01T${hhmm}:00.000Z`);
 
+/** 8 periods of 45 minutes; the break (10:25-10:50) is the gap between Period 3 and Period 4. */
 export const DEMO_PERIODS = [
   ['Period 1', '08:00', '08:45'],
   ['Period 2', '08:50', '09:35'],
   ['Period 3', '09:40', '10:25'],
-  ['Period 4', '10:30', '11:15'],
-  ['Period 5', '11:20', '12:05'],
-  ['Period 6', '12:10', '12:55'],
+  ['Period 4', '10:50', '11:35'],
+  ['Period 5', '11:40', '12:25'],
+  ['Period 6', '12:30', '13:15'],
+  ['Period 7', '13:20', '14:05'],
+  ['Period 8', '14:10', '14:55'],
 ] as const;
 
 export async function seedPeriods(prisma: PrismaClient): Promise<void> {
   for (const [i, [name, from, to]] of DEMO_PERIODS.entries()) {
     const id = `seed-period-${i + 1}`;
+    // update: demo periods are normalised to the times above on every run
     await prisma.period.upsert({
       where: { id },
       create: { id, name, startTime: t(from), endTime: t(to) },
-      update: {},
+      update: { name, startTime: t(from), endTime: t(to), deletedAt: null },
+    });
+  }
+}
+
+/** [key, name, building, capacity]. 6 home classrooms (one per section), 4 labs, 1 spare. */
+export const DEMO_ROOMS = [
+  ['101', 'Room 101', 'Building A', 40],
+  ['102', 'Room 102', 'Building A', 40],
+  ['103', 'Room 103', 'Building A', 40],
+  ['104', 'Room 104 (spare)', 'Building A', 40],
+  ['201', 'Room 201', 'Building B', 40],
+  ['202', 'Room 202', 'Building B', 40],
+  ['203', 'Room 203', 'Building B', 40],
+  ['phy-lab', 'Physics Lab', 'Science Block', 35],
+  ['che-lab', 'Chemistry Lab', 'Science Block', 35],
+  ['bio-lab', 'Biology Lab', 'Science Block', 35],
+  ['ict-lab', 'Computer Lab', 'Science Block', 35],
+] as const;
+
+export const demoRoomId = (key: string) => `seed-room-${key}`;
+
+export async function seedRooms(prisma: PrismaClient): Promise<void> {
+  for (const [key, name, building, capacity] of DEMO_ROOMS) {
+    const id = demoRoomId(key);
+    await prisma.room.upsert({
+      where: { id },
+      create: { id, name, building, capacity },
+      update: { name, building, capacity, deletedAt: null },
     });
   }
 }
@@ -75,7 +107,10 @@ export async function seedPeriods(prisma: PrismaClient): Promise<void> {
 export async function runSeed(prisma: PrismaClient, env: SeedEnv = process.env): Promise<void> {
   await seedAdmin(prisma, env);
   await seedSettings(prisma);
-  if (env.SEED_DEMO === 'true') await seedPeriods(prisma);
+  if (env.SEED_DEMO === 'true') {
+    await seedPeriods(prisma);
+    await seedRooms(prisma);
+  }
 }
 
 async function main() {

@@ -16,6 +16,7 @@ const snapshot = async () => ({
   users: await prisma.user.findMany({ where: { role: 'admin' }, orderBy: { id: 'asc' } }),
   settings: await prisma.setting.findMany({ orderBy: { key: 'asc' } }),
   periods: await prisma.period.findMany({ where: { id: { startsWith: 'seed-period-' } }, orderBy: { id: 'asc' } }),
+  rooms: await prisma.room.findMany({ where: { id: { startsWith: 'seed-room-' } }, orderBy: { id: 'asc' } }),
 });
 
 describe('seed', () => {
@@ -31,7 +32,13 @@ describe('seed', () => {
     const second = await snapshot();
     expect(second).toEqual(first); // same rows, same values, same updated_at
     expect(first.users).toHaveLength(1);
-    expect(first.periods.length).toBeGreaterThan(0);
+    expect(first.periods).toHaveLength(8);
+    expect(first.rooms).toHaveLength(11);
+    // periods run in order, 45 minutes each, without overlapping (the break is the gap after Period 3)
+    const hhmm = (d: Date) => d.toISOString().slice(11, 16);
+    for (let i = 1; i < first.periods.length; i++) {
+      expect(hhmm(first.periods[i]!.startTime) > hhmm(first.periods[i - 1]!.endTime)).toBe(true);
+    }
   });
 
   it('[DB-01] the seeded Admin has an argon2 hash, must change the password', async () => {
