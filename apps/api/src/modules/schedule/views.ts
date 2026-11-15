@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../../db';
+import { signMany } from '../../lib/files';
 import { asyncHandler } from '../../lib/http';
 import { dhakaDate, formatDhaka } from '../../lib/time';
 import { type AuthedRequest, requireRole } from '../../middleware/session';
@@ -50,8 +51,19 @@ viewsRouter.get('/me/week', requireRole('student', 'teacher'), asyncHandler(asyn
         .map((o) => ({ id: o.courseOfferingId, course: { code: o.courseOffering.course.code, name: o.courseOffering.course.name }, teacher: { id: o.courseOffering.teacherId, name: o.courseOffering.teacher.name } })),
     })),
     substituteMeetings: extra.map(meetingView),
+    routineFiles: await routineFilesFor(r),
   });
 }));
+
+/** The Admin's uploaded routine image/PDF for the student's own section (04 §2). Teachers get none here. */
+async function routineFilesFor(r: AuthedRequest): Promise<{ id: string; mime: string; name: string | null; url: string | null }[]> {
+  if (r.user.role !== 'student') return [];
+  const me = await prisma.studentProfile.findUnique({ where: { userId: r.user.id }, select: { sectionId: true } });
+  if (!me?.sectionId) return [];
+  const rows = await prisma.routineUpload.findMany({ where: { sectionId: me.sectionId, deletedAt: null, file: { deletedAt: null } }, include: { file: true }, orderBy: { createdAt: 'desc' } });
+  const urls = await signMany(rows.map((x) => x.fileId));
+  return rows.map((x) => ({ id: x.id, mime: x.file.mime, name: x.file.originalName, url: urls.get(x.fileId) ?? null }));
+}
 
 viewsRouter.get('/me/today', requireRole('student', 'teacher'), asyncHandler(async (req, res) => {
   const r = req as AuthedRequest;

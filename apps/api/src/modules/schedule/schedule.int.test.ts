@@ -252,6 +252,8 @@ describe('routine image/PDF upload', () => {
     expect(list.status).toBe(200);
     expect(list.body.uploads).toHaveLength(1);
     expect(list.body.uploads[0].id).toBe(b.body.upload.id);
+    const week = await student.get('/api/schedule/me/week');
+    expect(week.body.routineFiles.map((f: { id: string }) => f.id)).toEqual([b.body.upload.id]);
 
     // wrong type and non-admins are refused
     const bad = await send(admin.c, c.sectionId, Buffer.from('not a real file'), 'x.pdf');

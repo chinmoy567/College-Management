@@ -11,6 +11,7 @@ interface Today {
   meetings: { id: string; startTime: string; endTime: string; status: string; extra: boolean; current: boolean; next: boolean; period: { name: string } | null; room: { name: string } | null; offerings: { course: { code: string; name: string } }[] }[];
 }
 interface Week {
+  routineFiles?: { id: string; mime: string; name: string | null; url: string | null }[];
   slots: { id: string; day: string; period: { name: string; startTime: string; endTime: string }; room: { name: string } | null; offerings: { course: { code: string; name: string }; teacher: { name: string } }[] }[];
 }
 
@@ -54,6 +55,16 @@ export default function StudentRoutine() {
 
       <section aria-label="Week">
         <h2 className="mb-2 text-xl font-semibold">This week</h2>
+        {week.data?.routineFiles?.filter((f) => f.url).map((f) => (
+          <Card key={f.id} data-testid="routine-file" className="mb-3">
+            <p className="mb-2 text-base font-medium">Class routine from the college</p>
+            {f.mime.startsWith('image/') ? (
+              <a href={f.url!} target="_blank" rel="noreferrer"><img src={f.url!} alt="Class routine" className="w-full rounded-lg" /></a>
+            ) : (
+              <a href={f.url!} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center underline">Open routine PDF{f.name ? ` (${f.name})` : ''}</a>
+            )}
+          </Card>
+        ))}
         {week.isPending && <ListSkeleton rows={2} />}
         {week.isError && <ErrorState message={errMsg(week.error)} onRetry={() => void week.refetch()} />}
         {week.data && week.data.slots.length === 0 && <EmptyState title="No routine yet" />}
