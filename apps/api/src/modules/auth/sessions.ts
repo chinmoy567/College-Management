@@ -68,3 +68,10 @@ export async function revokeAllSessions(userId: string, exceptSessionId?: string
   });
   defer(() => onRevoke(userId, exceptSessionId));
 }
+
+/** Bulk `revokeAllSessions`: one query for all users; live sockets are told per user after commit. */
+export async function revokeSessionsForMany(userIds: string[], db: Prisma.TransactionClient = prisma): Promise<void> {
+  if (!userIds.length) return;
+  await db.loginSession.updateMany({ where: { userId: { in: userIds }, revokedAt: null }, data: { revokedAt: new Date() } });
+  for (const id of userIds) defer(() => onRevoke(id));
+}

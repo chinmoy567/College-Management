@@ -4,7 +4,7 @@ import { audit } from '../../lib/audit';
 import { chatMembership } from '../../lib/chatMembership';
 import { AppError } from '../../lib/http';
 import { finaliseAttempt } from '../exams/finalise';
-import { revokeAllSessions } from '../auth/sessions';
+import { revokeSessionsForMany } from '../auth/sessions';
 
 type Tx = Prisma.TransactionClient;
 
@@ -16,9 +16,8 @@ async function passOutInTx(tx: Tx, studentIds: string[]): Promise<void> {
   const now = new Date();
   await tx.user.updateMany({ where: { id: { in: studentIds } }, data: { status: 'passed_out' } });
   await tx.studentProfile.updateMany({ where: { userId: { in: studentIds } }, data: { passedOutAt: now } });
-  await chatMembership.syncMany(studentIds, tx);
+  await chatMembership.leaveAll(studentIds, tx);
 }
-
 /** Closes a session: every active student passes out, sessions end, chats are left (PRD §4.5). Admin-triggered only. */
 export async function closeSession(actorId: string, sessionId: string, ip?: string): Promise<{ closedAt: Date; passedOut: number }> {
   const out = await transaction(
@@ -38,7 +37,7 @@ export async function closeSession(actorId: string, sessionId: string, ip?: stri
       const staff = await tx.courseOffering.findMany({ where: { section: { group: { sessionId } }, endedAt: null }, select: { teacherId: true } });
       const mentors = await tx.section.findMany({ where: { group: { sessionId }, mentorTeacherId: { not: null } }, select: { mentorTeacherId: true } });
       await chatMembership.syncMany([...staff.map((s) => s.teacherId), ...mentors.map((m) => m.mentorTeacherId!)], tx);
-      for (const id of ids) await revokeAllSessions(id, undefined, tx);
+      await revokeSessionsForMany(ids, tx);
       await audit(actorId, 'session.close', 'session', sessionId, { passedOut: ids.length }, ip, tx);
       return { closedAt, ids };
     },
@@ -55,7 +54,7 @@ export async function passOutStudents(actorId: string, studentIds: string[], ip?
       const found = await tx.user.findMany({ where: { id: { in: ids }, role: 'student', status: 'active' }, select: { id: true } });
       if (found.length !== ids.length) throw new AppError('VALIDATION_ERROR', 400, 'Only active students can be passed out.', { studentIds: 'invalid' });
       await passOutInTx(tx, ids);
-      for (const id of ids) await revokeAllSessions(id, undefined, tx);
+      await revokeSessionsForMany(ids, tx);
       await audit(actorId, 'student.pass_out', 'user', ids[0]!, { count: ids.length, studentIds: ids }, ip, tx);
     },
     { timeout: 60_000 },

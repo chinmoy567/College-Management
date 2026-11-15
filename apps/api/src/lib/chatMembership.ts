@@ -111,4 +111,21 @@ export async function syncMany(userIds: Iterable<string>, db: Db = prisma): Prom
   for (const id of new Set(userIds)) await sync(id, db);
 }
 
-export const chatMembership = { sync, syncMany, ensureConversation };
+/** Bulk version of `sync` for users who must belong to no group/section chat (passed out): 2 queries total. */
+export async function leaveAll(userIds: string[], db: Db = prisma): Promise<void> {
+  if (!userIds.length) return;
+  const active = await db.conversationMember.findMany({
+    where: { userId: { in: userIds }, leftAt: null, conversation: { type: { in: ['group', 'section'] } } },
+    select: { conversationId: true, userId: true },
+  });
+  if (!active.length) return;
+  await db.conversationMember.updateMany({
+    where: { userId: { in: userIds }, leftAt: null, conversation: { type: { in: ['group', 'section'] } } },
+    data: { leftAt: new Date() },
+  });
+  const byUser = new Map<string, string[]>();
+  for (const m of active) byUser.set(m.userId, [...(byUser.get(m.userId) ?? []), m.conversationId]);
+  for (const [userId, left] of byUser) defer(() => roomHook(userId, { joined: [], left }));
+}
+
+export const chatMembership = { sync, syncMany, leaveAll, ensureConversation };
