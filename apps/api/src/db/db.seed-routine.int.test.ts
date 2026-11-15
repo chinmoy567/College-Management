@@ -7,8 +7,8 @@ import { routineClashes, seedRoutine } from '../../../../prisma/seed-routine';
 import { weeklyCount } from '../../../../prisma/seed-routine-plan';
 
 const app = makeApp();
-let sectionIds: string[] = [];
-let offeringsBySection = new Map<string, string[]>();
+const sectionIds: string[] = [];
+const offeringsBySection = new Map<string, string[]>();
 const teacherIds: string[] = [];
 
 beforeAll(async () => {
