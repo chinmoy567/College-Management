@@ -1,5 +1,5 @@
 /**
- * Deterministic DEV-ONLY demo data (spec 01 §5): 1 session, 3 groups, 2 sections, 5 courses,
+ * Deterministic DEV-ONLY demo data (spec 01 §5): 1 session, 3 groups, 3 sections (Arts empty), 5 courses,
  * 3 teachers, 60 students. Fake names, no real personal data, no randomness. Idempotent.
  * Never run in production.
  */
@@ -140,6 +140,12 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
       }
     }
   }
+  // Arts has no demo students, but it still needs an empty Section A so students can be added to it.
+  await prisma.section.upsert({
+    where: { id: id('section', 'art-a') },
+    create: { id: id('section', 'art-a'), groupId: groups.arts!, classLevel: 11, name: 'A' },
+    update: {},
+  });
   console.log(`Demo data ready. Password for every demo user: ${DEMO_PASSWORD}`);
   console.log('Teachers: T-0001..T-0003. Students: S-2026-0001..S-2026-0060.');
 }
