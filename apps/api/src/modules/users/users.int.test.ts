@@ -42,6 +42,19 @@ describe('create student/teacher', () => {
     }
   });
 
+  it('[ACAD-14c] the generated ID jumps past IDs inserted without the counter (seeded data)', async () => {
+    const { a } = await twoSections();
+    const year = new Date().getFullYear() + 40; // a prefix no other test uses
+    const sess = await prisma.session.create({ data: { name: `${year}–${String(year + 1).slice(2)}` } });
+    const g = await prisma.group.create({ data: { sessionId: sess.id, type: 'science' } });
+    const sec = await prisma.section.create({ data: { groupId: g.id, classLevel: 11, name: 'A' } });
+    await prisma.user.create({ data: { role: 'student', loginId: `S-${year}-0007`, email: mail('seeded'), passwordHash: 'x', student: { create: { name: 'Seeded', roll: '1', sectionId: sec.id } } } });
+    const res = await admin.c.post('/api/users/students', { name: 'Next', roll: '2', sectionId: sec.id });
+    expect(res.status).toBe(201);
+    expect(res.body.loginId).toBe(`S-${year}-0008`);
+    expect(a).toBeTruthy();
+  });
+
   it('[ACAD-14] plain password returned once, not stored or retrievable', async () => {
     const { a } = await twoSections();
     const res = await newStudent(a);

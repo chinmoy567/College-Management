@@ -16,24 +16,35 @@ import { revokeAllSessions } from '../auth/sessions';
 type Tx = Prisma.TransactionClient;
 
 // ───── login ID + password ─────
-/** Next number of a counter row in `Setting`, taken under a row lock so ids never repeat or skip (plan 03 step 7). */
-async function nextSeq(tx: Tx, key: string): Promise<number> {
+/**
+ * Next number of a counter row in `Setting`, taken under a row lock so ids never repeat or skip (plan 03 step 7).
+ * `floor` is the highest number already used by an existing account (e.g. seeded or hand-typed IDs), so the counter
+ * jumps straight past them in one step instead of probing the taken IDs one by one.
+ */
+async function nextSeq(tx: Tx, key: string, floor = 0): Promise<number> {
   await tx.$executeRaw(Prisma.sql`INSERT INTO settings ("key", value, updated_at) VALUES (${key}, to_jsonb(0), now()) ON CONFLICT ("key") DO NOTHING`);
   const rows = await tx.$queryRaw<{ value: unknown }[]>(Prisma.sql`SELECT value FROM settings WHERE "key" = ${key} FOR UPDATE`);
-  const n = Number(rows[0]!.value) + 1;
+  const n = Math.max(Number(rows[0]!.value), floor) + 1;
   await tx.$executeRaw(Prisma.sql`UPDATE settings SET value = to_jsonb(${n}::int), updated_at = now() WHERE "key" = ${key}`);
   return n;
+}
+
+/** Highest trailing number among login IDs that start with `prefix` and end in exactly 4 digits (0 if none). */
+async function maxUsedSeq(tx: Tx, prefix: string): Promise<number> {
+  const rows = await tx.$queryRaw<{ m: number | null }[]>(
+    Prisma.sql`SELECT max(right(login_id, 4)::int) AS m FROM users WHERE login_id ~ ${'^' + prefix + '[0-9]{4}$'}`,
+  );
+  return rows[0]?.m ?? 0;
 }
 
 const pad = (n: number) => String(n).padStart(4, '0');
 
 /** Students: `S-<sessionStartYear>-<4-digit seq>`; teachers: `T-<4-digit seq>`. Skips ids an Admin already typed by hand. */
 export async function generateLoginId(tx: Tx, kind: { student: string } | 'teacher'): Promise<string> {
+  const prefix = kind === 'teacher' ? 'T-' : `S-${kind.student}-`;
+  const floor = await maxUsedSeq(tx, prefix);
   for (;;) {
-    const id =
-      kind === 'teacher'
-        ? `T-${pad(await nextSeq(tx, 'login_seq:T'))}`
-        : `S-${kind.student}-${pad(await nextSeq(tx, `login_seq:${kind.student}`))}`;
+    const id = `${prefix}${pad(await nextSeq(tx, kind === 'teacher' ? 'login_seq:T' : `login_seq:${kind.student}`, floor))}`;
     if (!(await tx.user.findFirst({ where: { loginId: { equals: id, mode: 'insensitive' } }, select: { id: true } }))) return id;
   }
 }
@@ -94,7 +105,7 @@ export async function createStudent(actorId: string, input: NewStudent & { passw
     const s = await insertStudent(tx, input, session.group.session.name, passwordHash);
     await audit(actorId, 'student.create', 'user', s.id, { sectionId: input.sectionId }, ip, tx);
     return s;
-  });
+  }, { timeout: 30_000, maxWait: 10_000 }); // many sequential queries; the 5 s default expires on a remote DB
   return { id: created.id, loginId: created.loginId, password, sectionId: input.sectionId };
 }
 
@@ -126,7 +137,7 @@ export async function createTeacher(actorId: string, input: NewTeacher & { passw
     const t = await insertTeacher(tx, input, passwordHash);
     await audit(actorId, 'teacher.create', 'user', t.id, undefined, ip, tx);
     return t;
-  });
+  }, { timeout: 30_000, maxWait: 10_000 }); // many sequential queries; the 5 s default expires on a remote DB
   return { id: created.id, loginId: created.loginId, password };
 }
 
