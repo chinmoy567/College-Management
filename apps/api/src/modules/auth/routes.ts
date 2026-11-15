@@ -1,10 +1,10 @@
 import { Router, type Request, type Response } from 'express';
 import {
-  adminChangePasswordBody, forgotBody, loginBody, regenerateBody, resetBody, totpCodeBody, totpEnableBody,
+  adminChangePasswordBody, forgotBody, loginBody, resetBody,
 } from '@cms/shared';
 import { prisma } from '../../db';
 import { audit } from '../../lib/audit';
-import { decrypt, hashPassword, randomToken, sha256, verifyPassword } from '../../lib/crypto';
+import { hashPassword, randomToken, sha256, verifyPassword } from '../../lib/crypto';
 import { AppError, asyncHandler, validate } from '../../lib/http';
 import { checkPassword } from '../../lib/passwordPolicy';
 import { HOUR, MIN, assertUnder, consume, hit } from '../../lib/rateLimit';
@@ -12,14 +12,13 @@ import { authChain, clearSessionCookie, cookieName, cookieOptions, type AuthedRe
 import { queueEmail } from '../mail/queue';
 import * as tpl from '../mail/templates';
 import { createSession, revoke, revokeAllSessions } from './sessions';
-import * as totp from './totp';
 
 const appUrl = () => process.env.APP_URL ?? '';
 const ip = (req: Request) => req.ip ?? undefined;
 
 /** Routes that need no session. Mounted before the auth chain so they can never require it by accident. */
 export const publicAuthRouter = Router();
-/** Routes that need a (possibly step-up) session. */
+/** Routes that need a session. */
 export const authedAuthRouter = Router();
 
 type TokenPurposeName = 'password_reset' | 'email_verify' | 'email_change';
@@ -72,11 +71,10 @@ publicAuthRouter.post(
     await prisma.loginHistory.create({ data: { userId: user.id, identifierHash: idKey, success: true, ip: ip(req), userAgent: ua } });
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
     const isAdmin = user.role === 'admin';
-    const { token, session } = await createSession(user, { stepUpPending: isAdmin, ip: ip(req), userAgent: ua });
+    const { token, session } = await createSession(user, { ip: ip(req), userAgent: ua });
     setCookie(res, token, session.expiresAt);
     if (isAdmin) {
-      const next = user.mustChangePassword ? 'change_password' : user.totpEnabledAt ? 'totp' : 'totp_setup';
-      return res.json({ next });
+      return res.json({ next: user.mustChangePassword ? 'change_password' : 'dashboard' });
     }
     res.json({
       next: user.firstLogin ? 'complete_profile' : 'dashboard',
@@ -166,7 +164,7 @@ authedAuthRouter.post(
 authedAuthRouter.get(
   '/me',
   asyncHandler(async (req, res) => {
-    const { user, session } = req as AuthedRequest;
+    const { user } = req as AuthedRequest;
     const [teacher, student, sanction] = await Promise.all([
       user.role === 'teacher'
         ? prisma.teacherProfile.findUnique({ where: { userId: user.id }, include: { mentoredSection: { select: { id: true } } } })
@@ -186,8 +184,6 @@ authedAuthRouter.get(
         firstLogin: user.firstLogin,
         emailVerified: !!user.emailVerifiedAt,
         mustChangePassword: user.role === 'admin' ? user.mustChangePassword : undefined,
-        totpEnabled: user.role === 'admin' ? !!user.totpEnabledAt : undefined,
-        stepUpPending: session.stepUpPending || undefined,
         isMentorOf: teacher?.mentoredSection?.id,
         mutedUntil: sanction?.endsAt ?? undefined,
       },
@@ -195,7 +191,7 @@ authedAuthRouter.get(
   }),
 );
 
-// ───── Admin forced password change (before TOTP setup) ─────
+// ───── Admin forced password change (seed password) ─────
 function adminOnly(req: Request): AuthedRequest {
   const r = req as AuthedRequest;
   if (r.user.role !== 'admin') throw new AppError('FORBIDDEN', 403, 'Not allowed.');
@@ -214,64 +210,6 @@ authedAuthRouter.post(
     await prisma.user.update({ where: { id: r.user.id }, data: { passwordHash: await hashPassword(newPassword), mustChangePassword: false } });
     await revokeAllSessions(r.user.id, r.session.id);
     await audit(r.user.id, 'admin.password_change', 'user', r.user.id, undefined, ip(req));
-    res.json({ next: r.user.totpEnabledAt ? 'totp' : 'totp_setup' });
-  }),
-);
-
-// ───── TOTP ─────
-authedAuthRouter.post(
-  '/totp/setup',
-  asyncHandler(async (req, res) => {
-    const r = adminOnly(req);
-    if (r.user.mustChangePassword) throw new AppError('FORBIDDEN', 403, 'Change your password first.');
-    if (r.user.totpEnabledAt) throw new AppError('CONFLICT', 409, 'Two-step login is already on.');
-    const { otpauthUri, qrDataUrl } = await totp.beginSetup(r.user.id, r.user.email ?? 'admin');
-    res.json({ otpauthUri, qrDataUrl });
-  }),
-);
-
-authedAuthRouter.post(
-  '/totp/enable',
-  validate({ body: totpEnableBody }),
-  asyncHandler(async (req, res) => {
-    const r = adminOnly(req);
-    const codes = await totp.enable(r.user.id, (req.body as { code: string }).code);
-    await prisma.loginSession.update({ where: { id: r.session.id }, data: { stepUpPending: false } });
-    await audit(r.user.id, 'admin.totp_enable', 'user', r.user.id, undefined, ip(req));
-    res.json({ backupCodes: codes });
-  }),
-);
-
-authedAuthRouter.post(
-  '/login/totp',
-  validate({ body: totpCodeBody }),
-  asyncHandler(async (req, res) => {
-    const r = adminOnly(req);
-    if (!r.session.stepUpPending) return res.json({ next: 'dashboard' });
-    if (!r.user.totpEnabledAt) throw new AppError('FORBIDDEN', 403, 'Set up two-step login first.');
-    try {
-      await totp.verifyStepUp(r.session.id, r.user.id, req.body as { code?: string; backupCode?: string });
-    } catch (e) {
-      if (e instanceof AppError && e.code === 'SESSION_ENDED') clearSessionCookie(res);
-      throw e;
-    }
     res.json({ next: 'dashboard' });
-  }),
-);
-
-authedAuthRouter.post(
-  '/totp/backup-codes/regenerate',
-  validate({ body: regenerateBody }),
-  asyncHandler(async (req, res) => {
-    const r = adminOnly(req);
-    if (r.session.stepUpPending) throw new AppError('STEP_UP_REQUIRED', 403, 'Enter your authenticator code first.');
-    const { password, code } = req.body as { password: string; code: string };
-    if (!(await verifyPassword(r.user.passwordHash, password))) throw new AppError('INVALID_CREDENTIALS', 401, 'Wrong password.');
-    const fresh = await prisma.user.findUniqueOrThrow({ where: { id: r.user.id } });
-    if (!fresh.totpSecretEnc || totp.matchStep(decrypt(fresh.totpSecretEnc), code) === null)
-      throw new AppError('INVALID_CODE', 400, 'That code is not correct.');
-    const codes = await totp.regenerateBackupCodes(r.user.id);
-    await audit(r.user.id, 'admin.backup_codes_regenerate', 'user', r.user.id, undefined, ip(req));
-    res.json({ backupCodes: codes });
   }),
 );

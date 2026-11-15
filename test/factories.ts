@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import request from 'supertest';
 import type { Express } from 'express';
 import type { PrismaClient, User } from '@prisma/client';
@@ -10,7 +9,6 @@ import { setEmailSink, type EmailMessage } from '../apps/api/src/modules/mail/qu
 
 /** Env the API needs; set once for integration tests. */
 export function testEnv(): void {
-  process.env.TOTP_ENC_KEY ||= randomBytes(32).toString('base64');
   process.env.APP_URL ||= 'http://localhost:3000';
   process.env.SESSION_COOKIE_NAME ||= 'cms_session';
 }
@@ -107,16 +105,16 @@ export async function loginAs(app: Express, identifier: string, password = PW) {
 
 /** A signed-in client for any existing user, without going through the login rate limits. */
 export async function clientFor(app: Express, user: User) {
-  const { token } = await createSession(user, { stepUpPending: false });
+  const { token } = await createSession(user);
   return client(app, `${cookieName()}=${token}`);
 }
 
-/** Admin who finished password change and TOTP set-up, with a live session. */
+/** Admin who finished the password change, with a live session. */
 export async function adminClient(prisma: PrismaClient, app: Express) {
   const admin = await prisma.user.create({
     data: {
       role: 'admin', email: `${uniq('admin')}@x.test`, passwordHash: await hashPassword(PW),
-      mustChangePassword: false, totpEnabledAt: new Date(), firstLogin: false,
+      mustChangePassword: false, firstLogin: false,
     },
   });
   return { admin, c: await clientFor(app, admin) };

@@ -6,9 +6,7 @@ import { io as connect } from 'socket.io-client';
 import { prisma } from '../../db';
 import { sha256 } from '../../lib/crypto';
 import { createSocketServer } from '../realtime/socket';
-import { generateSync } from 'otplib';
 import { captureMail, client, loginAs as rawLogin, makeAdmin, makeApp, makeStudent, makeTeacher, PW, uniq } from '../../../../../test/factories';
-import { codeAt } from './totp';
 import { revokeAllSessions } from './sessions';
 
 const app = makeApp();
@@ -29,20 +27,14 @@ afterEach(() => {
 });
 afterAll(() => prisma.$disconnect());
 
-const secretOf = (uri: string) => new URL(uri).searchParams.get('secret')!;
-
-/** Admin who has changed the seed password and enabled TOTP. Returns the secret and backup codes. */
-async function enabledAdmin() {
+/** Admin who has changed the seed password. */
+async function changedAdmin() {
   const admin = await makeAdmin(prisma);
   const { res, c } = await loginAs(admin.email!);
   expect(res.body.next).toBe('change_password');
   const ch = await c.post('/api/auth/admin/change-password', { currentPassword: PW, newPassword: 'Brand-new-pass-9' });
-  expect(ch.body.next).toBe('totp_setup');
-  const setup = await c.post('/api/auth/totp/setup');
-  const secret = secretOf(setup.body.otpauthUri);
-  const en = await c.post('/api/auth/totp/enable', { code: generateSync({ secret }) });
-  expect(en.status).toBe(200);
-  return { admin, secret, backupCodes: en.body.backupCodes as string[], password: 'Brand-new-pass-9' };
+  expect(ch.body.next).toBe('dashboard');
+  return { admin, password: 'Brand-new-pass-9' };
 }
 
 describe('login', () => {
@@ -177,7 +169,7 @@ describe('sessions and CSRF', () => {
     await prisma.loginSession.update({ where: { id: s.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
     expect((await c.get('/api/auth/me')).body.error.code).toBe('SESSION_ENDED');
 
-    const a = await enabledAdmin();
+    const a = await changedAdmin();
     const sess = (await prisma.loginSession.findFirst({ where: { userId: a.admin.id, revokedAt: null } }))!;
     expect(sess.expiresAt.getTime() - sess.createdAt.getTime()).toBeLessThanOrEqual(12 * 3600_000 + 1000);
   });
@@ -252,78 +244,47 @@ describe('first login', () => {
   });
 });
 
-describe('admin two-step', () => {
-  it('[AUTH-05] admin blocked before TOTP; backup code once; step replay rejected; 5 wrong codes revoke', async () => {
-    const a = await enabledAdmin();
-
-    // New login: password OK but nothing reachable except the TOTP routes.
-    const login = await loginAs(a.admin.email!, a.password);
-    expect(login.res.body.next).toBe('totp');
-    const gated = await login.c.get('/api/me/profile');
-    expect(gated.status).toBe(403);
-    expect(gated.body.error.code).toBe('STEP_UP_REQUIRED');
-    expect((await login.c.get('/api/auth/me')).body.user.stepUpPending).toBe(true);
-
-    // Replay: the step used at enable time is rejected; a later step is accepted once.
-    const lastStep = (await prisma.user.findUniqueOrThrow({ where: { id: a.admin.id } })).totpLastStep!;
-    const sameStepCode = codeAt(a.secret, lastStep * 30);
-    expect((await login.c.post('/api/auth/login/totp', { code: sameStepCode })).status).toBe(400);
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(Date.now() + 60_000);
-    const fresh = generateSync({ secret: a.secret });
-    expect((await login.c.post('/api/auth/login/totp', { code: fresh })).status).toBe(200);
-    expect((await login.c.get('/api/me/profile')).status).toBe(200); // Admin has no profile row but the gate is open
-    const second = await loginAs(a.admin.email!, a.password);
-    expect((await second.c.post('/api/auth/login/totp', { code: fresh })).status).toBe(400); // same step twice
-    vi.useRealTimers();
-
-    // Backup code works exactly once.
-    const code = a.backupCodes[0]!;
-    expect((await second.c.post('/api/auth/login/totp', { backupCode: code })).status).toBe(200);
-    const third = await loginAs(a.admin.email!, a.password);
-    expect((await third.c.post('/api/auth/login/totp', { backupCode: code })).status).toBe(400);
-    const left = (await prisma.user.findUniqueOrThrow({ where: { id: a.admin.id } })).backupCodeHashes;
-    expect(left).toHaveLength(9);
-
-    // 5 wrong codes revoke the session (the reused backup code above was already failure #1).
-    for (let i = 0; i < 3; i++) expect((await third.c.post('/api/auth/login/totp', { code: '000000' })).status).toBe(400);
-    const fifth = await third.c.post('/api/auth/login/totp', { code: '000000' });
-    expect(fifth.status).toBe(401);
-    expect((await third.c.get('/api/auth/me')).status).toBe(401);
-  });
-
-  it('first Admin login order: change password → setup → enable; setup blocked before password change', async () => {
+describe('admin login', () => {
+  it('[AUTH-05] admin logs in with password only; blocked until the seed password is changed; then reaches the dashboard', async () => {
     const admin = await makeAdmin(prisma);
-    const { c, res } = await loginAs(admin.email!);
-    expect(res.body.next).toBe('change_password');
-    expect((await c.post('/api/auth/totp/setup')).status).toBe(403);
-    expect((await c.get('/api/me/profile')).body.error.code).toBe('STEP_UP_REQUIRED');
-    expect((await c.post('/api/auth/admin/change-password', { currentPassword: PW, newPassword: PW })).status).toBe(400);
-    expect((await c.post('/api/auth/admin/change-password', { currentPassword: PW, newPassword: 'Brand-new-pass-9' })).body.next).toBe('totp_setup');
-    const setup = await c.post('/api/auth/totp/setup');
-    expect(setup.body.qrDataUrl).toMatch(/^data:image\/png/);
-    const row = await prisma.user.findUniqueOrThrow({ where: { id: admin.id } });
-    expect(row.totpPendingSecretEnc).toBeTruthy();
-    expect(row.totpPendingSecretEnc).not.toContain(secretOf(setup.body.otpauthUri)); // encrypted at rest
-    expect((await c.post('/api/auth/totp/enable', { code: '000000' })).status).toBe(400);
-    const en = await c.post('/api/auth/totp/enable', { code: generateSync({ secret: secretOf(setup.body.otpauthUri) }) });
-    expect(en.body.backupCodes).toHaveLength(10);
-    expect(en.body.backupCodes[0]).toMatch(/^[a-z0-9]{5}-[a-z0-9]{5}$/);
-    expect((await c.get('/api/auth/me')).body.user.stepUpPending).toBeUndefined();
+    const first = await loginAs(admin.email!);
+    expect(first.res.status).toBe(200);
+    expect(first.res.body.next).toBe('change_password');
+    const gated = await first.c.get('/api/me/profile');
+    expect(gated.status).toBe(403);
+    expect(gated.body.error.code).toBe('FIRST_LOGIN_REQUIRED');
+    expect((await first.c.get('/api/auth/me')).body.user.mustChangePassword).toBe(true);
+    expect((await first.c.post('/api/auth/admin/change-password', { currentPassword: PW, newPassword: PW })).status).toBe(400);
+    expect((await first.c.post('/api/auth/admin/change-password', { currentPassword: PW, newPassword: 'Brand-new-pass-9' })).body.next).toBe('dashboard');
+    expect((await first.c.get('/api/me/profile')).status).toBe(200);
+
+    // From now on: password only, straight to the dashboard, no code step and no authenticator routes.
+    const later = await loginAs(admin.email!, 'Brand-new-pass-9');
+    expect(later.res.body.next).toBe('dashboard');
+    expect((await later.c.get('/api/me/profile')).status).toBe(200);
+    expect((await later.c.post('/api/auth/totp/setup')).status).toBe(404);
+    expect((await loginAs(admin.email!, PW)).res.status).toBe(401); // old seed password no longer works
   });
 
-  it('regenerate backup codes needs password + code and replaces all ten', async () => {
-    const a = await enabledAdmin();
-    const { c } = await loginAs(a.admin.email!, a.password);
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(Date.now() + 60_000);
-    const code = generateSync({ secret: a.secret });
-    await c.post('/api/auth/login/totp', { code });
-    expect((await c.post('/api/auth/totp/backup-codes/regenerate', { password: 'wrong-wrong-1', code })).status).toBe(401);
-    const ok = await c.post('/api/auth/totp/backup-codes/regenerate', { password: a.password, code });
-    expect(ok.status).toBe(200);
-    expect(ok.body.backupCodes).toHaveLength(10);
-    expect(ok.body.backupCodes).not.toContain(a.backupCodes[0]);
+  it('Admin can change own password in the profile and the other sessions end', async () => {
+    const a = await changedAdmin();
+    const one = await loginAs(a.admin.email!, a.password);
+    const two = await loginAs(a.admin.email!, a.password);
+    const r = await one.c.post('/api/me/password', { currentPassword: a.password, newPassword: 'Another-pass-77' });
+    expect(r.status).toBe(200);
+    expect((await two.c.get('/api/auth/me')).status).toBe(401);
+    expect((await loginAs(a.admin.email!, 'Another-pass-77')).res.body.next).toBe('dashboard');
+  });
+
+  it('Admin forgot-password works with the email link alone', async () => {
+    const a = await changedAdmin();
+    await prisma.user.update({ where: { id: a.admin.id }, data: { emailVerifiedAt: new Date() } });
+    const f = await request(app).post('/api/auth/password/forgot').set('X-Requested-With', 'cms').set('X-Forwarded-For', '10.2.9.1').send({ email: a.admin.email });
+    expect(f.status).toBe(200);
+    const token = new URL(mail.sent[0]!.m.link!).searchParams.get('token')!;
+    const reset = await request(app).post('/api/auth/password/reset').set('X-Requested-With', 'cms').set('X-Forwarded-For', '10.2.9.2').send({ token, newPassword: 'Reset-pass-1234' });
+    expect(reset.status).toBe(200);
+    expect((await loginAs(a.admin.email!, 'Reset-pass-1234')).res.body.next).toBe('dashboard');
   });
 });
 

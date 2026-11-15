@@ -16,12 +16,6 @@ export const loginBody = z.object({
   password: z.string().min(1).max(200),
   roleHint: z.enum(['admin', 'teacher', 'student']).optional(),
 });
-export const totpCodeBody = z.union([
-  z.object({ code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code') }),
-  z.object({ backupCode: z.string().trim().min(10).max(11) }),
-]);
-export const totpEnableBody = z.object({ code: z.string().trim().regex(/^\d{6}$/) });
-export const regenerateBody = z.object({ password: z.string().min(1), code: z.string().trim().regex(/^\d{6}$/) });
 export const forgotBody = z.object({ email: z.string().trim().toLowerCase().email() });
 export const resetBody = z.object({ token: z.string().min(10).max(100), newPassword });
 export const adminChangePasswordBody = z.object({ currentPassword: z.string().min(1), newPassword });

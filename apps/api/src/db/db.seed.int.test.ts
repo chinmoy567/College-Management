@@ -34,14 +34,12 @@ describe('seed', () => {
     expect(first.periods.length).toBeGreaterThan(0);
   });
 
-  it('[DB-01] the seeded Admin has an argon2 hash, must change the password and has no TOTP', async () => {
+  it('[DB-01] the seeded Admin has an argon2 hash, must change the password', async () => {
     const admin = await prisma.user.findFirstOrThrow({ where: { role: 'admin' } });
     expect(admin.email).toBe('admin@example.edu');
     expect(admin.passwordHash).toMatch(/^\$argon2id\$/);
     expect(admin.passwordHash).not.toContain('ChangeMe');
     expect(admin.mustChangePassword).toBe(true);
-    expect(admin.totpSecretEnc).toBeNull();
-    expect(admin.totpEnabledAt).toBeNull();
   });
 
   it('[DB-04] the seed never creates a second Admin', async () => {

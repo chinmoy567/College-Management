@@ -269,8 +269,8 @@ export async function anonymise(actorId: string, userId: string, confirmLoginId:
       await tx.user.update({
         where: { id: userId },
         data: {
-          loginId: null, email: null, mobile: null, passwordHash: null, avatarId: null, totpSecretEnc: null, totpPendingSecretEnc: null,
-          totpEnabledAt: null, totpLastStep: null, backupCodeHashes: [], status: 'deleted', anonymisedAt: new Date(),
+          loginId: null, email: null, mobile: null, passwordHash: null, avatarId: null,
+          status: 'deleted', anonymisedAt: new Date(),
         },
       });
       if (u.role === 'student') {

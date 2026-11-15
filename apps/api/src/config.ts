@@ -25,7 +25,6 @@ export const envSchema = z.object({
   TZ_DISPLAY: z.string().default('Asia/Dhaka'),
   SEED_ADMIN_EMAIL: z.string().email(),
   SEED_ADMIN_PASSWORD: z.string().min(8),
-  TOTP_ENC_KEY: z.string().min(1),
   VAPID_PUBLIC_KEY: z.string().min(1),
   VAPID_PRIVATE_KEY: z.string().min(1),
   VAPID_SUBJECT: z.string().min(1),

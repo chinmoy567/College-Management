@@ -22,7 +22,7 @@ export function sessionExpiry(role: User['role'], now = new Date()): Date {
 
 export async function createSession(
   user: User,
-  opts: { stepUpPending?: boolean; ip?: string; userAgent?: string } = {},
+  opts: { ip?: string; userAgent?: string } = {},
 ): Promise<{ token: string; session: LoginSession }> {
   const token = randomToken(32);
   const session = await prisma.loginSession.create({
@@ -30,7 +30,6 @@ export async function createSession(
       userId: user.id,
       tokenHash: sha256(token),
       expiresAt: sessionExpiry(user.role),
-      stepUpPending: opts.stepUpPending ?? false,
       ip: opts.ip,
       userAgent: opts.userAgent?.slice(0, 300),
     },

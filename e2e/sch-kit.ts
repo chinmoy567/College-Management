@@ -14,7 +14,7 @@ export async function makeUser(role: 'admin' | 'teacher' | 'student', sectionId?
   return prisma.user.create({
     data: {
       role, email: `e2e-${id}@x.test`, passwordHash: 'x', mustChangePassword: false, firstLogin: false,
-      ...(role === 'admin' ? { totpEnabledAt: new Date() } : { loginId: `e2e${id}` }),
+      ...(role === 'admin' ? {} : { loginId: `e2e${id}` }),
       ...(role === 'teacher' ? { teacher: { create: { name, subjects: [] } } } : {}),
       ...(role === 'student' ? { student: { create: { name, roll: String(Math.floor(Math.random() * 1e6)), sectionId: sectionId! } } } : {}),
     },
@@ -23,7 +23,7 @@ export async function makeUser(role: 'admin' | 'teacher' | 'student', sectionId?
 
 /** Signs the browser context in as `user` (same shortcut as the ACAD-15 test). */
 export async function signIn(context: BrowserContext, baseURL: string, user: User): Promise<string> {
-  const { token } = await createSession(user, { stepUpPending: false });
+  const { token } = await createSession(user);
   await context.clearCookies();
   await context.addCookies([{ name: COOKIE, value: token, url: baseURL }]);
   return token;

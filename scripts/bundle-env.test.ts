@@ -22,7 +22,7 @@ const serverNames = (): string[] =>
 describe('browser bundle', () => {
   it('[OPS-04] .env.example only exposes NEXT_PUBLIC_* to the browser', () => {
     const names = serverNames();
-    expect(names).toEqual(expect.arrayContaining(['GROQ_API_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'TOTP_ENC_KEY', 'VAPID_PRIVATE_KEY']));
+    expect(names).toEqual(expect.arrayContaining(['GROQ_API_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'VAPID_PRIVATE_KEY']));
     const next = readFileSync(path.join(root, 'apps/web/next.config.mjs'), 'utf8');
     expect(next).not.toMatch(/\benv\s*:/); // no `env` block that would inline server variables
   });
@@ -33,7 +33,7 @@ describe('browser bundle', () => {
     // Short generic names (PORT, TZ_DISPLAY...) occur in library code by chance; check the distinctive ones.
     for (const n of serverNames().filter((x) => x.includes('_') && x.length >= 9)) expect(new RegExp(`(?<![A-Z0-9_])${n}(?![A-Z0-9_])`).test(text), `${n} found in browser bundle`).toBe(false);
     // Real values from the local env file, when set, must not appear either.
-    for (const n of ['GROQ_API_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'TOTP_ENC_KEY', 'VAPID_PRIVATE_KEY', 'SMTP_PASS', 'SEED_ADMIN_PASSWORD']) {
+    for (const n of ['GROQ_API_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'VAPID_PRIVATE_KEY', 'SMTP_PASS', 'SEED_ADMIN_PASSWORD']) {
       const v = process.env[n];
       if (v && v.length >= 8) expect(text.includes(v), `${n} value found in browser bundle`).toBe(false);
     }

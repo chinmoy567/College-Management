@@ -13,9 +13,9 @@ test.afterAll(() => prisma.$disconnect());
 test('[ACAD-15] add student at 360 px, slip, new section when full', async ({ page, context, request, baseURL }) => {
   test.skip(test.info().project.name !== 'phone', 'Phone project only (360x740)');
   const admin = await prisma.user.create({
-    data: { role: 'admin', email: `e2e-${randomUUID()}@x.test`, passwordHash: 'x', mustChangePassword: false, totpEnabledAt: new Date(), firstLogin: false },
+    data: { role: 'admin', email: `e2e-${randomUUID()}@x.test`, passwordHash: 'x', mustChangePassword: false, firstLogin: false },
   });
-  const { token } = await createSession(admin, { stepUpPending: false });
+  const { token } = await createSession(admin);
   const cookie = { name: process.env.SESSION_COOKIE_NAME ?? 'cms_session', value: token, url: baseURL! };
   await context.addCookies([cookie]);
 

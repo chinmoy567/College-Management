@@ -53,7 +53,7 @@ export const sessionMiddleware: RequestHandler = async (req, res, next) => {
 };
 
 const FIRST_LOGIN_OK = [/^\/api\/auth\//, /^\/api\/me\/complete-profile$/];
-const STEP_UP_OK = [/^\/api\/auth\/(me|logout|totp\/|login\/totp|admin\/)/];
+const ADMIN_PW_OK = [/^\/api\/auth\/(me|logout|admin\/)/];
 
 /** First-login users may call only auth routes and complete-profile (AUTH-04). */
 export const firstLoginGate: RequestHandler = (req, _res, next) => {
@@ -63,12 +63,12 @@ export const firstLoginGate: RequestHandler = (req, _res, next) => {
   next();
 };
 
-/** Admin with a pending step-up (or without TOTP set up) reaches only the TOTP routes (AUTH-05). */
-export const stepUpGate: RequestHandler = (req, _res, next) => {
+/** Admin who still has the seed password reaches only change-password, me and logout (AUTH-05). */
+export const adminPasswordGate: RequestHandler = (req, _res, next) => {
   const r = req as AuthedRequest;
-  if (r.user.role === 'admin' && (r.session.stepUpPending || !r.user.totpEnabledAt)) {
-    if (!STEP_UP_OK.some((x) => x.test(req.originalUrl.split('?')[0]!)))
-      return next(new AppError('STEP_UP_REQUIRED', 403, 'Enter your authenticator code first.'));
+  if (r.user.role === 'admin' && r.user.mustChangePassword) {
+    if (!ADMIN_PW_OK.some((x) => x.test(req.originalUrl.split('?')[0]!)))
+      return next(new AppError('FIRST_LOGIN_REQUIRED', 403, 'Change your password first.'));
   }
   next();
 };
@@ -78,4 +78,4 @@ export const requireRole =
   (req, _res, next: NextFunction) =>
     roles.includes((req as AuthedRequest).actor.role) ? next() : next(new AppError('FORBIDDEN', 403, 'Not allowed.'));
 
-export const authChain: RequestHandler[] = [sessionMiddleware, firstLoginGate, stepUpGate];
+export const authChain: RequestHandler[] = [sessionMiddleware, firstLoginGate, adminPasswordGate];

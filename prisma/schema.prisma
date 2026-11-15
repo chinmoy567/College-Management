@@ -323,11 +323,6 @@ model User {
   firstLogin            Boolean              @default(true) @map("first_login")
   avatarId              String?              @unique @map("avatar_id")
   avatar                StorageObject?       @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: Restrict)
-  totpSecretEnc         String?              @map("totp_secret_enc") // Admin only, AES-256-GCM
-  totpEnabledAt         DateTime?            @map("totp_enabled_at") @db.Timestamptz(6)
-  totpPendingSecretEnc  String?              @map("totp_pending_secret_enc") // Admin only: secret during setup, moved to totpSecretEnc on enable
-  totpLastStep          Int?                 @map("totp_last_step") // last accepted TOTP time-step (replay protection, 02 §3)
-  backupCodeHashes      String[]             @map("backup_code_hashes") // Admin only, argon2 hashes, removed when used
   mustChangePassword    Boolean              @default(true) @map("must_change_password")
   lastLoginAt           DateTime?            @map("last_login_at") @db.Timestamptz(6)
   createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -419,8 +414,6 @@ model LoginSession {
   revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(6)
   ip            String?
   userAgent     String?   @map("user_agent")
-  stepUpPending Boolean   @default(false) @map("step_up_pending") // Admin: password OK, TOTP not yet entered
-  totpFailures  Int       @default(0) @map("totp_failures") // wrong TOTP/backup codes in this step-up session; 5 -> revoked (02 §3)
 
   @@index([userId, revokedAt])
   @@index([expiresAt])

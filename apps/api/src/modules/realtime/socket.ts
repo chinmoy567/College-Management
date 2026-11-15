@@ -29,7 +29,7 @@ export function createSocketServer(server: HttpServer, opts: { revalidateMs?: nu
       const token = cookie.parse(socket.handshake.headers.cookie ?? '')[cookieName()];
       const s = token ? await lookup(token) : null;
       if (!s || !isLive(s)) return next(new Error('UNAUTHENTICATED'));
-      if (s.stepUpPending || (s.user.role !== 'admin' && s.user.firstLogin)) return next(new Error('FORBIDDEN'));
+      if ((s.user.role !== 'admin' && s.user.firstLogin) || (s.user.role === 'admin' && s.user.mustChangePassword)) return next(new Error('FORBIDDEN'));
       (socket.data as SocketData) = { userId: s.userId, role: s.user.role, loginSessionId: s.id };
       next();
     } catch {
