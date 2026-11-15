@@ -24,6 +24,7 @@
     "db:drift": "tsx scripts/db-drift-check.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed.ts --demo",
+    "db:seed:routine": "tsx prisma/seed-routine.ts",
     "load:seed": "tsx load/seed.ts",
     "load:exam": "tsx load/exam.ts",
     "load:chat": "tsx load/chat.ts"
