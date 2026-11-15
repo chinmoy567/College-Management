@@ -8,7 +8,7 @@ const adminPassword = z.string().min(8).max(128);
 export const studentCreateBody = z.object({
   name: z.string().trim().min(1).max(120),
   roll: z.string().trim().min(1).max(20),
-  email,
+  email: email.optional(), // optional: the student can add one later from their profile
   sectionId: id,
   loginId: loginId.optional(),
   password: adminPassword.optional(),

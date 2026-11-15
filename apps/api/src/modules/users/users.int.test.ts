@@ -31,6 +31,17 @@ async function twoSections() {
 }
 
 describe('create student/teacher', () => {
+  it('[ACAD-14b] a student can be added without an email; two such students do not clash', async () => {
+    const { a } = await twoSections();
+    for (const roll of [uniq('n'), uniq('n')]) {
+      const res = await admin.c.post('/api/users/students', { name: 'No Email', roll, sectionId: a });
+      expect(res.status).toBe(201);
+      const u = await prisma.user.findUniqueOrThrow({ where: { id: res.body.id as string } });
+      expect(u.email).toBeNull();
+      expect(u.firstLogin).toBe(false);
+    }
+  });
+
   it('[ACAD-14] plain password returned once, not stored or retrievable', async () => {
     const { a } = await twoSections();
     const res = await newStudent(a);
@@ -43,7 +54,8 @@ describe('create student/teacher', () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { id } });
     expect(user.passwordHash).toMatch(/^\$argon2id\$/);
     expect(user.passwordHash).not.toContain(password);
-    expect(user.firstLogin && user.mustChangePassword).toBe(true);
+    // students keep the Admin's password; no forced first-login step
+    expect(user.firstLogin || user.mustChangePassword).toBe(false);
     // not in any audit row, notification or later read
     const audits = JSON.stringify(await prisma.auditLog.findMany({ where: { targetId: id } }));
     expect(audits).not.toContain(password);
@@ -54,7 +66,7 @@ describe('create student/teacher', () => {
     expect((await t.get(`/api/users/students/${id}`)).status).toBe(404);
     // the credential works on first login, then a reset issues a different one-time password
     const login = await request(app).post('/api/auth/login').set('X-Requested-With', 'cms').set('X-Forwarded-For', '10.77.0.1').send({ identifier: loginId, password });
-    expect(login.body.next).toBe('complete_profile');
+    expect(login.body.next).toBe('dashboard');
     const reset = await admin.c.post(`/api/users/${id}/reset-password`, {});
     expect(reset.status).toBe(200);
     expect(reset.body.password).not.toBe(password);

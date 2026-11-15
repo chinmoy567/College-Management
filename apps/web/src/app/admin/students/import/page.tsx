@@ -77,7 +77,7 @@ export default function ImportStudents() {
       <PageTitle>Import students</PageTitle>
       <div className="flex flex-col gap-4">
         <Card className="text-base text-slate-700">
-          CSV columns: <code>name, roll, email, session, group, section</code>. Up to 1000 rows. One bad row imports nothing.
+          CSV columns: <code>name, roll, session, group, section</code>, plus an optional <code>email</code> column. Up to 1000 rows. One bad row imports nothing.
         </Card>
         <Field label="CSV file">
           <input

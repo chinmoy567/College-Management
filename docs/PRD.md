@@ -130,8 +130,8 @@ Session (2024–25)
 ### 3.1.1 Adding Students (Admin)
 1. Admin opens **Sessions → *2024–25*** and clicks **Add student**.
 2. Admin selects the **group** and the **section**. If no section has a free place, the Admin can **create a new section right there** (e.g. Science-D).
-3. Admin enters the student's details (name, roll, email; the class comes from the section). The system creates a unique **Student ID** (Admin can edit it) and an initial **password** (or the Admin types one; "Generate" creates a strong one).
-4. The system shows a **credential slip** (ID + password) that the Admin prints or copies and gives to the student. The student must change the password on first login (4.2).
+3. Admin enters the student's details (name and roll; the **email is optional**, and the class comes from the section). The system creates a unique **Student ID** (Admin can edit it) and an initial **password** (or the Admin types one; "Generate" creates a strong one).
+4. The system shows a **credential slip** (ID + password) that the Admin prints or copies and gives to the student. The student can log in right away with it and keep it; changing the password, adding an email and a mobile number are all optional and can be done later from the profile (4.2).
 5. The student is **automatically enrolled** in every course offering of that section (optional courses: see 3.3 step 6).
 - **30-student limit:** a section with 30 active students is **full**. The system blocks adding or moving more students into it and asks the Admin to pick or create another section. Passed-out, deactivated and deleted students do not count toward the 30.
 - Bulk CSV import (4.4) follows the same rules: rows for a full section are rejected with a clear message, and nothing is half-imported.
@@ -164,6 +164,7 @@ Session (2024–25)
 3. On success, the user is redirected to their **role-specific dashboard**.
 
 ### 4.2 First-Time Login (Teacher & Student)
+**Students are not forced through this step:** they log in with the Admin's ID and password, can keep that password, and add an email, mobile number or new password later from the profile. Until a student has a verified email, only the Admin can reset their password. The steps below apply to teachers.
 1. Logs in with admin-given User ID and password.
 2. Forced **"Complete Your Profile"** step: set a new password and mobile number. A verification link is sent to the email the Admin entered.
 3. After this step the full dashboard is unlocked. **Email verification does not block the dashboard** (the daily email limit could delay it); a banner reminds the user until the email is verified. Password reset by email works only for a verified email; otherwise the Admin resets the password.
@@ -180,7 +181,7 @@ Session (2024–25)
 **SMTP:** configured via environment variables (host, port, user, password, sender). Credentials will be provided by the client.
 
 ### 4.4 Account Management by Admin
-- **Add:** single form or **bulk CSV import** (students: name, roll, section, email; teachers: name, designation, subjects).
+- **Add:** single form or **bulk CSV import** (students: name, roll, section, optional email; teachers: name, designation, subjects).
 - **Edit:** name, ID, section (move student), designation, subjects, status.
 - **Move student to another section:** only into a section with a free place (max 30). The old enrollments are **ended** (not deleted) and new ones are created for the new section's course offerings. Past attendance, exam attempts and ranks stay with the section the student was in at that time.
 - **Promote Class 11 → 12 (manual, Admin only):** nothing moves automatically. The Admin creates the Class 12 sections (each section has a **class**, 11 or 12), assigns their courses, teachers, mentor and routine, then moves students into them, one by one, in bulk, or a whole section at once. Same rules as a section move: only into a section with a free place (max 30), old enrollments are **ended** (not deleted), new ones are created for the Class 12 section's offerings, and the student's class becomes 12 (it always comes from the section). Past attendance, exam attempts and ranks stay with the Class 11 section.

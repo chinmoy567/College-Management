@@ -52,13 +52,13 @@ export function resolvePassword(typed: string | undefined, loginId: string | nul
 export interface NewStudent {
   name: string;
   roll: string;
-  email: string;
+  email?: string;
   sectionId: string;
   loginId?: string;
 }
 
-async function assertFreeIdentity(tx: Tx, email: string, loginId?: string): Promise<void> {
-  if (await tx.user.findUnique({ where: { email } })) throw new AppError('CONFLICT', 409, 'This email is already used.', { email: 'duplicate' });
+async function assertFreeIdentity(tx: Tx, email: string | undefined, loginId?: string): Promise<void> {
+  if (email && (await tx.user.findUnique({ where: { email } }))) throw new AppError('CONFLICT', 409, 'This email is already used.', { email: 'duplicate' });
   if (loginId && (await tx.user.findFirst({ where: { loginId: { equals: loginId, mode: 'insensitive' } }, select: { id: true } })))
     throw new AppError('CONFLICT', 409, 'This login ID is already used.', { loginId: 'duplicate' });
 }
@@ -71,7 +71,7 @@ export async function insertStudent(tx: Tx, input: NewStudent, sessionName: stri
   const loginId = input.loginId ?? (await generateLoginId(tx, { student: sessionStartYear(sessionName) }));
   const user = await tx.user.create({
     data: {
-      role: 'student', loginId, email: input.email, passwordHash, status: 'active', firstLogin: true, mustChangePassword: true,
+      role: 'student', loginId, email: input.email ?? null, passwordHash, status: 'active', firstLogin: false, mustChangePassword: false, // students keep the Admin's ID/password; email, mobile and a new password are optional later
       student: { create: { name: input.name, roll: input.roll, sectionId: input.sectionId } },
     },
     select: { id: true },

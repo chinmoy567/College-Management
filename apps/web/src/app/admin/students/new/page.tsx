@@ -73,7 +73,7 @@ export default function NewStudent() {
   });
 
   const submit = () => {
-    const p = studentCreateBody.safeParse({ ...f, sectionId });
+    const p = studentCreateBody.safeParse({ ...f, email: f.email.trim() || undefined, sectionId });
     if (!p.success) {
       const m: Record<string, string> = {};
       for (const i of p.error.issues) m[String(i.path[0])] = i.path[0] === 'sectionId' ? 'Choose a section.' : i.message;
@@ -153,7 +153,7 @@ export default function NewStudent() {
           <Field label="Roll number" error={errs.roll}>
             <Input value={f.roll} onChange={(e) => setF({ ...f, roll: e.target.value })} inputMode="numeric" autoComplete="off" />
           </Field>
-          <Field label="Email" error={errs.email}>
+          <Field label="Email (optional)" hint="Leave empty. The student can add it later from their profile." error={errs.email}>
             <Input type="email" inputMode="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} autoComplete="off" />
           </Field>
           {errs.form && <p role="alert" className="text-base text-red-700">{errs.form}</p>}

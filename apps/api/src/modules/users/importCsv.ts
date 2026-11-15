@@ -47,7 +47,7 @@ interface StudentPlan {
   row: number;
   name: string;
   roll: string;
-  email: string;
+  email?: string;
   sectionId: string;
   sessionId: string;
   sessionName: string;
@@ -75,8 +75,8 @@ async function validateStudents(db: Tx, raw: Record<string, string>[]): Promise<
       err(row, 'roll', roll ? 'Roll is too long (20 characters at most).' : 'Roll is required.');
       bad = true;
     }
-    if (!emailSchema.safeParse(email).success || email.length > 200) {
-      err(row, 'email', 'Enter a valid email.');
+    if (email && (!emailSchema.safeParse(email).success || email.length > 200)) {
+      err(row, 'email', 'Enter a valid email or leave it empty.');
       bad = true;
     }
     const sess = bySession.get(normaliseSessionName(r.session ?? ''));
@@ -92,7 +92,7 @@ async function validateStudents(db: Tx, raw: Record<string, string>[]): Promise<
     if (sess.status === 'closed') return void err(row, 'session', 'This session is closed.');
     if (bad) return;
     resolved.push({
-      row, name, roll, email, sectionId: section.id, sessionId: sess.id, sessionName: sess.name, classLevel: section.classLevel,
+      row, name, roll, email: email || undefined, sectionId: section.id, sessionId: sess.id, sessionName: sess.name, classLevel: section.classLevel,
       placement: `${sess.name} · ${group.type} · ${section.classLevel}-${section.name}`,
     });
   });
@@ -101,16 +101,18 @@ async function validateStudents(db: Tx, raw: Record<string, string>[]): Promise<
   const seenEmail = new Map<string, number>();
   const seenRoll = new Map<string, number>();
   for (const p of resolved) {
-    const e = seenEmail.get(p.email);
-    if (e !== undefined) err(p.row, 'email', `Duplicate email (also row ${e}).`);
-    else seenEmail.set(p.email, p.row);
+    if (p.email) {
+      const e = seenEmail.get(p.email);
+      if (e !== undefined) err(p.row, 'email', `Duplicate email (also row ${e}).`);
+      else seenEmail.set(p.email, p.row);
+    }
     const rk = `${p.sectionId}|${p.roll}`;
     const rr = seenRoll.get(rk);
     if (rr !== undefined) err(p.row, 'roll', `Duplicate roll in the section (also row ${rr}).`);
     else seenRoll.set(rk, p.row);
   }
   // duplicates in the database
-  const emails = await db.user.findMany({ where: { email: { in: resolved.map((p) => p.email) } }, select: { email: true } });
+  const emails = await db.user.findMany({ where: { email: { in: resolved.flatMap((p) => (p.email ? [p.email] : [])) } }, select: { email: true } });
   const takenEmail = new Set(emails.map((e) => e.email));
   const sectionIds = [...new Set(resolved.map((p) => p.sectionId))];
   const rolls = await db.studentProfile.findMany({ where: { sectionId: { in: sectionIds } }, select: { sectionId: true, roll: true } });
@@ -118,7 +120,7 @@ async function validateStudents(db: Tx, raw: Record<string, string>[]): Promise<
   const active = await db.studentProfile.groupBy({ by: ['sectionId'], where: { sectionId: { in: sectionIds }, user: { status: 'active' } }, _count: true });
   const room = new Map(sectionIds.map((id) => [id, SECTION_MAX - (active.find((a) => a.sectionId === id)?._count ?? 0)]));
   for (const p of resolved) {
-    if (takenEmail.has(p.email)) err(p.row, 'email', 'This email is already used.');
+    if (p.email && takenEmail.has(p.email)) err(p.row, 'email', 'This email is already used.');
     if (takenRoll.has(`${p.sectionId}|${p.roll}`)) err(p.row, 'roll', 'This roll number is already used in the section.');
     const left = room.get(p.sectionId)!;
     if (left <= 0) err(p.row, 'section', `Section is full (${SECTION_MAX} students). Choose or create another section.`);
@@ -130,7 +132,7 @@ async function validateStudents(db: Tx, raw: Record<string, string>[]): Promise<
 }
 
 export async function dryRunStudents(buffer: Buffer) {
-  const rows = readCsv(buffer, ['name', 'roll', 'email', 'session', 'group', 'section']);
+  const rows = readCsv(buffer, ['name', 'roll', 'session', 'group', 'section']);
   const { plans, errors } = await validateStudents(prisma, rows);
   return { total: rows.length, valid: plans.length, errors };
 }
@@ -150,7 +152,7 @@ async function hashAll(count: number): Promise<{ password: string; hash: string 
 }
 
 export async function importStudents(actorId: string, buffer: Buffer, ip?: string): Promise<{ created: number; slips: Slip[] }> {
-  const rows = readCsv(buffer, ['name', 'roll', 'email', 'session', 'group', 'section']);
+  const rows = readCsv(buffer, ['name', 'roll', 'session', 'group', 'section']);
   const pre = await validateStudents(prisma, rows);
   if (pre.errors.length) throw new ImportInvalid(pre.errors);
   const creds = await hashAll(rows.length);
