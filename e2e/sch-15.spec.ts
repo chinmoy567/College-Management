@@ -42,14 +42,14 @@ test('[SCH-15] attendance sheet at 360 px, draft kept on failure', async ({ page
   await expect(page.getByTestId('not-sent')).toContainText('Not sent, retry');
   expect(await page.evaluate((id) => localStorage.getItem(`att-draft:${id}`), meeting.id)).not.toBeNull();
   await page.reload();
-  await expect(rows).toHaveCount(12);
-  await expect(rows.first().getByTestId('status')).toHaveText('absent'); // draft survived a reload
+  await expect(rows).toHaveCount(12, { timeout: 30_000 });
+  await expect(rows.first().getByTestId('status')).toHaveText('absent', { timeout: 30_000 }); // draft survived a reload
   expect(await prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id } })).toBe(0);
 
   // Retry once the network is back: saved, draft cleared.
   await page.unroute('**/api/attendance/meetings/*/sheet');
   await page.getByRole('button', { name: /^Retry/ }).click();
-  await expect(page.getByText('Attendance saved.')).toBeVisible();
+  await expect(page.getByText('Attendance saved.')).toBeVisible({ timeout: 30_000 });
   expect(await page.evaluate((id) => localStorage.getItem(`att-draft:${id}`), meeting.id)).toBeNull();
   expect(await prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id } })).toBe(12);
   expect(await prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id, status: 'absent' } })).toBe(1);

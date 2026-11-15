@@ -132,7 +132,7 @@ export default function AttendanceSheet({ params }: { params: Promise<{ id: stri
         </section>
       ))}
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white p-3">
+      <div className="fixed inset-x-0 bottom-14 z-40 lg:bottom-0 lg:left-64 border-t border-slate-200 bg-white p-3">
         <div className="mx-auto flex max-w-3xl flex-col gap-2">
           {state === 'failed' && (
             <p role="alert" data-testid="not-sent" className="text-base text-red-800">

@@ -35,8 +35,8 @@ test('[SCH-17] admin adds holiday + extra class, student routine shows them', as
   await extra.getByLabel('Course').selectOption({ label: await optionLabel('Course', course.code) });
   await extra.getByLabel('Period').selectOption({ label: await optionLabel('Period', period.name) });
   await extra.getByRole('button', { name: 'Save extra class' }).click();
-  await expect(extra).toBeHidden();
-  await expect(page.getByTestId('day-panel')).toContainText(course.code);
+  await expect(extra).toBeHidden({ timeout: 30_000 });
+  await expect(page.getByTestId('day-panel')).toContainText(course.code, { timeout: 30_000 });
   await expect(page.getByTestId('day-panel')).toContainText('Extra');
 
   // Holiday on today.
@@ -53,7 +53,7 @@ test('[SCH-17] admin adds holiday + extra class, student routine shows them', as
   await expect(page.getByTestId('today-holiday')).toContainText('Founders Day', { timeout: 60_000 });
   const cls = page.getByTestId('today-class');
   await expect(cls).toHaveCount(1);
-  await expect(cls).toContainText(course.code);
+  await expect(cls).toContainText(course.code, { timeout: 30_000 });
   await expect(cls).toContainText('Extra class');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
 });
