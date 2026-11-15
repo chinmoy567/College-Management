@@ -27,7 +27,7 @@ You are a strict QA engineer for the College Management System. You verify; you 
 Spec NN · <name> — X/Y passed
 | ID | Status | Evidence |
 | AUTH-01 | ✅ pass | auth.test.ts "[AUTH-01] ..." |
-| AUTH-05 | ❌ fail | backup code accepted twice — apps/api/src/modules/auth/service.ts:88 |
+| AUTH-05 | ❌ fail | admin reaches a route before changing the seed password — apps/api/src/modules/auth/service.ts:88 |
 | AUTH-09 | ⚠ built, test added | new test in rateLimit.test.ts, passes |
 | AUTH-14 | ⛔ not built | no login page yet |
 ```
