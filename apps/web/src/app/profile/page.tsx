@@ -77,6 +77,35 @@ function ChangePassword() {
   );
 }
 
+function ChangeEmail() {
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setMsg('');
+    setError('');
+    try {
+      await api('/me/email', { method: 'POST', json: { newEmail: email.trim(), password: pw } });
+      setMsg('We sent a link to the new address. Open it within 30 minutes to finish the change.');
+      setEmail('');
+      setPw('');
+    } catch (err) {
+      setError(err instanceof ApiError ? (err.fields?.newEmail ?? err.message) : 'Something went wrong.');
+    }
+  }
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <Field label="New email"><Input type="email" autoComplete="email" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+      <Field label="Current password"><Input type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} /></Field>
+      {error && <p role="alert" className="text-base text-red-700">{error}</p>}
+      {msg && <p role="status" className="text-base text-emerald-700">{msg}</p>}
+      <Button type="submit" disabled={!email || !pw}>Change email</Button>
+    </form>
+  );
+}
+
 function Verified({ p }: { p: Profile }) {
   const [msg, setMsg] = useState('');
   useEffect(() => {
@@ -112,6 +141,7 @@ function Body() {
       </Card>
       {p.role !== 'admin' && <Card><h2 className="mb-3 text-lg font-semibold">Edit profile</h2><Edit p={p} /></Card>}
       <Card><h2 className="mb-3 text-lg font-semibold">Change password</h2><ChangePassword /></Card>
+      <Card><h2 className="mb-3 text-lg font-semibold">Change email</h2><ChangeEmail /></Card>
       <Logout />
     </div>
   );
