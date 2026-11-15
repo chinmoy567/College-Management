@@ -46,16 +46,17 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
   const path = usePathname();
   const [more, setMore] = useState(false);
   const user = me.data?.user;
-  const stepUp = !!user?.stepUpPending;
+  const mustChange = !!user?.mustChangePassword;
   const wrongRole = !!user && !!role && user.role !== role;
   useEffect(() => setMore(false), [path]);
   useEffect(() => {
-    if (me.isError || stepUp) window.location.assign(role === 'admin' || user?.role === 'admin' ? '/login?role=admin' : '/login');
+    if (me.isError) window.location.assign(role === 'admin' ? '/login?role=admin' : '/login');
+    else if (mustChange) window.location.assign('/admin/setup');
     else if (user?.firstLogin && user.role !== 'admin') window.location.assign('/complete-profile');
     else if (wrongRole) window.location.assign(HOME[user!.role]);
-  }, [me.isError, stepUp, wrongRole, user, role]);
+  }, [me.isError, mustChange, wrongRole, user, role]);
 
-  if (!user || stepUp || wrongRole)
+  if (!user || mustChange || wrongRole)
     return (
       <main className="mx-auto max-w-3xl p-4">
         <ListSkeleton />

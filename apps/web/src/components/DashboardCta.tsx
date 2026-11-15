@@ -10,9 +10,9 @@ import { HOME, type MeUser } from '@/lib/auth';
 export function DashboardCta({ children }: { children: ReactNode }) {
   const me = useQuery({ queryKey: ['me'], queryFn: () => api<{ user: MeUser }>('/auth/me'), retry: false });
   const user = me.data?.user;
-  if (user && !user.stepUpPending)
+  if (user)
     return (
-      <Link href={user.firstLogin ? '/complete-profile' : HOME[user.role]} className="flex min-h-12 items-center justify-center rounded-xl bg-white px-4 text-lg font-semibold text-indigo-700">
+      <Link href={user.firstLogin ? '/complete-profile' : user.mustChangePassword ? '/admin/setup' : HOME[user.role]} className="flex min-h-12 items-center justify-center rounded-xl bg-white px-4 text-lg font-semibold text-indigo-700">
         Open my dashboard
       </Link>
     );
