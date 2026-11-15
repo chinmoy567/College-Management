@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { errMsg, fieldErrors, type SessionRow } from '@/lib/queries';
 import { fmtDateTime, fromDhakaInput, toDhakaInput, type OfferingLite } from '@/lib/exams';
 import { EXAM_TYPES, uploadForm, type ChapterRow, type CourseRow, type OnlineClassRow } from '@/lib/learning';
-import { Badge, Button, Card, EmptyState, Field, Input, ListSkeleton, PageTitle, Select, Sheet, cn } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, ListSkeleton, PageTitle, Select, Sheet, cn } from '@/components/ui';
 import { MaterialList } from '@/components/MaterialList';
 import { PreviousList } from '@/components/PreviousList';
 import { RecordingList } from '@/components/RecordingList';
@@ -117,6 +117,7 @@ function ClassesTab() {
       <Button className="mb-3 w-full" onClick={() => setOpen(true)}>Schedule an online class</Button>
       <Sheet open={open} title="Schedule an online class" onClose={() => setOpen(false)}><ClassForm onDone={() => { setOpen(false); reload(); }} /></Sheet>
       {q.isPending && <ListSkeleton />}
+      {q.isError && <ErrorState message={errMsg(q.error)} onRetry={() => void q.refetch()} />}
       {q.data && q.data.items.length === 0 && <EmptyState title="No online classes yet" />}
       <div className="flex flex-col gap-3">{q.data?.items.map((c) => <ClassCard key={c.id} c={c} onChanged={reload} />)}</div>
     </>
