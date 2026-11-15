@@ -9,7 +9,7 @@
  */
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { demoRoomId, seedPeriods, seedRooms } from './seed';
+import { DEMO_PERIODS, DEMO_ROOMS, demoRoomId, seedPeriods, seedRooms } from './seed';
 import { planRoutine, type PlanSection } from './seed-routine-plan';
 
 const HOME_ROOMS = ['101', '102', '103', '201', '202', '203']; // class 11 sci/com/arts, then class 12
@@ -18,12 +18,19 @@ const slotId = (sectionId: string, n: number) => `demo-slot-${sectionId}-${Strin
 
 /** `sectionIds` limits the routine to those sections (used by tests); default is every section with offerings. */
 export async function seedRoutine(prisma: PrismaClient, opts: { sectionIds?: string[] } = {}): Promise<{ sections: number; slots: number }> {
-  await seedPeriods(prisma);
-  await seedRooms(prisma);
-  await prisma.period.updateMany({
-    where: { name: { startsWith: 'E2E ' }, deletedAt: null, slots: { none: { deletedAt: null } } },
-    data: { deletedAt: new Date() },
-  });
+  // A scoped run (tests, shared DB) only creates periods/rooms that are missing and never touches other rows,
+  // so parallel test files cannot lock or delete each other's data. A full run normalises and cleans up.
+  const scoped = !!opts.sectionIds;
+  const havePeriods = await prisma.period.count({ where: { id: { startsWith: 'seed-period-' }, deletedAt: null } });
+  const haveRooms = await prisma.room.count({ where: { id: { startsWith: 'seed-room-' }, deletedAt: null } });
+  if (!scoped || havePeriods < DEMO_PERIODS.length) await seedPeriods(prisma);
+  if (!scoped || haveRooms < DEMO_ROOMS.length) await seedRooms(prisma);
+  if (!scoped) {
+    await prisma.period.updateMany({
+      where: { name: { startsWith: 'E2E ' }, deletedAt: null, slots: { none: { deletedAt: null } } },
+      data: { deletedAt: new Date() },
+    });
+  }
 
   const rows = await prisma.section.findMany({
     where: { deletedAt: null, offerings: { some: { endedAt: null } }, ...(opts.sectionIds ? { id: { in: opts.sectionIds } } : {}) },
