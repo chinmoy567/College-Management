@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { COOKIE, makeOffering, makeSection, makeUser, prisma, signIn } from './sch-kit';
+import { makeOffering, makeSection, makeUser, prisma, signIn } from './sch-kit';
 
 // 1x1 transparent PNG
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
