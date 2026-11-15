@@ -52,7 +52,7 @@ test('[SCH-DEMO-04] seeded demo routine: no room/teacher/section overlap; Admin 
   // The student of that section sees the whole week.
   await signIn(context, baseURL!, student);
   await page.goto('/student/routine');
-  const week = page.getByRole('region', { name: 'Week' });
+  const week = page.getByRole('region', { name: 'Week', exact: true });
   await expect(week.getByRole('heading', { level: 3 })).toHaveCount(5, { timeout: 60_000 });
   await expect(week.getByText(/Period \d/)).toHaveCount(slotCount);
   await noSideScroll();
