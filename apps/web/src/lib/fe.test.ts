@@ -20,7 +20,7 @@ describe('frontend rules', () => {
     for (const f of all) {
       const src = readFileSync(f, 'utf8');
       for (const m of src.matchAll(/\.(toLocaleString|toLocaleDateString|toLocaleTimeString)\(([^)]*)\)/g)) {
-        if (/en-US/.test(m[2]) && !/Date\(/.test(src.slice(Math.max(0, m.index! - 40), m.index))) continue; // number formatting
+        if (/en-US/.test(m[2] ?? '') && !/Date\(/.test(src.slice(Math.max(0, m.index! - 40), m.index))) continue; // number formatting
         if (f.endsWith('dhaka.ts')) continue; // the helper itself pins TZ = 'Asia/Dhaka'
         expect(m[2] ?? '', `${f} uses device time zone`).toContain('Asia/Dhaka');
       }
