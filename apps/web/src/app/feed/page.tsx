@@ -17,9 +17,11 @@ interface Page {
   nextCursor: string | null;
 }
 
-function Feed({ me }: { me: Me }) {
-  const [tag, setTag] = useState('');
-  const q = useInfiniteQuery({
+type FeedQuery = ReturnType<typeof useFeedQuery>;
+
+/** Called by the page itself, not by the Feed below it, so the posts load in parallel with /auth/me instead of after it. */
+function useFeedQuery(tag: string) {
+  return useInfiniteQuery({
     queryKey: ['feed', tag],
     initialPageParam: '',
     queryFn: ({ pageParam }) => {
@@ -34,6 +36,9 @@ function Feed({ me }: { me: Me }) {
     refetchOnReconnect: false,
     staleTime: Infinity,
   });
+}
+
+function Feed({ me, tag, setTag, q }: { me: Me; tag: string; setTag: (t: string) => void; q: FeedQuery }) {
   const pinned = q.data?.pages[0]?.pinned ?? [];
   const items = q.data?.pages.flatMap((p) => p.items) ?? [];
   return (
@@ -74,5 +79,7 @@ function Feed({ me }: { me: Me }) {
 }
 
 export default function FeedPage() {
-  return <CommunityShell>{(me) => <Feed me={me} />}</CommunityShell>;
+  const [tag, setTag] = useState('');
+  const q = useFeedQuery(tag);
+  return <CommunityShell>{(me) => <Feed me={me} tag={tag} setTag={setTag} q={q} />}</CommunityShell>;
 }
