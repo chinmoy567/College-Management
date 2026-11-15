@@ -45,6 +45,13 @@ export default function SectionPage({ params }: { params: Promise<{ id: string }
       <div className="flex flex-col gap-4">
         <Card className="flex items-center justify-between gap-3">
           <div>
+            <p className="text-base text-slate-600">Class routine</p>
+            <p className="text-lg font-semibold">Build or upload the routine</p>
+          </div>
+          <Link href={`/admin/schedule?tab=routine&section=${s.id}`}><Button variant="secondary">Open routine</Button></Link>
+        </Card>
+        <Card className="flex items-center justify-between gap-3">
+          <div>
             <p className="text-base text-slate-600">Section Mentor</p>
             <p className="text-lg font-semibold">{s.mentor?.name ?? 'No mentor yet'}</p>
           </div>

@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { RoutineTab } from '@/components/schedule/RoutineTab';
+import { SetupTab } from '@/components/schedule/SetupTabs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg, fieldErrors, sectionLabel, type SectionDetail, type SessionRow } from '@/lib/queries';
@@ -75,7 +78,47 @@ function ExtraClassForm({ date, onDone }: { date: string; onDone: () => void }) 
   );
 }
 
+const TABS = [
+  { key: 'calendar', label: 'Calendar' },
+  { key: 'routine', label: 'Routine' },
+  { key: 'periods', label: 'Periods' },
+  { key: 'rooms', label: 'Rooms' },
+] as const;
+type TabKey = (typeof TABS)[number]['key'];
+
 export default function ScheduleManager() {
+  return (
+    <Suspense fallback={<ListSkeleton rows={2} />}>
+      <ScheduleTabs />
+    </Suspense>
+  );
+}
+
+function ScheduleTabs() {
+  const params = useSearchParams();
+  const [tab, setTab] = useState<TabKey>(params.get('tab') === 'routine' ? 'routine' : 'calendar');
+  const sectionParam = params.get('section') ?? '';
+  const active = tab;
+  return (
+    <>
+      <PageTitle>Schedule</PageTitle>
+      <div role="tablist" aria-label="Schedule sections" className="mb-4 flex gap-1 overflow-x-auto">
+        {TABS.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={active === t.key} data-testid={`tab-${t.key}`} onClick={() => setTab(t.key)}
+            className={cn('min-h-11 shrink-0 rounded-lg px-4 text-base font-medium', active === t.key ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800')}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {active === 'calendar' && <CalendarTab />}
+      {active === 'routine' && <RoutineTab initialSectionId={sectionParam} />}
+      {active === 'periods' && <SetupTab kind="periods" />}
+      {active === 'rooms' && <SetupTab kind="rooms" />}
+    </>
+  );
+}
+
+function CalendarTab() {
   const [month, setMonth] = useState(todayYm());
   const [picked, setPicked] = useState(todayYmd());
   const [form, setForm] = useState<'holiday' | 'extra' | null>(null);
@@ -89,7 +132,6 @@ export default function ScheduleManager() {
   const pickedClasses = classesOn(picked);
   return (
     <>
-      <PageTitle>Schedule</PageTitle>
       <div className="mb-2 flex items-center justify-between">
         <Button variant="secondary" aria-label="Previous month" onClick={() => setMonth(shiftMonth(month, -1))}>Prev</Button>
         <h2 className="text-lg font-semibold">{monthLabel(month)}</h2>
