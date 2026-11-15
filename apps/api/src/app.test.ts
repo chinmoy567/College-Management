@@ -20,7 +20,12 @@ describe('app', () => {
     expect(csp).toContain("'strict-dynamic'");
     expect(csp).not.toContain('unsafe-eval');
     expect(csp.match(/'nonce-[^']+'/)![0]).not.toBe((b.headers['content-security-policy'] as string).match(/'nonce-[^']+'/)![0]);
+    expect(csp).toMatch(/img-src [^;]*'self'[^;]*data:[^;]*blob:/);
+    expect(csp).toMatch(/frame-src [^;]*youtube-nocookie\.com[^;]*drive\.google\.com/);
+    expect(csp).toMatch(/connect-src [^;]*'self'[^;]*wss:/);
+    expect(csp).toContain("object-src 'none'");
     expect(a.headers['x-content-type-options']).toBe('nosniff');
+    expect(a.headers['strict-transport-security']).toBeTruthy();
     expect(a.headers['x-powered-by']).toBeUndefined();
   });
 
