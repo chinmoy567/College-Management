@@ -119,6 +119,7 @@ export async function generateMeetings(opts: { from?: string; to?: string; now?:
     }
     if (result.removals.length)
       await tx.classMeeting.updateMany({ where: { id: { in: result.removals }, attendanceTakenAt: null }, data: { status: 'removed' } });
-  });
+    // a full college routine (~1,600 meetings per 14 days) exceeds Prisma's 5 s default on a remote database
+  }, { timeout: 300_000, maxWait: 15_000 });
   return { inserted, updated: result.updates.length, removed: result.removals.length };
 }
