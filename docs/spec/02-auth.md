@@ -20,24 +20,19 @@ Source: PRD §2.2–2.4, §4.1–4.3, §4.6, PRD §5.1.3. Skill: `cms-auth-permi
 3. `status = inactive` → `403 ACCOUNT_INACTIVE` "Your account is inactive. Contact the college office."
    `status = passed_out` → `403 ACCOUNT_PASSED_OUT` "Your account is inactive because your session has been completed." (PRD §4.5). Only shown after the correct password.
 4. Write `LoginHistory`.
-5. **Admin:** create session with `stepUpPending = true` → `200 { next: "totp" }` (or `{ next: "totp_setup" }` if TOTP not enabled). A step-up session can call only the TOTP routes.
+5. **Admin:** create session → `200 { next: mustChangePassword ? "change_password" : "dashboard" }`.
 6. Others: create session → `200 { next: firstLogin ? "complete_profile" : "dashboard", role, roleMismatch: roleHint && roleHint != role }`. The UI shows "This is a Teacher account" style notice on mismatch but still goes to the real dashboard (PRD §5.1.3).
 
 `POST /api/auth/logout` – revoke current session, clear cookie.
 `GET /api/auth/me` – `{ user: { id, role, name, avatarUrl, firstLogin, emailVerified, isMentorOf?: sectionId, mutedUntil? } }`.
 
-## 3. Admin two-step (TOTP)
+## 3. Admin login (no second step)
 
-| Route | Purpose |
-|---|---|
-| `POST /api/auth/totp/setup` | Step-up session, TOTP not enabled. Generates secret (otplib, 30 s, 6 digits), stores encrypted (pending), returns `otpauth://` URI + QR data URL. |
-| `POST /api/auth/totp/enable` `{ code }` | Verifies code, sets `totpEnabledAt`, generates **10 backup codes** (10 chars, `xxxxx-xxxxx`), stores argon2 hashes, returns codes **once**. |
-| `POST /api/auth/login/totp` `{ code }` or `{ backupCode }` | Verify (window ±1 step). Backup code is removed after use. Success clears `stepUpPending`. 5 wrong codes → session revoked, must log in again. |
-| `POST /api/auth/totp/backup-codes/regenerate` `{ password, code }` | Replaces all 10. |
+Client decision: no authenticator app and no backup codes. The Admin logs in with email + password only, like everyone else.
 
-- First Admin login order: password → forced new password (seed password must change) → TOTP setup → dashboard.
-- Secret encryption: AES-256-GCM with `TOTP_ENC_KEY` (32 bytes, base64, env only).
-- Replay protection: remember the last accepted time-step per Admin; reject the same step twice.
+- First Admin login order: password → forced new password (the seed password must change, `POST /api/auth/admin/change-password`) → dashboard.
+- Until the seed password is changed (`mustChangePassword`), the Admin session can call only `change-password`, `logout` and `me`; every other route returns `403 FIRST_LOGIN_REQUIRED`.
+- Afterwards the Admin changes password with `POST /api/me/password` and email with `POST /api/me/email` (new address verified by link, §5), and can use forgot password (§5).
 
 ## 4. First login (teacher & student) — PRD §4.2
 
@@ -51,7 +46,7 @@ Source: PRD §2.2–2.4, §4.1–4.3, §4.6, PRD §5.1.3. Skill: `cms-auth-permi
 
 | Route | Rules |
 |---|---|
-| `POST /api/auth/password/forgot` `{ email }` | Always `200` with the same message. If a user with a **verified** email exists and is active: create `Token(password_reset)` valid **20 min**, queue email (priority high). Unverified → nothing sent (UI text says: "If the email is registered and verified, a link was sent. Otherwise ask the Admin."). Admin reset still needs TOTP afterwards. |
+| `POST /api/auth/password/forgot` `{ email }` | Always `200` with the same message. If a user with a **verified** email exists and is active: create `Token(password_reset)` valid **20 min**, queue email (priority high). Unverified → nothing sent (UI text says: "If the email is registered and verified, a link was sent. Otherwise ask the Admin."). The Admin resets the same way; no extra code is needed. |
 | `POST /api/auth/password/reset` `{ token, newPassword }` | Single-use, not expired (`410 TOKEN_EXPIRED`). Sets password, marks token used, revokes all sessions. |
 | `POST /api/me/password` `{ currentPassword, newPassword }` | Revokes other sessions. |
 | `POST /api/me/email` `{ newEmail, password }` | Unique check; `Token(email_change, newEmail)` 30 min, link sent to the **new** email. |
@@ -67,7 +62,6 @@ Source: PRD §2.2–2.4, §4.1–4.3, §4.6, PRD §5.1.3. Skill: `cms-auth-permi
 |---|---|
 | login per IP | 20 / 15 min |
 | login per identifier | 5 failures / 15 min → `429` "Too many attempts, try again in N minutes" |
-| TOTP per session | 5 attempts |
 | forgot password per IP / per email | 5 / hour, 3 / hour |
 | messaging send per user | 30 / min (07) |
 | AI chat per user | 6 / min + daily limit (09) |
@@ -99,7 +93,7 @@ No age rule is applied anywhere (client decision); `age` can be computed from `d
 - **AUTH-02** Passed-out and inactive users cannot log in; their specific message appears only after a correct password.
 - **AUTH-03** Deactivating a user makes their existing session get 401 on the next request and disconnects their socket.
 - **AUTH-04** A first-login user can call only auth routes and complete-profile.
-- **AUTH-05** The Admin reaches no Admin API before TOTP; a backup code works once; the same TOTP time-step is rejected twice; 5 wrong codes revoke the session.
+- **AUTH-05** The Admin logs in with password only; until the seed password is changed every other API returns `FIRST_LOGIN_REQUIRED`; after the change the Admin reaches the dashboard APIs with no code step.
 - **AUTH-06** Reset tokens that are expired, reused or for the wrong purpose fail; a reset revokes all sessions.
 - **AUTH-07** An unverified email receives no reset email, and the response is the same as for a verified one.
 - **AUTH-08** A state-changing request without `X-Requested-With: cms` gets 403.
@@ -108,4 +102,4 @@ No age rule is applied anywhere (client decision); `age` can be computed from `d
 - **AUTH-11** Email change sends the link to the new email; verifying swaps the email and revokes other sessions.
 - **AUTH-12** Session cookie is `httpOnly; Secure; SameSite=Lax`; only the token hash is in the database.
 - **AUTH-13** Profile: a student cannot change a locked name or any read-only field; teachers cannot edit designation or subjects.
-- **AUTH-14** (UI) Login form at 360 px: role buttons pre-select the label, role mismatch shows the notice and still lands on the real dashboard, Admin gets the code step, first login goes to Complete Your Profile.
+- **AUTH-14** (UI) Login form at 360 px: role buttons pre-select the label, role mismatch shows the notice and still lands on the real dashboard, Admin logs in with password only and, on the first login, is sent to change the seed password, Teacher/Student first login goes to Complete Your Profile.
