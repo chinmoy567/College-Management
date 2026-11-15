@@ -1,7 +1,7 @@
 /**
  * Fills the demo DB so that each of 2025–26 (Class 12) and 2026–27 (Class 11) has Science A, Commerce A and Arts A with
  * exactly 30 students each; every new student gets a unique password. Class 12 sections get the same HSC course offerings
- * as Class 11 and all their students are enrolled. Writes ../student_id_pass.txt (plaintext passwords: never commit it).
+ * as Class 11 and all their students are enrolled. Passwords already listed in docs/system-password.md are re-used; no password file is written, new students' login IDs and passwords are printed to the console (add them to docs/system-password.md).
  * Idempotent: existing users are kept, and passwords already written to the file are re-used.
  * Run: npx tsx prisma/seed-students-90.ts   (DEV / demo data only)
  */
@@ -13,7 +13,7 @@ import { PrismaClient } from '@prisma/client';
 import { generatePassword } from '../apps/api/src/lib/passwordGen';
 
 const DEMO_PASSWORD = 'Demo@12345';
-const FILE = path.resolve(__dirname, '..', 'student_id_pass.txt');
+const FILE = path.resolve(__dirname, '..', 'docs', 'system-password.md');
 const PER_SECTION = 30;
 
 const FIRST = ['Arif', 'Rafiq', 'Sabbir', 'Tanvir', 'Imran', 'Shakib', 'Mehedi', 'Nayeem', 'Rakib', 'Zahid',
@@ -52,8 +52,8 @@ function readOldPasswords(): Map<string, string> {
   const m = new Map<string, string>();
   if (!fs.existsSync(FILE)) return m;
   for (const line of fs.readFileSync(FILE, 'utf8').split(/\r?\n/)) {
-    const c = line.split('|').map((s) => s.trim());
-    if (/^S-\d{4}-\d{4}$/.test(c[0] ?? '') && c[1]) m.set(c[0]!, c[1]);
+    const c = line.split('|').map((s) => s.trim()); // markdown row: '| id | password | ...' so c[0] is ''
+    if (/^S-\d{4}-\d{4}$/.test(c[1] ?? '') && c[2]) m.set(c[1]!, c[2]);
   }
   return m;
 }
@@ -61,7 +61,9 @@ function readOldPasswords(): Map<string, string> {
 async function main() {
   const prisma = new PrismaClient();
   const old = readOldPasswords(); // also receives passwords generated in this run
+  const oldBefore = new Set(old.keys());
   const rows: string[][] = [];
+  const fresh: string[] = [];
   let created = 0, offeringsMade = 0, enrolled = 0;
 
   const usedNames = new Set((await prisma.studentProfile.findMany({ select: { name: true } })).map((s) => s.name));
@@ -117,6 +119,7 @@ async function main() {
         const i = seq++;
         const password = old.get(loginId) ?? generatePassword();
         old.set(loginId, password);
+        if (!oldBefore.has(loginId)) fresh.push(`${loginId} | ${password}`);
         const name = nameFor(i);
         const lastName = name.split(' ')[1]!;
         const birthYear = t.classLevel === 12 ? 2008 + (i % 2) : 2009 + (i % 3);
@@ -159,18 +162,8 @@ async function main() {
     }
   }
 
-  const head = ['Login ID', 'Password', 'Name', 'Session', 'Group', 'Class', 'Section', 'Roll', 'DOB', 'Guardian', 'Guardian contact', 'Mobile', 'Address'];
-  const all = [head, ...rows.sort((a, b) => a[3]!.localeCompare(b[3]!) || a[4]!.localeCompare(b[4]!) || a[7]!.localeCompare(b[7]!))];
-  const w = head.map((_, c) => Math.max(...all.map((r) => r[c]!.length)));
-  const text = [
-    'STUDENT LOGIN LIST (demo data). Contains plaintext passwords: do NOT commit or share.',
-    `Total students: ${rows.length}`,
-    '',
-    ...all.map((r) => r.map((v, c) => v.padEnd(w[c]!)).join(' | ').trimEnd()),
-    '',
-  ].join('\n');
-  fs.writeFileSync(FILE, text, 'utf8');
-  console.log(`New students: ${created}, offerings created: ${offeringsMade}, enrollments added: ${enrolled}. Wrote ${rows.length} rows to ${FILE}`);
+  if (fresh.length) console.log(['NEW STUDENT LOGINS (add to docs/system-password.md):', ...fresh].join('\n'));
+  console.log(`New students: ${created}, offerings created: ${offeringsMade}, enrollments added: ${enrolled}. Students checked: ${rows.length}`);
   await prisma.$disconnect();
 }
 main().catch((e) => { console.error(e); process.exit(1); });
