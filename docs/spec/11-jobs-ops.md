@@ -34,7 +34,6 @@ NODE_ENV=production
 PORT=10000
 SEED_ADMIN_EMAIL=
 SEED_ADMIN_PASSWORD=          # used once; Admin must change it at first login
-TOTP_ENC_KEY=                 # 32 random bytes, base64
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:office@example.edu

@@ -82,7 +82,7 @@ Closed sessions are read-only: every write that targets a closed session's secti
 ### 5.5 Permanent delete = anonymise (PRD §4.4)
 
 Transaction:
-- User: `loginId, email, mobile, passwordHash, avatarId, totp* = null`, `status=deleted`, `anonymisedAt=now`.
+- User: `loginId, email, mobile, passwordHash, avatarId`, `status=deleted`, `anonymisedAt=now`.
 - Profile: name → `"Deleted user"`, bio/dob/address/guardian → null.
 - Revoke sessions, delete PushSubscriptions, NotificationPrefs, Tokens.
 - **Delete all AIConversations** (PRD §5.20).

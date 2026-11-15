@@ -8,7 +8,7 @@ Source: PRD §5.1–5.6, `docs/tech.stack.md` §2. Skill: `cms-frontend`.
 ```
 src/app
   (public)/            page.tsx (landing) · login · forgot-password · reset-password · verify-email
-  (onboarding)/        complete-profile (teacher/student) · admin/setup (new password + TOTP + backup codes)
+  (onboarding)/        complete-profile (teacher/student) · admin/setup (new password)
   (app)/layout.tsx     auth guard (GET /api/auth/me), role shell, socket provider, bottom nav
     admin/...          Admin routes
     teacher/...        Teacher + Section Mentor routes
@@ -27,7 +27,7 @@ src/app
 | Route | Content |
 |---|---|
 | `/` | Header (logo, name, **Login**), hero, About, Departments, latest public notices, Book Shop preview (swipe row), Contact, footer. Three stacked role buttons: **Student Login / Teacher Login / Admin Login** (`/login?role=...`). Logged in → **Open my dashboard** instead. No heavy libraries. |
-| `/login?role=` | One form: User ID or Email, Password (show/hide), role label from query only. Admin → TOTP step (`code` or "use a backup code"). Generic error. Role mismatch notice. Forgot password link. |
+| `/login?role=` | One form: User ID or Email, Password (show/hide), role label from query only. Admin uses the same form (first login → change seed password). Generic error. Role mismatch notice. Forgot password link. |
 
 ### 2.2 Admin (`/admin`)
 | Route | Screen |
@@ -46,7 +46,7 @@ src/app
 | `/admin/previous-questions`, `/admin/recordings`, `/admin/materials` | College-wide uploads |
 | `/admin/attendance`, `/admin/exams` | College-wide summaries |
 | `/admin/reports` | CSV/PDF exports |
-| `/admin/settings` | Settings keys (01 §4), college profile, AI usage, security (backup codes) |
+| `/admin/settings` | Settings keys (01 §4), college profile, AI usage |
 
 ### 2.3 Teacher (`/teacher`)
 | Route | Screen |

@@ -52,9 +52,8 @@ Modules: `auth, users, academics, schedule, attendance, feed, chat, notices, not
 ## 4. Authentication & authorization
 
 - `sessionMiddleware` (all `/api` routes except public ones) reads the cookie, hashes the token, loads `LoginSession` + `User`, rejects if revoked/expired or `user.status != active`. Sets `req.actor`.
-- Public routes: `GET /api/health`, `POST /api/auth/login`, `POST /api/auth/login/totp`, forgot/reset password, verify email, `GET /api/public/*` (landing page).
+- Public routes: `GET /api/health`, `POST /api/auth/login`, forgot/reset password, verify email, `GET /api/public/*` (landing page).
 - Users with `first_login = true` may only call `/api/auth/*` and `/api/me/complete-profile` (`FIRST_LOGIN_REQUIRED` 403 otherwise).
-- Admin without TOTP set up may only call TOTP setup routes.
 - **Policy helpers** (`apps/api/src/lib/permissions.ts`), each unit-tested for allow and deny:
 
 | Helper | True when |
@@ -93,7 +92,7 @@ Modules: `auth, users, academics, schedule, attendance, feed, chat, notices, not
 
 ## 8. Logging & errors
 
-- pino JSON logs with request id. Redact `password`, `token`, `cookie`, `authorization`, `totp`, `GROQ_API_KEY`, `SMTP_PASS`.
+- pino JSON logs with request id. Redact `password`, `token`, `cookie`, `authorization`, `GROQ_API_KEY`, `SMTP_PASS`.
 - Never log message, post or AI chat content.
 
 ## 9. Testing
@@ -118,7 +117,7 @@ Modules: `auth, users, academics, schedule, attendance, feed, chat, notices, not
 - **CONV-03** Every list endpoint is cursor-paginated (default 20, max 50).
 - **CONV-04** Private files are reachable only through signed URLs issued after a permission check; the public bucket holds only logo, banner, landing-notice attachments and book covers.
 - **CONV-05** Uploads get random keys and are never overwritten; deleted files are removed from storage only after 30 days.
-- **CONV-06** Logs redact passwords, tokens, cookies, TOTP codes and API keys, and never contain post, message or AI chat text.
+- **CONV-06** Logs redact passwords, tokens, cookies and API keys, and never contain post, message or AI chat text.
 - **CONV-07** Times are stored in UTC and shown in Asia/Dhaka; date-only values use the Dhaka date (test around 18:00 UTC).
 - **CONV-08** Every policy helper in `permissions.ts` has allow and deny tests.
 - **CONV-09** Objects the actor may not see return 404, not 403.

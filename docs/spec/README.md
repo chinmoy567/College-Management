@@ -10,7 +10,7 @@ Stack and hosting are fixed by `docs/tech.stack.md`. Client decisions in `.claud
 |---|---|---|
 | 00 | [00-conventions.md](00-conventions.md) | Repo layout, coding rules, API shape, errors, pagination, permissions helpers, time, files, testing |
 | 01 | [01-database.md](01-database.md) | Full Prisma schema, constraints, indexes, RLS, seed (§6) |
-| 02 | [02-auth.md](02-auth.md) | Login, Admin TOTP, first login, password/email flows, sessions, rate limits (§2, §4.1–4.3, §4.6) |
+| 02 | [02-auth.md](02-auth.md) | Login, Admin first login, password/email flows, sessions, rate limits (§2, §4.1–4.3, §4.6) |
 | 03 | [03-academics-accounts.md](03-academics-accounts.md) | Sessions, groups, sections, courses, chapters, offerings, enrollment, accounts, CSV import, moves, promotion, pass-out, delete, Student 360° (§3, §4.4–4.5, §5.3) |
 | 04 | [04-schedule-attendance.md](04-schedule-attendance.md) | Periods, rooms, routine, holidays, special days, Class Meetings, attendance (§5.17, §5.18) |
 | 05 | [05-exams-progress.md](05-exams-progress.md) | Question bank, exams/quizzes, attempts, grading, regrade, extra time, ranks, progress (§5.14, §5.15) |
@@ -29,7 +29,7 @@ Each milestone ends with type-check, lint, tests and a PRD check (`cms-verify` s
 |---|---|---|---|
 | M0 | **Scaffold**: npm workspaces, `apps/web`, `apps/api`, `packages/shared`, `prisma`, Express serving Next.js, `GET /api/health`, pino, helmet, error handler, ESLint, `render.yaml`; **test tooling**: Vitest + supertest with a test Postgres, Playwright (360 × 740 project), `scripts/spec-check.ts` (`npm run spec:check`), GitHub Actions CI | – | `npm run dev` serves the landing placeholder, `/api/health` returns `ok`, `npm test`, `npm run test:e2e` and `npm run spec:check` run |
 | M1 | **Database**: full Prisma schema (01), first migration, RLS migration, seed (Admin, settings, periods) | M0 | `prisma migrate deploy` + seed run on a clean DB |
-| M2 | **Auth** (02): login, sessions, Admin TOTP, first-login profile, reset, verify, change email, rate limits, socket auth helper | M1 | Auth tests pass; deactivation kills sessions |
+| M2 | **Auth** (02): login, sessions, Admin seed-password change, first-login profile, reset, verify, change email, rate limits, socket auth helper | M1 | Auth tests pass; deactivation kills sessions |
 | M3 | **Academics & accounts** (03): sessions/groups/sections, catalog, chapters, offerings, enrollment, add/import/move/promote/pass-out/delete, audit log | M2 | 30-student limit and enrollment history tested |
 | M4 | **App shell** (10): landing page, login, role layouts, bottom nav, dashboards with empty widgets, profile | M2 | Screens checked at 360 px |
 | M5 | **Schedule & attendance** (04): Schedule Manager, meeting generation job, attendance sheet, % calculation | M3 | Generation is idempotent; % rules tested |
@@ -51,7 +51,6 @@ These are implementation details the PRD needs but does not spell out. They do n
 | "Answers grounded in uploaded notes" (§5.20) has no retrieval method | Extract text from PDF notes on upload, store chunks with a PostgreSQL full-text index (`simple` config, works for Bangla), add the top chunks to the prompt. No embeddings, no paid service | 09 |
 | Email daily limit (§5.9) is not in the Settings list (§6) | Setting `email_daily_limit` (default 450) + `EmailQuota` table | 01, 07 |
 | File columns are `*_url` in §6 | Stored as `StorageObject` rows (bucket + key); URLs are signed on read. Supports the 30-day delayed delete (§8) | 00, 01 |
-| Admin TOTP secret storage | Encrypted at rest with `TOTP_ENC_KEY` (AES-256-GCM) | 02 |
 | Rate-limit store "in PostgreSQL" | `RateLimitHit` table used by an express-rate-limit store | 01, 02 |
 | Exam lifecycle states | `draft → published → closed`, plus `results_published_at` and `revealed_at` | 05 |
 | A Class Meeting the Admin moves to another date must not be regenerated | `ClassMeeting.original_date` + `manually_edited`; unique index on `(routine_slot_id, COALESCE(original_date, date))` | 01, 04 |

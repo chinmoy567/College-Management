@@ -4,7 +4,7 @@ Source: PRD §5.8, §5.9, §5.10, §4.6 (sockets). Skill: `cms-realtime-jobs`.
 
 ## 1. Socket.IO
 
-- One server, path `/socket.io`, same origin. Handshake: read `cms_session` cookie → same check as HTTP (02 §1). Reject `first_login`, step-up-pending and inactive users.
+- One server, path `/socket.io`, same origin. Handshake: read `cms_session` cookie → same check as HTTP (02 §1). Reject `first_login` and inactive users.
 - On connect the server joins the socket to: `user:<id>` and `conv:<id>` for each conversation where the user is a member with `leftAt IS NULL`. Clients never choose rooms.
 - Session revocation (`revokeAllSessions`) emits `session:revoked` to `user:<id>` and calls `disconnectSockets()` for sockets of that session. Each socket stores its `loginSessionId`; a 5-minute timer re-validates it as a safety net.
 - Membership changes (join/leave chat) call `socketsJoin/socketsLeave` for `user:<id>` sockets.

@@ -72,11 +72,6 @@ model User {
   firstLogin       Boolean    @default(true)
   avatarId         String?    @unique
   avatar           StorageObject? @relation("UserAvatar", fields: [avatarId], references: [id])
-  totpSecretEnc    String?    // Admin only, AES-256-GCM
-  totpEnabledAt    DateTime?
-  totpPendingSecretEnc String? // Admin only: secret during setup, moved to totpSecretEnc on enable
-  totpLastStep     Int?       // last accepted TOTP time-step (replay protection, 02 §3)
-  backupCodeHashes String[]   // Admin only, argon2 hashes, removed when used
   mustChangePassword Boolean  @default(true)
   lastLoginAt      DateTime?
   createdAt        DateTime   @default(now())
@@ -124,8 +119,6 @@ model LoginSession {
   revokedAt  DateTime?
   ip         String?
   userAgent  String?
-  stepUpPending Boolean @default(false) // Admin: password OK, TOTP not yet entered
-  totpFailures  Int     @default(0)     // wrong TOTP/backup codes in this step-up session; 5 → revoked (02 §3)
   @@index([userId, revokedAt])
 }
 
@@ -935,7 +928,7 @@ A CI test (`db.rls.test.ts`) fails if any table in `public` has `relrowsecurity 
 
 ## 5. Seed (`prisma/seed.ts`)
 
-- The single Admin: `role=admin`, email from `SEED_ADMIN_EMAIL`, password from `SEED_ADMIN_PASSWORD`, `mustChangePassword=true`, no TOTP yet. Idempotent: never creates a second Admin (fails if one exists with a different email).
+- The single Admin: `role=admin`, email from `SEED_ADMIN_EMAIL`, password from `SEED_ADMIN_PASSWORD`, `mustChangePassword=true`, password must change on first login. Idempotent: never creates a second Admin (fails if one exists with a different email).
 - Settings above. Example periods (Period 1 08:00–08:45 …) only when `SEED_DEMO=true`.
 - Demo data script (`seed-demo.ts`, dev only): one session, 3 groups, 2 sections, 5 courses, 3 teachers, 60 students.
 
