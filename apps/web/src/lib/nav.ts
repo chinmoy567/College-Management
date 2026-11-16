@@ -42,6 +42,7 @@ export const MORE: Record<Role, NavItem[]> = {
     ...common,
   ],
   teacher: [
+    { href: '/teacher/routine', label: 'Routine', icon: '🕒' },
     { href: '/teacher/attendance', label: 'Attendance', icon: '✅' },
     { href: '/teacher/exams', label: 'Exams', icon: '📝' },
     ...common,

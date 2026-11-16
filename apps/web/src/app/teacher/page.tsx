@@ -13,6 +13,7 @@ export default function TeacherHome() {
       <Section title="Work">
         <Tiles
           items={[
+            { href: '/teacher/routine', label: 'My routine', icon: '🕒', hint: 'Week, and take attendance' },
             { href: '/teacher/attendance', label: 'Take attendance', icon: '✅' },
             { href: '/teacher/content', label: 'My courses', icon: '📚', hint: 'Classes, recordings, notes' },
             { href: '/teacher/exams', label: 'Exams', icon: '📝' },
