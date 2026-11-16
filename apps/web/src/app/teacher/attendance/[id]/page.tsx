@@ -79,6 +79,7 @@ export default function AttendanceSheet({ params }: { params: Promise<{ id: stri
       }),
     onSuccess: () => {
       writeDraft(id, null); // cleared only on a 200
+      setDraftId(crypto.randomUUID()); // a later edit on this page is a new submit, not a repeat of the saved one
       setState('sent');
     },
     onError: () => {
