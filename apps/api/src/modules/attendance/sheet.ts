@@ -1,4 +1,4 @@
-import type { AttendanceStatus } from '@prisma/client';
+import type { AttendanceStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db';
 import { transaction } from '../../lib/afterCommit';
 import { audit } from '../../lib/audit';
@@ -98,21 +98,25 @@ export async function submitSheet(
     const before = await aggregate({ studentIds: ids }, tx);
     const existing = new Map((await tx.attendanceRecord.findMany({ where: { classMeetingId: m.id } })).map((r) => [r.studentId, r]));
     const wasAbsent = new Set([...existing.values()].filter((r) => r.status === 'absent').map((r) => r.studentId));
-    let changed = 0;
+    // Batched writes: a few queries instead of one per student, so a 30-student sheet stays fast even on a remote database.
+    const toCreate: Prisma.AttendanceRecordCreateManyInput[] = [];
+    const edits: Prisma.AttendanceEditCreateManyInput[] = [];
+    const byNewStatus = new Map<AttendanceStatus, string[]>();
     for (const [studentId, status] of wanted) {
       const s = roster.get(studentId)!;
       const prev = existing.get(studentId);
       if (!prev) {
-        await tx.attendanceRecord.create({
-          data: { classMeetingId: m.id, studentId, sectionId: m.offerings.find((o) => o.courseOfferingId === s.offeringId)!.courseOffering.sectionId, courseOfferingId: s.offeringId, status, markedBy: actor.id },
-        });
-        changed++;
+        toCreate.push({ classMeetingId: m.id, studentId, sectionId: m.offerings.find((o) => o.courseOfferingId === s.offeringId)!.courseOffering.sectionId, courseOfferingId: s.offeringId, status, markedBy: actor.id });
       } else if (prev.status !== status) {
-        await tx.attendanceRecord.update({ where: { id: prev.id }, data: { status, markedBy: actor.id, markedAt: new Date() } });
-        await tx.attendanceEdit.create({ data: { attendanceRecordId: prev.id, oldStatus: prev.status, newStatus: status, editedBy: actor.id } });
-        changed++;
+        byNewStatus.set(status, [...(byNewStatus.get(status) ?? []), prev.id]);
+        edits.push({ attendanceRecordId: prev.id, oldStatus: prev.status, newStatus: status, editedBy: actor.id });
       }
     }
+    if (toCreate.length) await tx.attendanceRecord.createMany({ data: toCreate });
+    for (const [status, recordIds] of byNewStatus)
+      await tx.attendanceRecord.updateMany({ where: { id: { in: recordIds } }, data: { status, markedBy: actor.id, markedAt: new Date() } });
+    if (edits.length) await tx.attendanceEdit.createMany({ data: edits });
+    const changed = toCreate.length + edits.length;
     await tx.classMeeting.update({
       where: { id: m.id },
       data: { status: 'held', attendanceTakenAt: m.attendanceTakenAt ?? new Date(), lastClientDraftId: body.clientDraftId },
@@ -126,7 +130,7 @@ export async function submitSheet(
       return r ? attendancePct(r.present, r.held, r.excused) : null;
     };
     const absent = ids.filter((id) => wanted.get(id) === 'absent' && !wasAbsent.has(id));
-    for (const id of absent) await notify([id], 'marked_absent', { type: 'class_meeting', id: m.id }, 'You were marked absent in a class.', tx);
+    if (absent.length) await notify(absent, 'marked_absent', { type: 'class_meeting', id: m.id }, 'You were marked absent in a class.', tx);
     for (const id of ids) {
       const off = roster.get(id)!.offeringId;
       const b = pctOf(before, id, off);
@@ -135,5 +139,5 @@ export async function submitSheet(
         await notify([id], 'attendance_below_threshold', { type: 'course_offering', id: off }, `Your attendance in a course fell below ${th.threshold}%.`, tx);
     }
     return { ok: true, repeated: false, changed };
-  });
+  }, { timeout: 30_000, maxWait: 10_000 });
 }

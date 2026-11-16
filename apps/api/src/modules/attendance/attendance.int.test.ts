@@ -34,6 +34,22 @@ describe('attendance permissions and submit', () => {
     expect((await (await clientFor(app, other)).post(sheet(m.id), { records: [], clientDraftId: 'x-denied-1' })).status).toBe(403);
   });
 
+  it('[SCH-10] a 30-student sheet saves in one batch: 30 records, one notification per absent student, a later edit logs each change', async () => {
+    const c = await classroom(prisma, admin.c, 30);
+    const m = await pastMeeting(prisma, c.offering.id, c.teacher.id);
+    const t = await clientFor(app, c.teacher);
+    const rec = c.students.map((s, i) => ({ studentId: s.id, status: i < 2 ? 'absent' : 'present' }));
+    const res = await submit(t, m.id, rec, 'draft-batch-0001');
+    expect(res.status).toBe(200);
+    expect(res.body.changed).toBe(30);
+    expect(await prisma.attendanceRecord.count({ where: { classMeetingId: m.id } })).toBe(30);
+    expect(await prisma.notification.count({ where: { type: 'marked_absent', userId: { in: [c.students[0]!.id, c.students[1]!.id] } } })).toBe(2);
+    const edit = await submit(t, m.id, c.students.slice(0, 5).map((s) => ({ studentId: s.id, status: 'late' })), 'draft-batch-0002');
+    expect(edit.body.changed).toBe(5);
+    expect(await prisma.attendanceEdit.count({ where: { attendanceRecord: { classMeetingId: m.id } } })).toBe(5);
+    expect(await prisma.attendanceRecord.count({ where: { classMeetingId: m.id, status: 'late' } })).toBe(5);
+  });
+
   it('[SCH-10] re-submitting the same sheet is idempotent; changes create AttendanceEdit rows (and an AuditLog for the Admin)', async () => {
     const c = await classroom(prisma, admin.c);
     const m = await pastMeeting(prisma, c.offering.id, c.teacher.id);

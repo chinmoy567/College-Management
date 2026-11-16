@@ -139,6 +139,9 @@ export default function AttendanceSheet({ params }: { params: Promise<{ id: stri
               Not sent, retry. Your marks are kept on this phone.
             </p>
           )}
+          {state === 'failed' && submit.error && (
+            <p data-testid="not-sent-reason" className="text-sm text-slate-700">Reason: {errMsg(submit.error)}</p>
+          )}
           {state === 'sent' && <p role="status" className="text-base text-emerald-800">Attendance saved.</p>}
           <Button disabled={submit.isPending} onClick={() => submit.mutate()} className="w-full">
             {submit.isPending ? 'Sending…' : state === 'failed' ? 'Retry' : 'Submit'} ({counts.present + counts.late} present, {counts.absent} absent)
