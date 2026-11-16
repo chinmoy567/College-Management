@@ -54,12 +54,14 @@ test('[SCH-15] attendance sheet at 360 px, draft kept on failure', async ({ page
   expect(await prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id } })).toBe(12);
   expect(await prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id, status: 'absent' } })).toBe(1);
 
-  // Submitting again with no change adds nothing; changing a mark afterwards on the same page is saved.
-  await page.getByRole('button', { name: /^Submit/ }).click();
-  await expect(page.getByText('Attendance saved.')).toBeVisible({ timeout: 30_000 });
+  // Once saved the button is black and cannot be clicked; changing a mark makes it usable again and the edit is saved.
+  const saved = page.getByRole('button', { name: /^Saved/ });
+  await expect(saved).toBeDisabled();
+  await expect(saved).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   expect(await prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id } })).toBe(12);
   expect(await prisma.attendanceEdit.count({ where: { attendanceRecord: { classMeetingId: meeting.id } } })).toBe(0);
   await rows.nth(1).click(); // present -> absent
+  await expect(page.getByRole('button', { name: /^Submit/ })).toBeEnabled();
   await page.getByRole('button', { name: /^Submit/ }).click();
   await expect.poll(() => prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id, status: 'absent' } }), { timeout: 30_000 }).toBe(2);
   expect(await prisma.attendanceRecord.count({ where: { classMeetingId: meeting.id } })).toBe(12);

@@ -144,8 +144,12 @@ export default function AttendanceSheet({ params }: { params: Promise<{ id: stri
             <p data-testid="not-sent-reason" className="text-sm text-slate-700">Reason: {errMsg(submit.error)}</p>
           )}
           {state === 'sent' && <p role="status" className="text-base text-emerald-800">Attendance saved.</p>}
-          <Button disabled={submit.isPending} onClick={() => submit.mutate()} className="w-full">
-            {submit.isPending ? 'Sending…' : state === 'failed' ? 'Retry' : 'Submit'} ({counts.present + counts.late} present, {counts.absent} absent)
+          <Button
+            disabled={submit.isPending || state === 'sent'}
+            onClick={() => submit.mutate()}
+            className={state === 'sent' ? 'w-full cursor-not-allowed bg-black! text-white! hover:bg-black! disabled:bg-black!' : 'w-full'}
+          >
+            {submit.isPending ? 'Sending…' : state === 'sent' ? 'Saved' : state === 'failed' ? 'Retry' : 'Submit'} ({counts.present + counts.late} present, {counts.absent} absent)
           </Button>
         </div>
       </div>
