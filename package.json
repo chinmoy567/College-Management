@@ -29,6 +29,7 @@
     "db:seed:exams": "tsx prisma/seed-exams.ts",
     "db:seed:people": "tsx prisma/seed-people-extra.ts",
     "db:seed:community": "tsx prisma/seed-community.ts",
+    "db:seed:notices": "tsx prisma/seed-notices.ts",
     "load:seed": "tsx load/seed.ts",
     "load:exam": "tsx load/exam.ts",
     "load:chat": "tsx load/chat.ts"
