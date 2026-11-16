@@ -21,7 +21,7 @@ test('[EXAM-UI] teacher builds an exam, adds an inline question, publishes, then
   await page.getByLabel('Title').fill('Builder exam');
   await page.getByLabel('Opens (Dhaka time)').fill(dhakaLocal(60));
   await page.getByLabel('Closes (Dhaka time)').fill(dhakaLocal(180));
-  await page.getByRole('button', { name: 'Create draft' }).click();
+  await page.getByRole('button', { name: 'Save and add questions' }).click();
   await expect(page.getByRole('heading', { name: 'Builder exam' })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('publish-exam')).toBeDisabled(); // no questions yet
 

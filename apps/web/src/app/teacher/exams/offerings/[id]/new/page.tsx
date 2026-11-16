@@ -13,9 +13,10 @@ export default function NewExam() {
   return (
     <>
       <PageTitle>New exam</PageTitle>
+      <p className="mb-4 text-base text-slate-600">Step 1: set the time and rules. Step 2 (next screen): add your MCQ questions and their options.</p>
       <ExamForm
         offeringId={id}
-        submitLabel="Create draft"
+        submitLabel="Save and add questions"
         onSubmit={async (v) => {
           const e = await api<{ id: string }>('/exams', { method: 'POST', json: { offeringId: id, ...v, instructions: v.instructions || null } });
           await qc.invalidateQueries({ queryKey: ['offering-exams', id] });
