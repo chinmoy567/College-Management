@@ -124,6 +124,7 @@ Calendar day colour: all present / partly absent / absent / no class.
 
 - Student: `GET /api/schedule/me/week` (slots of active enrollments) and `/me/today` (today's meetings with current/next flag, holidays shown).
 - Teacher: `GET /api/schedule/me/week` built from all offerings they teach + substitute meetings.
+- Teacher Routine page (`/teacher/routine`): `GET /api/schedule/me/meetings?from&to` (teacher only, range at most 31 days) returns the caller's own dated meetings (as teacher or substitute) in the calendar `meetingView` shape plus `done` (attendance taken). Each class shows its section, room and teacher or substitute; today's and past classes get a Take attendance (or Edit attendance) link to the sheet, past classes with no attendance show an "Attendance not taken" badge, and future or cancelled classes get no button. Who may actually take attendance stays decided by the server (SCH-09).
 - Mentor: section routine read-only via `GET /api/schedule/routine?sectionId=`.
 
 ## 9. Acceptance
@@ -148,3 +149,6 @@ Calendar day colour: all present / partly absent / absent / no class.
 - **SCH-18** Admin uploads a routine image/PDF per section (content-checked, images re-encoded); a new upload replaces the old one; students/teachers of that section can view it, others and non-admin writers get 403.
 - **SCH-19** (UI) Admin Schedule Manager: manage periods and rooms, build a section routine (add/edit/delete a slot, clash warnings, copy from another section) and upload a routine file; the student routine shows the result at 360 px.
 - **SCH-20** (UI) The student routine ends with a "Full week routine" table: Sun–Thu columns, periods down the side (name and time), each cell the course code and room of the student's own classes (empty when none). At 360 px it scrolls sideways inside its own box with the period column fixed; the page never scrolls sideways, and the Today, routine-file and This-week sections are unchanged.
+- **SCH-21** `GET /api/schedule/me/meetings?from&to` returns only the caller's own meetings (as teacher or substitute, combined classes included, `removed` excluded) with `done`; another teacher's meetings are not returned; non-teachers get 403; a range over 31 days or `from` after `to` is rejected with 400.
+- **SCH-22** (UI) The teacher Routine page shows a Sun–Thu week table (previous/next week) of the teacher's own classes with course, section, room and substitute label. Today's and past classes have a Take attendance (or Edit attendance when done) link to the sheet, past classes without attendance show "Attendance not taken", future and cancelled classes have no button. At 360 px it scrolls inside its own box; the page never scrolls sideways; no console errors.
+- **SCH-23** (UI) The student Full week routine table shows the teacher's name in each cell, and the rest of SCH-20 is unchanged.
