@@ -44,6 +44,7 @@ function FullWeekTable({ slots }: { slots: WeekSlot[] }) {
                     ) : cell.map((s) => (
                       <div key={s.id} data-testid="week-cell" title={s.offerings.map((o) => o.course.name).join(', ')} className="mb-1 min-h-11 rounded-lg bg-indigo-50 p-2">
                         <span className="block font-semibold">{s.offerings.map((o) => o.course.code).join(' + ')}</span>
+                        <span data-testid="week-teacher" className="block break-words text-sm text-slate-600">{[...new Set(s.offerings.map((o) => o.teacher.name))].join(', ')}</span>
                         {s.room && <span className="block break-words text-sm text-slate-600">{s.room.name}</span>}
                       </div>
                     ))}
