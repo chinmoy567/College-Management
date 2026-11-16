@@ -8,7 +8,7 @@ export interface ChapterLite { id: string; name: string }
 export interface InlineQuestion { chapterId: string | null; type: 'single' | 'multiple'; text: string; options: { text: string }[]; correct: number[]; marks: number }
 
 /** One MCQ typed inline while building an exam. Text only (no images, PRD 5.14.1). */
-export function QuestionForm({ chapters, onSubmit }: { chapters: ChapterLite[]; onSubmit: (q: InlineQuestion) => Promise<unknown> }) {
+export function QuestionForm({ chapters, onSubmit, addLabel = 'Add to exam' }: { addLabel?: string; chapters: ChapterLite[]; onSubmit: (q: InlineQuestion) => Promise<unknown> }) {
   const [type, setType] = useState<'single' | 'multiple'>('single');
   const [text, setText] = useState('');
   const [options, setOptions] = useState<string[]>(['', '', '', '']);
@@ -83,7 +83,7 @@ export function QuestionForm({ chapters, onSubmit }: { chapters: ChapterLite[]; 
         <Input inputMode="decimal" value={marks} onChange={(e) => setMarks(e.target.value.replace(/[^\d.]/g, ''))} />
       </Field>
       {err && <p role="alert" className="text-base text-red-700">{err}</p>}
-      <Button type="submit" disabled={busy}>{busy ? 'Adding…' : 'Add to exam'}</Button>
+      <Button type="submit" disabled={busy}>{busy ? 'Adding…' : addLabel}</Button>
     </form>
   );
 }

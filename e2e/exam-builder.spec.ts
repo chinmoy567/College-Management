@@ -21,16 +21,15 @@ test('[EXAM-UI] teacher builds an exam, adds an inline question, publishes, then
   await page.getByLabel('Title').fill('Builder exam');
   await page.getByLabel('Opens (Dhaka time)').fill(dhakaLocal(60));
   await page.getByLabel('Closes (Dhaka time)').fill(dhakaLocal(180));
-  await page.getByRole('button', { name: 'Save and add questions' }).click();
-  await expect(page.getByRole('heading', { name: 'Builder exam' })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId('publish-exam')).toBeDisabled(); // no questions yet
-
-  await page.getByTestId('add-inline').click();
+  // settings and the question are on the same screen
   await page.getByTestId('q-text').fill('What is 2 + 2?');
   await page.getByTestId('q-option-0').fill('3');
   await page.getByTestId('q-option-1').fill('4');
   await page.getByRole('radio', { name: 'Option 2 is correct' }).click();
-  await page.getByRole('button', { name: 'Add to exam' }).click();
+  await page.getByRole('button', { name: 'Add question' }).click();
+  await expect(page.getByTestId('new-question-1')).toContainText('What is 2 + 2?');
+  await page.getByTestId('save-exam').click();
+  await expect(page.getByRole('heading', { name: 'Builder exam' })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('question-1')).toContainText('What is 2 + 2?', { timeout: 30_000 });
   await expect(page.getByTestId('question-1')).toContainText('✓ 4');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);

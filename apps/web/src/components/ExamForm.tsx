@@ -17,7 +17,7 @@ const blank: ExamFormValues = {
 };
 
 /** Create / edit form for an exam or quiz. Times are typed as Dhaka wall time. Validated with the shared schema before sending. */
-export function ExamForm({ offeringId, initial, submitLabel, onSubmit }: { offeringId: string; initial?: ExamRow; submitLabel: string; onSubmit: (v: ExamFormValues & { startAt: string; endAt: string }) => Promise<unknown> }) {
+export function ExamForm({ offeringId, initial, submitLabel, onSubmit, formId }: { formId?: string; offeringId: string; initial?: ExamRow; submitLabel: string; onSubmit: (v: ExamFormValues & { startAt: string; endAt: string }) => Promise<unknown> }) {
   const [v, setV] = useState<ExamFormValues>(
     initial
       ? { kind: initial.kind, title: initial.title, instructions: initial.instructions ?? '', startAt: toDhakaInput(initial.startAt), endAt: toDhakaInput(initial.endAt), durationMin: initial.durationMin, passMarks: initial.passMarks, maxAttempts: initial.maxAttempts, shuffleQuestions: initial.shuffleQuestions, shuffleOptions: initial.shuffleOptions, showAnswersAfterEnd: initial.showAnswersAfterEnd, resultMode: initial.resultMode }
@@ -61,7 +61,7 @@ export function ExamForm({ offeringId, initial, submitLabel, onSubmit }: { offer
     </label>
   );
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
+    <form id={formId} onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
       <Field label="Title" error={errors.title}>
         <Input value={v.title} maxLength={200} onChange={(e) => set('title', e.target.value)} autoComplete="off" />
       </Field>
@@ -105,7 +105,7 @@ export function ExamForm({ offeringId, initial, submitLabel, onSubmit }: { offer
         {check('showAnswersAfterEnd', 'Show correct answers after results')}
       </div>
       {formError && <p role="alert" className="text-base text-red-700">{formError}</p>}
-      <Button type="submit" disabled={busy}>{busy ? 'Saving…' : submitLabel}</Button>
+      {!formId && <Button type="submit" disabled={busy}>{busy ? 'Saving…' : submitLabel}</Button>}
     </form>
   );
 }
