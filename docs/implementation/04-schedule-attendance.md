@@ -67,6 +67,7 @@ The heart of this spec is the **Class Meeting** row: routine slots are templates
 ### Demo schedule data (dev / demo only)
 
 Run after `db:seed:demo` and the offering scripts (`seed-offerings`, `seed-courses-full`, `seed-students-90`): `npm run db:seed:routine`.
+Then, to test the student attendance table and percentages, add 6 weeks of past held meetings with present/late/absent/excused records (idempotent, dev only): `npm run db:seed:attendance` (`prisma/seed-attendance-history.ts`).
 - `db:seed:demo` seeds 8 periods (45 min, break after Period 3) and 11 rooms (7 classrooms incl. a spare, Physics/Chemistry/Biology/Computer labs).
 - `prisma/seed-routine.ts` plans a Sun-Thu routine for every section that has offerings with `prisma/seed-routine-plan.ts` (deterministic, no room, teacher or section clash), writes it as `demo-slot-*` routine slots and generates 14 days of meetings. It refuses to run if the Admin already built slots for those offerings.
 - Tests: `[SCH-DEMO-01..03]` (planner unit + DB integration), `[SCH-DEMO-04]` (Playwright, 360 px).
