@@ -7,7 +7,8 @@ import { asyncHandler, validate } from '../../lib/http';
 import { dhakaDate, formatDhaka } from '../../lib/time';
 import { type AuthedRequest, requireRole } from '../../middleware/session';
 import { meetingInclude, meetingView } from './calendar';
-import { dateOnly, hhmmOf } from './generate';
+import { addDays, dateOnly, hhmmOf } from './generate';
+import { weekdayOf } from '../../lib/time';
 
 /** Routine views for the signed-in student or teacher (04 §8). */
 export const viewsRouter = Router();
@@ -42,7 +43,27 @@ viewsRouter.get('/me/week', requireRole('student', 'teacher'), asyncHandler(asyn
           orderBy: { date: 'asc' },
         })
       : [];
+  // Dated meetings of this Dhaka week (Sun–Sat) so one-off changes (cancelled, moved, extra, substitute) show on the week views too.
+  const weekFrom = addDays(today, -weekdayOf(today));
+  const weekMeetings =
+    r.user.role === 'student'
+      ? await prisma.classMeeting.findMany({
+          where: {
+            status: { in: ['scheduled', 'held', 'cancelled'] },
+            offerings: { some: { courseOfferingId: { in: ids } } },
+            OR: [
+              { date: { gte: dateOnly(weekFrom), lte: dateOnly(addDays(weekFrom, 6)) } },
+              { originalDate: { gte: dateOnly(weekFrom), lte: dateOnly(addDays(weekFrom, 6)) } },
+            ],
+          },
+          include: meetingInclude,
+          orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+          take: 300,
+        })
+      : [];
   res.json({
+    weekFrom,
+    weekMeetings: weekMeetings.map(meetingView).map((m) => ({ ...m, offerings: m.offerings.filter((o) => mine.has(o.id)) })),
     slots: slots.map((s) => ({
       id: s.id,
       day: s.day,

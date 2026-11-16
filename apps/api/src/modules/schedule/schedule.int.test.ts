@@ -300,3 +300,37 @@ describe('teacher own meetings (04 §8)', () => {
     expect((await t.get(`/api/schedule/me/meetings?from=${dateIn(-30)}&to=${dateIn(0)}`)).status).toBe(200);
   });
 });
+
+describe('student week overlay (04 §8)', () => {
+  it('[SCH-24] student /me/week returns weekMeetings for own offerings only: cancelled, moved and extra included, others excluded', async () => {
+    const c = await classroom(prisma, admin.c);
+    const other = await classroom(prisma, admin.c);
+    const wf = (await (await clientFor(app, c.students[0]!)).get('/api/schedule/me/week')).body.weekFrom as string;
+    const at = (n: number) => dateOnly(new Date(Date.parse(`${wf}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10));
+    const mk = (offeringId: string, teacherId: string, n: number, extra: Record<string, unknown> = {}) =>
+      prisma.classMeeting.create({
+        data: { date: at(n), startTime: timeDate('08:00'), endTime: timeDate('08:45'), teacherId, offerings: { create: [{ courseOfferingId: offeringId }] }, ...extra },
+      });
+    const cancelled = await mk(c.offering.id, c.teacher.id, 1, { status: 'cancelled' });
+    const moved = await mk(c.offering.id, c.teacher.id, 3, { originalDate: at(2), manuallyEdited: true });
+    const extra = await mk(c.offering.id, c.teacher.id, 4);
+    const removed = await mk(c.offering.id, c.teacher.id, 2, { status: 'removed' });
+    const foreign = await mk(other.offering.id, other.teacher.id, 1);
+    const nextWeek = await mk(c.offering.id, c.teacher.id, 8);
+
+    const kid = await clientFor(app, c.students[0]!);
+    const body = (await kid.get('/api/schedule/me/week')).body as { weekMeetings: { id: string; status: string; originalDate: string | null; extra: boolean }[] };
+    const ids = body.weekMeetings.map((m) => m.id);
+    expect(ids).toContain(cancelled.id);
+    expect(ids).toContain(moved.id);
+    expect(ids).toContain(extra.id);
+    expect(ids).not.toContain(removed.id);
+    expect(ids).not.toContain(foreign.id);
+    expect(ids).not.toContain(nextWeek.id);
+    expect(body.weekMeetings.find((m) => m.id === cancelled.id)!.status).toBe('cancelled');
+    expect(body.weekMeetings.find((m) => m.id === moved.id)!.originalDate).toBe(new Date(at(2)).toISOString().slice(0, 10));
+
+    const t = await clientFor(app, c.teacher);
+    expect((await t.get('/api/schedule/me/week')).body.weekMeetings).toEqual([]);
+  });
+});

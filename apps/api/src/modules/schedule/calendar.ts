@@ -33,6 +33,8 @@ export const meetingView = (m: MeetingRow) => ({
   endTime: hhmmOf(m.endTime),
   status: m.status,
   extra: m.routineSlotId === null,
+  routineSlotId: m.routineSlotId,
+  originalDate: m.originalDate ? ymdOf(m.originalDate) : null,
   attendanceTaken: !!m.attendanceTakenAt,
   period: m.period ? { id: m.period.id, name: m.period.name } : null,
   room: m.room ? { id: m.room.id, name: m.room.name } : null,

@@ -60,6 +60,8 @@ The heart of this spec is the **Class Meeting** row: routine slots are templates
 | SCH-21 | `[SCH-21] GET /schedule/me/meetings: own + substitute only, 403 non-teacher, 31-day cap` |
 | SCH-22 | Playwright `[SCH-22] teacher routine: take attendance from the routine at 360 px` |
 | SCH-23 | Playwright `[SCH-23] student Full week table shows the teacher name` |
+| SCH-24 | `[SCH-24] student /me/week returns weekMeetings: own offerings only, cancelled/moved/extra included` |
+| SCH-25 | Playwright `[SCH-25] student routine marks cancelled, moved, extra and substitute classes` |
 
 ### Demo schedule data (dev / demo only)
 
