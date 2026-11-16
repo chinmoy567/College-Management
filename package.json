@@ -34,6 +34,7 @@
     "db:seed:learning": "tsx prisma/seed-learning.ts",
     "db:seed:ai": "tsx prisma/seed-ai.ts",
     "db:seed:exam-extras": "tsx prisma/seed-exam-extras.ts",
+    "db:seed:all": "npm run db:seed:routine && npm run db:seed:attendance && npm run db:seed:exams && npm run db:seed:people && npm run db:seed:community && npm run db:seed:notices && npm run db:seed:chat && npm run db:seed:learning && npm run db:seed:ai && npm run db:seed:exam-extras",
     "load:seed": "tsx load/seed.ts",
     "load:exam": "tsx load/exam.ts",
     "load:chat": "tsx load/chat.ts"
