@@ -26,6 +26,7 @@
     "db:seed:demo": "tsx prisma/seed.ts --demo",
     "db:seed:routine": "tsx prisma/seed-routine.ts",
     "db:seed:attendance": "tsx prisma/seed-attendance-history.ts",
+    "db:seed:exams": "tsx prisma/seed-exams.ts",
     "load:seed": "tsx load/seed.ts",
     "load:exam": "tsx load/exam.ts",
     "load:chat": "tsx load/chat.ts"

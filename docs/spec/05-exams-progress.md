@@ -143,3 +143,7 @@ Nothing else in a started exam can be edited.
 - **EXAM-18** Duration accepts only 15, 30, 45, 60, 90, 120.
 - **EXAM-19** (UI) Exam page at 360 px: timer always visible, answers save with a tick, reload resumes with the same order and answers, no animation.
 - **EXAM-20** (UI) Student progress page shows marks, %, grade, section rank, trend chart and strong/weak chapters.
+
+## 10. Demo data (development only)
+
+`npm run db:seed:exams` (idempotent, refuses to run when `NODE_ENV=production`) adds, for up to 6 demo offerings: a 10-question bank over 3 chapters and 6 exams each: a past exam (instant, results published), a past quiz (up to 3 attempts), a past exam with manual results not yet published, a live exam (open now, no attempts), an upcoming exam and a draft. Students get a fixed ability (about 35 to 95 percent) so scores, ranks, pass/fail and strong/weak chapters vary, and about 10 percent miss each past exam. Use it to see reports, ranks and the progress page without creating exams by hand.
