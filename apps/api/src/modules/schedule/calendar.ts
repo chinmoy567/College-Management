@@ -17,7 +17,7 @@ const adminOnly = requireRole('admin');
 const idParam = validate({ params: z.object({ id }) });
 const actorId = (req: unknown) => (req as AuthedRequest).user.id;
 
-const meetingInclude = {
+export const meetingInclude = {
   period: true,
   room: true,
   teacher: { select: { userId: true, name: true } },

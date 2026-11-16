@@ -69,6 +69,12 @@ export const calendarQuery = z.object({
   roomId: id.optional(),
 });
 
+/** A teacher's own meetings for a date range of at most 31 days (04 §8). */
+export const myMeetingsQuery = z
+  .object({ from: dhakaDate, to: dhakaDate })
+  .refine((q) => q.from <= q.to, { message: 'From must not be after to.', path: ['to'] })
+  .refine((q) => (Date.parse(q.to) - Date.parse(q.from)) / 86_400_000 <= 30, { message: 'Range is at most 31 days.', path: ['to'] });
+
 export const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'] as const;
 export const sheetBody = z.object({
   records: z.array(z.object({ studentId: id, status: z.enum(ATTENDANCE_STATUSES) })).max(400),

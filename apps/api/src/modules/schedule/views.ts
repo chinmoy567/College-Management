@@ -1,10 +1,12 @@
 import { Router } from 'express';
+import type { z } from 'zod';
+import { myMeetingsQuery } from '@cms/shared';
 import { prisma } from '../../db';
 import { signMany } from '../../lib/files';
-import { asyncHandler } from '../../lib/http';
+import { asyncHandler, validate } from '../../lib/http';
 import { dhakaDate, formatDhaka } from '../../lib/time';
 import { type AuthedRequest, requireRole } from '../../middleware/session';
-import { meetingView } from './calendar';
+import { meetingInclude, meetingView } from './calendar';
 import { dateOnly, hhmmOf } from './generate';
 
 /** Routine views for the signed-in student or teacher (04 §8). */
@@ -90,4 +92,21 @@ viewsRouter.get('/me/today', requireRole('student', 'teacher'), asyncHandler(asy
   const next = views.find((m) => m.status !== 'cancelled' && m.startTime > nowHm);
   if (next) next.next = true;
   res.json({ date: today, holiday: holiday ? { id: holiday.id, title: holiday.title } : null, meetings: views });
+}));
+
+/** The teacher's own dated meetings (as teacher or substitute) for a range, with whether attendance was taken (04 §8, SCH-21). */
+viewsRouter.get('/me/meetings', requireRole('teacher'), validate({ query: myMeetingsQuery }), asyncHandler(async (req, res) => {
+  const r = req as AuthedRequest;
+  const q = req.query as unknown as z.infer<typeof myMeetingsQuery>;
+  const meetings = await prisma.classMeeting.findMany({
+    where: {
+      date: { gte: dateOnly(q.from), lte: dateOnly(q.to) },
+      status: { in: ['scheduled', 'held', 'cancelled'] },
+      OR: [{ teacherId: r.user.id }, { substituteTeacherId: r.user.id }],
+    },
+    include: meetingInclude,
+    orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+    take: 500,
+  });
+  res.json({ meetings: meetings.map(meetingView) });
 }));

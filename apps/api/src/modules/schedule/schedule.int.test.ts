@@ -268,3 +268,35 @@ describe('routine image/PDF upload', () => {
     expect((await admin.c.get(`/api/schedule/routine/uploads?sectionId=${c.sectionId}`)).body.uploads).toHaveLength(0);
   });
 });
+
+describe('teacher own meetings (04 §8)', () => {
+  it('[SCH-21] GET /schedule/me/meetings returns only the callers own meetings (teacher or substitute), 403 for non-teachers, 31-day cap', async () => {
+    const c = await classroom(prisma, admin.c);
+    const mine = await pastMeeting(prisma, c.offering.id, c.teacher.id, 1);
+    const other = await makeTeacher(prisma);
+    const subFor = await pastMeeting(prisma, c.offering.id, c.teacher.id, 2);
+    await prisma.classMeeting.update({ where: { id: subFor.id }, data: { substituteTeacherId: other.id } });
+    const removed = await pastMeeting(prisma, c.offering.id, c.teacher.id, 3);
+    await prisma.classMeeting.update({ where: { id: removed.id }, data: { status: 'removed' } });
+    const range = `from=${dateIn(-5)}&to=${dateIn(1)}`;
+
+    const t = await clientFor(app, c.teacher);
+    const ids = ((await t.get(`/api/schedule/me/meetings?${range}`)).body.meetings as { id: string; attendanceTaken: boolean; teacher: { name: string }; offerings: { section: string }[] }[]);
+    expect(ids.map((m) => m.id).sort()).toEqual([mine.id, subFor.id].sort());
+    expect(ids[0]!.offerings[0]!.section).toContain('Class');
+    expect(ids.every((m) => m.attendanceTaken === false)).toBe(true);
+
+    const o = await clientFor(app, other);
+    expect(((await o.get(`/api/schedule/me/meetings?${range}`)).body.meetings as { id: string }[]).map((m) => m.id)).toEqual([subFor.id]);
+    const third = await clientFor(app, await makeTeacher(prisma));
+    expect((await third.get(`/api/schedule/me/meetings?${range}`)).body.meetings).toEqual([]);
+
+    expect((await admin.c.get(`/api/schedule/me/meetings?${range}`)).status).toBe(403);
+    const kid = await clientFor(app, c.students[0]!);
+    expect((await kid.get(`/api/schedule/me/meetings?${range}`)).status).toBe(403);
+
+    expect((await t.get(`/api/schedule/me/meetings?from=${dateIn(-40)}&to=${dateIn(0)}`)).status).toBe(400);
+    expect((await t.get(`/api/schedule/me/meetings?from=${dateIn(1)}&to=${dateIn(0)}`)).status).toBe(400);
+    expect((await t.get(`/api/schedule/me/meetings?from=${dateIn(-30)}&to=${dateIn(0)}`)).status).toBe(200);
+  });
+});
