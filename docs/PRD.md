@@ -520,7 +520,7 @@ All of these work only within the teacher's assigned course offerings:
 - This routine is what drives attendance: every routine slot becomes a class the teacher takes attendance for (Section 5.18).
 - **Conflict check:** warns if a teacher is double-booked in two sections at the same time.
 - **Student view:** weekly grid + "today" list; current/next class highlighted.
-- **Teacher view:** their personal weekly routine, built automatically from all sections they teach.
+- **Teacher view:** their personal weekly routine, built automatically from all sections they teach. Each class shows its section, room and teacher (or substitute) and, for today's and past classes, a link to take (or edit) its attendance. Students also see the teacher of each class in their routine.
 - Alternative: upload the routine as an image/PDF (kept from v1.0) for quick use.
 - Changes to the routine notify affected students and teachers.
 - **Routine changes apply from the next class onward.** Past Class Meetings and their attendance are never changed. Future Class Meetings that have no attendance yet are rebuilt from the new routine.

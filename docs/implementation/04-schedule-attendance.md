@@ -54,6 +54,12 @@ The heart of this spec is the **Class Meeting** row: routine slots are templates
 | SCH-15 | Playwright `[SCH-15] attendance sheet at 360 px, draft kept on failure` (route-intercept to fail the POST) |
 | SCH-16 | Playwright `[SCH-16] student attendance card colours + calendar` |
 | SCH-17 | Playwright `[SCH-17] admin adds holiday + extra class, student routine shows them` |
+| SCH-18 | `[SCH-18] routine upload per section, replace, view and 403 cases` |
+| SCH-19 | Playwright `[SCH-19] admin builds a section routine, student sees it at 360 px` |
+| SCH-20 | Playwright `[SCH-20] Full week routine table at 360 px` |
+| SCH-21 | `[SCH-21] GET /schedule/me/meetings: own + substitute only, 403 non-teacher, 31-day cap` |
+| SCH-22 | Playwright `[SCH-22] teacher routine: take attendance from the routine at 360 px` |
+| SCH-23 | Playwright `[SCH-23] student Full week table shows the teacher name` |
 
 ### Demo schedule data (dev / demo only)
 
