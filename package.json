@@ -31,6 +31,7 @@
     "db:seed:community": "tsx prisma/seed-community.ts",
     "db:seed:notices": "tsx prisma/seed-notices.ts",
     "db:seed:chat": "tsx prisma/seed-chat.ts",
+    "db:seed:learning": "tsx prisma/seed-learning.ts",
     "load:seed": "tsx load/seed.ts",
     "load:exam": "tsx load/exam.ts",
     "load:chat": "tsx load/chat.ts"
