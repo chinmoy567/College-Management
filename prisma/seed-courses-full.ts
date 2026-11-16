@@ -69,7 +69,7 @@ async function main() {
       const course = await prisma.course.findUniqueOrThrow({ where: { code } });
       if (await prisma.courseOffering.findUnique({ where: { sectionId_courseId: { sectionId, courseId: course.id } } })) continue;
       const teacherId = (await prisma.user.findUniqueOrThrow({ where: { loginId: teacher } })).id;
-      const o = await prisma.courseOffering.create({ data: { id: `demo-offering-${sectionId}-${code}`, sectionId, courseId: course.id, teacherId } });
+      const o = await prisma.courseOffering.create({ data: { id: `do-${sectionId.slice(-10)}-${code}`, sectionId, courseId: course.id, teacherId } });
       created++;
       if (optional) continue;
       for (const s of students) { await prisma.enrollment.create({ data: { courseOfferingId: o.id, studentId: s.userId } }); enrolled++; }

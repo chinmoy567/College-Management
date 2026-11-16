@@ -16,7 +16,7 @@
 import 'dotenv/config';
 import { Prisma, PrismaClient, type ExamKind, type ExamStatus, type ResultMode } from '@prisma/client';
 
-const MAX_OFFERINGS = 6;
+const MAX_OFFERINGS = 1000; // every offering with active students
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
 const Q_COUNT = 10;

@@ -54,7 +54,7 @@ async function main() {
       const teacherId = await user(teacherOf[code]!);
       const exists = await prisma.courseOffering.findUnique({ where: { sectionId_courseId: { sectionId, courseId: course.id } } });
       if (exists) continue;
-      const o = await prisma.courseOffering.create({ data: { id: `demo-offering-${sectionId}-${code}`, sectionId, courseId: course.id, teacherId } });
+      const o = await prisma.courseOffering.create({ data: { id: `do-${sectionId.slice(-10)}-${code}`, sectionId, courseId: course.id, teacherId } });
       created++;
       if (OPTIONAL.has(code)) continue; // optional subject: Admin enrolls students individually
       for (const s of students) {

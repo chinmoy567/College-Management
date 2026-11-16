@@ -94,7 +94,7 @@ async function main() {
           if (!course) continue;
           if (await prisma.courseOffering.findUnique({ where: { sectionId_courseId: { sectionId: section.id, courseId: course.id } } })) continue;
           const teacherId = (await prisma.user.findUniqueOrThrow({ where: { loginId: teacher } })).id;
-          await prisma.courseOffering.create({ data: { id: `demo-offering-${section.id}-${code}`, sectionId: section.id, courseId: course.id, teacherId } });
+          await prisma.courseOffering.create({ data: { id: `do-${section.id.slice(-10)}-${code}`, sectionId: section.id, courseId: course.id, teacherId } });
           offeringsMade++;
           void optional;
         }
@@ -102,7 +102,7 @@ async function main() {
       const ict = await prisma.course.findUnique({ where: { code: 'ICT' } });
       if (ict && !(await prisma.courseOffering.findUnique({ where: { sectionId_courseId: { sectionId: section.id, courseId: ict.id } } }))) {
         const teacherId = (await prisma.user.findUniqueOrThrow({ where: { loginId: 'T-0002' } })).id;
-        await prisma.courseOffering.create({ data: { id: `demo-offering-${section.id}-ICT`, sectionId: section.id, courseId: ict.id, teacherId } });
+        await prisma.courseOffering.create({ data: { id: `do-${section.id.slice(-10)}-ICT`, sectionId: section.id, courseId: ict.id, teacherId } });
         offeringsMade++;
       }
 
