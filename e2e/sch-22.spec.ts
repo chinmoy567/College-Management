@@ -34,7 +34,7 @@ test('[SCH-22] teacher routine: own classes with section/room/substitute, take-a
 
   await signIn(context, baseURL!, me);
   await page.goto('/teacher/routine');
-  await expect(page.getByRole('heading', { name: 'Routine' })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('heading', { name: 'Routine', exact: true })).toBeVisible({ timeout: 60_000 });
 
   // Today's class (only visible when today is Sun–Thu) has a Take attendance link.
   const dow = new Date(`${today()}T00:00:00Z`).getUTCDay();

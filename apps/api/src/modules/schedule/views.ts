@@ -16,7 +16,7 @@ export const viewsRouter = Router();
 const slotInclude = {
   period: true,
   room: true,
-  offerings: { include: { courseOffering: { include: { course: true, teacher: true } } } },
+  offerings: { include: { courseOffering: { include: { course: true, teacher: true, section: true } } } },
 } as const;
 
 async function offeringIdsFor(r: AuthedRequest): Promise<string[]> {
@@ -71,7 +71,7 @@ viewsRouter.get('/me/week', requireRole('student', 'teacher'), asyncHandler(asyn
       room: s.room ? { id: s.room.id, name: s.room.name } : null,
       offerings: s.offerings
         .filter((o) => mine.has(o.courseOfferingId))
-        .map((o) => ({ id: o.courseOfferingId, course: { code: o.courseOffering.course.code, name: o.courseOffering.course.name }, teacher: { id: o.courseOffering.teacherId, name: o.courseOffering.teacher.name } })),
+        .map((o) => ({ id: o.courseOfferingId, section: `Class ${o.courseOffering.section.classLevel} · ${o.courseOffering.section.name}`, course: { code: o.courseOffering.course.code, name: o.courseOffering.course.name }, teacher: { id: o.courseOffering.teacherId, name: o.courseOffering.teacher.name } })),
     })),
     substituteMeetings: extra.map(meetingView),
     routineFiles: await routineFilesFor(r),

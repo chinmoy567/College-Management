@@ -62,6 +62,7 @@ The heart of this spec is the **Class Meeting** row: routine slots are templates
 | SCH-23 | Playwright `[SCH-23] student Full week table shows the teacher name` |
 | SCH-24 | `[SCH-24] student /me/week returns weekMeetings: own offerings only, cancelled/moved/extra included` |
 | SCH-25 | Playwright `[SCH-25] student routine marks cancelled, moved, extra and substitute classes` |
+| SCH-26 | Playwright `[SCH-26] teacher routine shows the recurring Full week routine table` |
 
 ### Demo schedule data (dev / demo only)
 

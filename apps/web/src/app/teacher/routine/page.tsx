@@ -14,6 +14,65 @@ interface Meeting {
   offerings: { id: string; section: string; course: { code: string; name: string } }[];
 }
 
+interface WeekSlot {
+  id: string; day: string; period: { id: string; name: string; startTime: string; endTime: string }; room: { name: string } | null;
+  offerings: { id: string; section: string; course: { code: string; name: string } }[];
+}
+const GRID_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu'];
+
+/** The teacher's recurring weekly pattern (same every week), from the routine slots. */
+function WeeklyPattern() {
+  const q = useQuery({ queryKey: ['teacher-week-pattern'], queryFn: () => api<{ slots: WeekSlot[] }>('/schedule/me/week') });
+  const slots = (q.data?.slots ?? []).filter((s) => GRID_DAYS.includes(s.day));
+  const periods = [...new Map(slots.map((s) => [s.period.id, s.period])).values()].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  return (
+    <section aria-label="Full week routine" className="mt-6">
+      <h2 className="mb-1 text-xl font-semibold">Full week routine (every week)</h2>
+      <p className="mb-2 text-base text-slate-600">Your regular weekly classes. One-off changes show in the week view above.</p>
+      {q.isPending && <ListSkeleton rows={2} />}
+      {q.isError && <ErrorState message={errMsg(q.error)} onRetry={() => void q.refetch()} />}
+      {q.data && slots.length === 0 && <EmptyState title="No regular classes yet" />}
+      {slots.length > 0 && (
+        <div data-testid="pattern-grid" className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table className="w-full min-w-[40rem] border-collapse text-base">
+            <thead>
+              <tr>
+                <th scope="col" className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white p-2 text-left">Period</th>
+                {GRID_DAYS.map((d) => <th key={d} scope="col" className="border-b border-slate-200 p-2 text-left capitalize">{d}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {periods.map((p) => (
+                <tr key={p.id}>
+                  <th scope="row" className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white p-2 text-left font-medium">
+                    {p.name}<br /><span className="text-sm font-normal text-slate-500">{p.startTime}–{p.endTime}</span>
+                  </th>
+                  {GRID_DAYS.map((d) => {
+                    const cell = slots.filter((s) => s.day === d && s.period.id === p.id);
+                    return (
+                      <td key={d} className="border-b border-slate-200 p-1 align-top">
+                        {cell.length === 0 ? (
+                          <span aria-label="No class" className="block min-h-11 p-2 text-slate-300">–</span>
+                        ) : cell.map((s) => (
+                          <div key={s.id} data-testid="pattern-cell" title={s.offerings.map((o) => o.course.name).join(', ')} className="mb-1 min-h-11 rounded-lg bg-indigo-50 p-2">
+                            <span className="block font-semibold">{s.offerings.map((o) => o.course.code).join(' + ')}</span>
+                            <span className="block break-words text-sm text-slate-600">{[...new Set(s.offerings.map((o) => o.section))].join(', ')}</span>
+                            {s.room && <span className="block break-words text-sm text-slate-600">{s.room.name}</span>}
+                          </div>
+                        ))}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
 const addDays = (s: string, n: number) => ymd(new Date(Date.parse(`${s}T00:00:00Z`) + n * 86_400_000));
@@ -104,6 +163,8 @@ export default function TeacherRoutine() {
           </table>
         </div>
       )}
+      <WeeklyPattern />
     </>
   );
 }
+
