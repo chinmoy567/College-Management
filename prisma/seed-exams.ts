@@ -1,5 +1,6 @@
 /**
  * Demo EXAM data (DEV / demo data only, idempotent):  npm run db:seed:exams
+ * Ids are short (dx-, dxb-) because API routes only accept ids of at most 40 characters.
  * For up to 6 demo offerings that have active students it adds, with fixed ids so a re-run changes nothing:
  *  - a question bank (10 questions over 3 chapters, 8 single + 2 multiple answer),
  *  - Past exam (instant result, results published, revealed)   - ranks, grades, report, progress page
@@ -23,7 +24,15 @@ const Q_COUNT = 10;
 function hash(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; // avalanche
   return (h >>> 0) / 4294967296; // 0..1
+}
+
+/** Short stable id part (ids must match /^[A-Za-z0-9_-]{1,40}$/, packages/shared common.ts). */
+function short(s: string): string {
+  let a = 5381, b = 52711;
+  for (let i = 0; i < s.length; i++) { a = (Math.imul(a, 33) ^ s.charCodeAt(i)) >>> 0; b = (Math.imul(b, 31) + s.charCodeAt(i)) >>> 0; }
+  return a.toString(36).padStart(7, '0').slice(-7) + b.toString(36).padStart(7, '0').slice(-5);
 }
 
 type Opt = { id: string; text: string };
@@ -78,7 +87,7 @@ export async function seedExams(prisma: PrismaClient): Promise<{ offerings: numb
     // chapters (find by name, create when missing)
     const chapterIds: string[] = [];
     for (let c = 0; c < 3; c++) {
-      const name = `Chapter ${c + 1}`;
+      const name = `${off.course.name} - Chapter ${c + 1}`;
       const found = await prisma.chapter.findFirst({ where: { courseId: off.courseId, name } });
       if (found) { chapterIds.push(found.id); continue; }
       const max = await prisma.chapter.aggregate({ where: { courseId: off.courseId }, _max: { order: true } });
@@ -90,7 +99,7 @@ export async function seedExams(prisma: PrismaClient): Promise<{ offerings: numb
     const bankIds: string[] = [];
     for (let i = 0; i < defs.length; i++) {
       const d = defs[i]!;
-      const id = `demo-bank-${off.id}-${i + 1}`;
+      const id = `dxb-${short(off.id)}-${i + 1}`;
       bankIds.push(id);
       await prisma.question.upsert({
         where: { id },
@@ -106,7 +115,7 @@ export async function seedExams(prisma: PrismaClient): Promise<{ offerings: numb
     const totalMarks = defs.reduce((s, d) => s + d.marks, 0);
 
     for (const plan of PLANS) {
-      const examId = `demo-exam-${off.id}-${plan.key}`;
+      const examId = `dx-${short(off.id)}-${plan.key}`;
       const startAt = new Date(now + plan.startOffsetMs);
       const endAt = new Date(startAt.getTime() + plan.windowMs);
       const passMarks = Math.round(totalMarks * 0.4);
@@ -144,7 +153,7 @@ export async function seedExams(prisma: PrismaClient): Promise<{ offerings: numb
         for (let a = 1; a <= nAttempts; a++) {
           const startedAt = new Date(startAt.getTime() + Math.floor(hash(`s|${st.studentId}|${examId}|${a}`) * (plan.windowMs / 2)) + (a - 1) * 20 * 60000);
           const submittedAt = new Date(startedAt.getTime() + plan.durationMin * 60000 * (0.5 + hash(`d|${st.studentId}|${examId}|${a}`) * 0.45));
-          const attemptId = `${examId}-a-${st.studentId}-${a}`;
+          const attemptId = `${examId}-${short(st.studentId)}-${a}`;
           let score = 0;
           defs.forEach((d, i) => {
             const right = hash(`r|${st.studentId}|${examId}|${a}|${i}`) < Math.min(0.97, ability + (a - 1) * 0.08);
