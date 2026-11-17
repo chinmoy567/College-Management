@@ -85,6 +85,11 @@ export async function seedAttendanceHistory(prisma: PrismaClient): Promise<{ mee
   for (const c of chunk(meetings, 500)) m += (await prisma.classMeeting.createMany({ data: c, skipDuplicates: true })).count;
   for (const c of chunk(links, 1000)) await prisma.classMeetingOffering.createMany({ data: c, skipDuplicates: true });
   for (const c of chunk(records, 2000)) r += (await prisma.attendanceRecord.createMany({ data: c, skipDuplicates: true })).count;
+  // Reused past meetings of the routine seed are still 'scheduled'; they now have attendance, so they were held.
+  await prisma.classMeeting.updateMany({
+    where: { id: { in: existing.map((x) => x.id) }, status: 'scheduled', attendanceTakenAt: null },
+    data: { status: 'held', attendanceTakenAt: new Date(todayUtc.getTime() - 86400000 + 9 * 3600000) },
+  });
   return { meetings: m, records: r };
 }
 
