@@ -12,7 +12,7 @@ import { ErrorState, ListSkeleton, PageTitle } from '@/components/ui';
 export default function Read() {
   const { id } = useParams<{ id: string }>();
   const book = useQuery({ queryKey: ['book', id], queryFn: () => api<{ title: string }>(`/books/${id}`) });
-  const url = useQuery({ queryKey: ['book-pdf', id], queryFn: () => api<{ url: string }>(`/books/${id}/pdf`), staleTime: 4 * 60_000 });
+  const url = useQuery({ queryKey: ['book-pdf', id], queryFn: () => api<{ url: string }>(`/books/${id}/pdf`), staleTime: 4 * 60_000, retry: false });
   const download = async () => {
     const d = await api<{ url: string }>(`/books/${id}/pdf?download=1`);
     window.location.assign(d.url);
