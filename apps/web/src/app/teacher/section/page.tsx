@@ -41,14 +41,18 @@ export default function MySection() {
   const s = o.summary;
   const q = search.trim().toLowerCase();
   const rows = (list.data?.items ?? []).filter((st) => (filter === 'all' || st.flags.includes(filter)) && (!q || st.name.toLowerCase().includes(q) || st.roll.toLowerCase().includes(q)));
-  const stat = (label: string, value: string | number, f?: MentorFlag) => (
-    <button key={label} type="button" disabled={!f} onClick={() => f && setFilter(filter === f ? 'all' : f)} data-testid={`stat-${f ?? 'students'}`} className="min-h-11 text-left disabled:cursor-default">
+  const stat = (label: string, value: string | number, f?: MentorFlag) => {
+    const card = (
       <Card className={`h-full ${f && filter === f ? 'ring-2 ring-indigo-500' : ''}`}>
         <p className="text-2xl font-semibold">{value}</p>
         <p className="text-base text-slate-600">{label}</p>
       </Card>
-    </button>
-  );
+    );
+    const id = `stat-${f ?? label.toLowerCase()}`;
+    return f
+      ? <button key={label} type="button" onClick={() => setFilter(filter === f ? 'all' : f)} data-testid={id} className="min-h-11 text-left">{card}</button>
+      : <div key={label} data-testid={id}>{card}</div>;
+  };
 
   return (
     <>
