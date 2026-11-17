@@ -19,6 +19,8 @@ All scripts are idempotent (fixed ids, safe to re-run) and refuse to run when `N
 | `db:seed:learning` | Online classes, recorded classes, notes (links) per offering |
 | `db:seed:ai` | Saved AI study conversations and usage (canned answers) |
 | `db:seed:exam-extras` | Answer-key fixes, cancelled questions, extra-time extensions on demo exams |
+| `db:seed:attendance-edits` | 60 teacher corrections of attendance records with their edit history |
+| `db:seed:blocks` | 12 student-blocks-classmate rows (same section) |
 
 ## Not seeded
 - Book Shop (a book needs real PDF and cover files in Supabase Storage).
