@@ -22,8 +22,9 @@ All scripts are idempotent (fixed ids, safe to re-run) and refuse to run when `N
 | `db:seed:attendance-edits` | 60 teacher corrections of attendance records with their edit history |
 | `db:seed:blocks` | 12 student-blocks-classmate rows (same section) |
 | `db:seed:books` | 40 published books (price, author, group/class/course), no PDF or cover; the Admin uploads PDFs later |
+| `db:seed:book-covers` | Generated cover (colour by group, title, author) for every book without one. Not part of `db:seed:all`: it uploads to the configured storage (Supabase public bucket `public` must exist); `-- --preview <dir>` writes 3 sample PNGs and uploads nothing |
 
 ## Not seeded
-- Book PDFs and covers (books are seeded without them; the Admin uploads real files).
+- Book PDFs (books are seeded without them; the Admin uploads real files). Covers: `db:seed:book-covers`.
 - Previous-year questions and uploaded note files (they need real files).
 - Post images, chat attachments, avatars.
