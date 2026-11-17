@@ -4,10 +4,11 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
-import { pctText } from '@/lib/exams';
+import { OfferingLabel } from '@/components/OfferingLabel';
+import { type OfferingCtx, pctText } from '@/lib/exams';
 import { Badge, Card, EmptyState, ErrorState, ListSkeleton, PageTitle } from '@/components/ui';
 
-interface Progress {
+interface Progress extends OfferingCtx {
   exams: { id: string; title: string; totalMarks: number; passMarks: number }[];
   students: { studentId: string; name: string; roll: string | null; percent: number | null; rank: number | null; grade: string | null; examsCounted: number; missed: number }[];
   belowPass: { studentId: string; name: string; roll: string | null; exams: { examId: string; title: string; score: number | null; passMarks: number }[] }[];
@@ -20,6 +21,7 @@ export default function OfferingProgress() {
   return (
     <>
       <PageTitle>Student progress</PageTitle>
+      <OfferingLabel of={q.data} className="-mt-2" />
       {q.isPending && <ListSkeleton />}
       {q.isError && <ErrorState message={errMsg(q.error)} onRetry={() => void q.refetch()} />}
       {q.data && q.data.exams.length === 0 && <EmptyState title="No published results yet" hint="Ranks use exams whose results are published. Quizzes are not counted." />}

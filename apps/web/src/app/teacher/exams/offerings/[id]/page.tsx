@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
+import { OfferingLabel } from '@/components/OfferingLabel';
 import { examStatusTone, fmtDateTime, type ExamRow, type OfferingLite } from '@/lib/exams';
 import { Badge, Button, Card, EmptyState, ErrorState, ListSkeleton, PageTitle } from '@/components/ui';
 
@@ -22,6 +23,7 @@ export default function OfferingExams() {
   return (
     <>
       <PageTitle>{offering ? `${offering.course.code} exams` : 'Exams'}</PageTitle>
+      <OfferingLabel of={offering} className="-mt-2" />
       <div className="mb-4 grid grid-cols-2 gap-2">
         {offering?.teaches && (
           <Link href={`/teacher/exams/offerings/${id}/new`} className="flex min-h-11 items-center justify-center rounded-lg bg-indigo-600 px-4 text-base font-medium text-white" data-testid="new-exam">New exam</Link>

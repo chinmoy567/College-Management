@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { INTEGRITY_CAP } from '@cms/shared';
 import { api, ApiError } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
-import { clock, type Opt } from '@/lib/exams';
+import { type OfferingCtx, clock, offeringLabel, type Opt } from '@/lib/exams';
 import { ErrorState, ListSkeleton, Sheet, cn } from '@/components/ui';
 
 /*
@@ -17,7 +17,7 @@ import { ErrorState, ListSkeleton, Sheet, cn } from '@/components/ui';
 
 interface Question { id: string; type: 'single' | 'multiple'; text: string; marks: number; options: Opt[] }
 interface Saved { examQuestionId: string; selectedOptionIds: string[]; markedForReview: boolean }
-interface Taking { id: string; examId: string; status: string; deadlineAt: string; serverNow: string; title: string; totalMarks: number; questions: Question[]; answers: Saved[]; offset: number }
+interface Taking extends OfferingCtx { id: string; examId: string; status: string; deadlineAt: string; serverNow: string; title: string; totalMarks: number; questions: Question[]; answers: Saved[]; offset: number }
 type Ans = { sel: string[]; marked: boolean };
 type IntegrityType = 'blur' | 'focus' | 'fullscreen_exit' | 'visibility_hidden';
 type SaveState = 'saved' | 'saving' | 'offline';
@@ -204,7 +204,10 @@ function Taker({ data }: { data: Taking }) {
   return (
     <div className="flex min-h-screen flex-col bg-white" data-testid="exam-page">
       <header className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2">
-        <p className="min-w-0 truncate text-base font-semibold" data-testid="exam-title">{data.title}</p>
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold" data-testid="exam-title">{data.title}</p>
+          <p className="truncate text-sm text-slate-600" data-testid="offering-label">{offeringLabel(data)}</p>
+        </div>
         <div className="flex shrink-0 items-center gap-3">
           <span data-testid="save-status" data-state={saveState} data-saved-question={lastSaved ?? ''} aria-live="polite" className={cn('text-sm', saveState === 'offline' ? 'font-medium text-red-700' : 'text-slate-600')}>
             {statusText}

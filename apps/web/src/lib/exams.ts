@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { groupLabel, sectionLabel } from '@/lib/queries';
 
 /** Times are always shown in Asia/Dhaka (UTC+6, no daylight saving). */
 const dhaka = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', ...o });
@@ -51,9 +52,13 @@ export function useServerOffset(serverNowIso: string | undefined): number {
   return ref.current;
 }
 
-export interface OfferingLite { id: string; courseId: string; course: { id: string; code: string; name: string }; section: string; teaches: boolean }
+/** Which class an exam belongs to; every exam payload carries it. */
+export interface OfferingCtx { course: { id: string; code: string; name: string }; session: string; group: string; section: string; classLevel: number }
+/** "Physics · 2024–25 · Science · Class 11 · Section A" */
+export const offeringLabel = (o: OfferingCtx): string => `${o.course.name} · ${o.session} · ${groupLabel(o.group)} · ${sectionLabel({ classLevel: o.classLevel, name: o.section })}`;
+export interface OfferingLite extends OfferingCtx { id: string; courseId: string; teaches: boolean }
 export interface Opt { id: string; text: string }
-export interface ExamRow {
+export interface ExamRow extends Partial<OfferingCtx> {
   id: string; offeringId: string; kind: 'exam' | 'quiz'; title: string; instructions: string | null; startAt: string; endAt: string; durationMin: number;
   totalMarks: number; passMarks: number; maxAttempts: number; shuffleQuestions: boolean; shuffleOptions: boolean; showAnswersAfterEnd: boolean;
   resultMode: 'instant' | 'manual'; status: 'draft' | 'published' | 'closed'; resultsPublishedAt: string | null; revealedAt: string | null; warnings?: string[];

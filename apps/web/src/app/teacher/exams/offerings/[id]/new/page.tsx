@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
+import { OfferingLabel } from '@/components/OfferingLabel';
 import type { OfferingLite } from '@/lib/exams';
 import { Button, Card, PageTitle } from '@/components/ui';
 import { ExamForm, type ExamFormValues } from '@/components/ExamForm';
@@ -22,7 +23,8 @@ export default function NewExam() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const offerings = useQuery({ queryKey: ['exam-offerings'], queryFn: () => api<{ items: OfferingLite[] }>('/exams/offerings') });
-  const courseId = offerings.data?.items.find((o) => o.id === id)?.courseId;
+  const offering = offerings.data?.items.find((o) => o.id === id);
+  const courseId = offering?.courseId;
   const chapters = useQuery({
     queryKey: ['chapters', courseId],
     queryFn: () => api<{ items: ChapterLite[] }>(`/academics/courses/${courseId}/chapters`),
@@ -55,6 +57,7 @@ export default function NewExam() {
   return (
     <>
       <PageTitle>New exam</PageTitle>
+      <OfferingLabel of={offering} className="-mt-2" />
       <ExamForm formId="exam-settings" offeringId={id} submitLabel="Save exam" onSubmit={save} />
 
       <h2 className="mb-2 mt-8 text-xl font-semibold">Questions ({questions.length}{questions.length ? ` · ${total} marks` : ''})</h2>

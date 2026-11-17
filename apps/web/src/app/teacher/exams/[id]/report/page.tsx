@@ -5,12 +5,13 @@ import { useParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
+import { OfferingLabel } from '@/components/OfferingLabel';
 import { fmtDateTime, pctText, type ExamRow, type OfferingLite } from '@/lib/exams';
 import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, ListSkeleton, PageTitle, Sheet } from '@/components/ui';
 
 interface Attempt { attemptId: string; name: string; roll: string | null; attemptNo: number; status: string; score: number | null; submittedAt: string | null; extraMinutes: number; integrity: { blur: number; focus: number; fullscreen_exit: number; visibility_hidden: number; total: number } }
 interface Report {
-  exam: { id: string; title: string; totalMarks: number; passMarks: number; status: string; resultsPublishedAt: string | null };
+  exam: { id: string; course: { id: string; code: string; name: string }; session: string; group: string; section: string; classLevel: number; title: string; totalMarks: number; passMarks: number; status: string; resultsPublishedAt: string | null };
   summary: { enrolled: number; attended: number; highest: number | null; lowest: number | null; average: number | null; passed: number };
   distribution: { from: number; to: number; count: number }[];
   perQuestion: { examQuestionId: string; order: number; text: string; marks: number; isCancelled: boolean; correctPct: number | null; answered: number }[];
@@ -34,6 +35,7 @@ export default function ExamReport() {
   return (
     <>
       <PageTitle>Report: {r.exam.title}</PageTitle>
+      <OfferingLabel of={r.exam} className="-mt-2" />
       <div className="mb-4 grid grid-cols-2 gap-2">
         <a href={`/api/exams/${id}/report.csv`} className="flex min-h-11 items-center justify-center rounded-lg bg-slate-100 text-base font-medium">Export CSV</a>
         <a href={`/api/exams/${id}/report.pdf`} className="flex min-h-11 items-center justify-center rounded-lg bg-slate-100 text-base font-medium">Export PDF</a>

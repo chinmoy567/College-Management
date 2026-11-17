@@ -4,7 +4,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg, fieldErrors, type SessionRow } from '@/lib/queries';
-import { fmtDateTime, fromDhakaInput, toDhakaInput, type OfferingLite } from '@/lib/exams';
+import { fmtDateTime, fromDhakaInput, offeringLabel, toDhakaInput, type OfferingLite } from '@/lib/exams';
 import { EXAM_TYPES, uploadForm, type ChapterRow, type CourseRow, type OnlineClassRow } from '@/lib/learning';
 import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, ListSkeleton, PageTitle, Select, Sheet, cn } from '@/components/ui';
 import { MaterialList } from '@/components/MaterialList';
@@ -61,7 +61,7 @@ function ClassForm({ onDone }: { onDone: () => void }) {
         {mine.map((o) => (
           <label key={o.id} className="flex min-h-11 items-center gap-2 text-base">
             <input type="checkbox" className="size-5" checked={ids.includes(o.id)} onChange={(e) => setIds(e.target.checked ? [...ids, o.id] : ids.filter((x) => x !== o.id))} />
-            {o.course.code} · {o.section}
+            {offeringLabel(o)}
           </label>
         ))}
       </fieldset>
@@ -138,7 +138,7 @@ function RecordingForm({ role, onDone }: { role: Role; onDone: () => void }) {
   return (
     <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void s.run(() => api('/materials/recordings', { method: 'POST', json: { courseId: course, courseOfferingId: role === 'teacher' ? offeringId : undefined, chapterId: chapterId || undefined, ...f, description: f.description || undefined } })); }}>
       {role === 'teacher' ? (
-        <Field label="Course offering"><Select value={offeringId} required onChange={(e) => { setOfferingId(e.target.value); setChapterId(''); }}><option value="">Choose…</option>{offerings.data?.items.map((o) => <option key={o.id} value={o.id}>{o.course.code} · {o.section}</option>)}</Select></Field>
+        <Field label="Course offering"><Select value={offeringId} required onChange={(e) => { setOfferingId(e.target.value); setChapterId(''); }}><option value="">Choose…</option>{offerings.data?.items.map((o) => <option key={o.id} value={o.id}>{offeringLabel(o)}</option>)}</Select></Field>
       ) : (
         <Field label="Course"><Select value={courseId} required onChange={(e) => { setCourseId(e.target.value); setChapterId(''); }}><option value="">Choose…</option>{courses.data?.items.map((c) => <option key={c.id} value={c.id}>{c.code} {c.name}</option>)}</Select></Field>
       )}
@@ -190,7 +190,7 @@ function MaterialForm({ role, onDone }: { role: Role; onDone: () => void }) {
       ) : (
         <Field label="Share with"><Select value={scope} onChange={(e) => { setScope(e.target.value); setTarget(''); }}><option value="college">Whole college</option><option value="group">One group</option></Select></Field>
       )}
-      {scope === 'offering' && <Field label="Course offering"><Select value={target} required onChange={(e) => { setTarget(e.target.value); setChapterId(''); }}><option value="">Choose…</option>{offerings.data?.items.filter((o) => o.teaches).map((o) => <option key={o.id} value={o.id}>{o.course.code} · {o.section}</option>)}</Select></Field>}
+      {scope === 'offering' && <Field label="Course offering"><Select value={target} required onChange={(e) => { setTarget(e.target.value); setChapterId(''); }}><option value="">Choose…</option>{offerings.data?.items.filter((o) => o.teaches).map((o) => <option key={o.id} value={o.id}>{offeringLabel(o)}</option>)}</Select></Field>}
       {scope === 'section' && <Field label="Section"><Select value={target} required onChange={(e) => setTarget(e.target.value)}><option value="">Choose…</option>{options.data?.sections.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}</Select></Field>}
       {scope === 'group' && <Field label="Group"><Select value={target} required onChange={(e) => setTarget(e.target.value)}><option value="">Choose…</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}</Select></Field>}
       {scope !== 'offering' && <Field label="Course (optional)"><Select value={courseId} onChange={(e) => { setCourseId(e.target.value); setChapterId(''); }}><option value="">No course</option>{(courses.data?.items ?? offerings.data?.items.map((o) => ({ id: o.courseId, code: o.course.code, name: o.course.name })) ?? []).map((c) => <option key={c.id} value={c.id}>{c.code} {c.name}</option>)}</Select></Field>}

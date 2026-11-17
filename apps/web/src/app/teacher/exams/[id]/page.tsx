@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
+import { OfferingLabel } from '@/components/OfferingLabel';
 import { examStatusTone, fmtDateTime, type BankQuestion, type ExamDetail, type OfferingLite, type TeacherQuestion } from '@/lib/exams';
 import { Badge, Button, Card, ErrorState, Input, ListSkeleton, PageTitle, Select, Sheet, cn } from '@/components/ui';
 import { ExamForm } from '@/components/ExamForm';
@@ -72,6 +73,7 @@ export default function ExamBuilder() {
   return (
     <>
       <PageTitle>{e.title}</PageTitle>
+      <OfferingLabel of={e} className="-mt-2" />
       <Card className="flex flex-col gap-1 text-base" data-testid="exam-summary">
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <Badge tone={examStatusTone(e.status)}>{e.status === 'draft' ? 'Draft' : e.status === 'published' ? (started ? 'Live or finished' : 'Published') : 'Closed'}</Badge>
@@ -144,6 +146,7 @@ export default function ExamBuilder() {
       </ol>
 
       <Sheet open={sheet === 'edit'} title="Edit details" onClose={() => setSheet(null)}>
+        <OfferingLabel of={e} />
         <ExamForm
           offeringId={e.offeringId}
           initial={e}

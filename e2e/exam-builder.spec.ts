@@ -30,6 +30,7 @@ test('[EXAM-UI] teacher builds an exam, adds an inline question, publishes, then
   await expect(page.getByTestId('new-question-1')).toContainText('What is 2 + 2?');
   await page.getByTestId('save-exam').click();
   await expect(page.getByRole('heading', { name: 'Builder exam' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('offering-label')).toContainText(/Class \d+ · Section /); // the class is named under the title
   await expect(page.getByTestId('question-1')).toContainText('What is 2 + 2?', { timeout: 30_000 });
   await expect(page.getByTestId('question-1')).toContainText('✓ 4');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
@@ -43,6 +44,7 @@ test('[EXAM-UI] teacher builds an exam, adds an inline question, publishes, then
   const done = await makeExam(offering.id, teacher.id, [{ text: 'Q1' }, { text: 'Q2' }], { status: 'closed', revealed: true, resultsPublished: true, startOffsetMin: -3000, endOffsetMin: -2000, title: 'Old exam' });
   await makeResult(done.exam.id, student.id, sectionId, [true, false]);
   await page.goto(`/teacher/exams/${done.exam.id}/report`);
+  await expect(page.getByTestId('offering-label')).toContainText(/Class \d+ · Section /, { timeout: 30_000 });
   await expect(page.getByTestId('summary')).toContainText('1/1', { timeout: 30_000 });
   await expect(page.getByTestId('summary')).toContainText('Highest');
   await expect(page.getByRole('button', { name: 'Reopen with extra time' })).toBeVisible();

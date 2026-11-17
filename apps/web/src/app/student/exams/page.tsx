@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
-import { countdownText, fmtDateTime, useServerOffset, useTick } from '@/lib/exams';
+import { countdownText, fmtDateTime, offeringLabel, useServerOffset, useTick } from '@/lib/exams';
 import { Badge, Button, Card, EmptyState, ErrorState, ListSkeleton, PageTitle, cn } from '@/components/ui';
 
 interface Item {
-  id: string; course: { code: string; name: string }; kind: 'exam' | 'quiz'; title: string; startAt: string; endAt: string; durationMin: number;
+  id: string; course: { id: string; code: string; name: string }; session: string; group: string; section: string; classLevel: number; kind: 'exam' | 'quiz'; title: string; startAt: string; endAt: string; durationMin: number;
   totalMarks: number; phase: 'upcoming' | 'live' | 'completed'; attemptsUsed: number; maxAttempts: number; inProgressAttempt: { id: string; deadlineAt: string } | null;
 }
 interface Page { serverNow: string; nextCursor: string | null; items: Item[] }
@@ -53,6 +53,7 @@ export default function StudentExams() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-lg font-semibold">{e.title}</p>
+                    <p className="truncate text-base text-slate-600" data-testid="offering-label">{offeringLabel(e)}</p>
                     <p className="truncate text-base text-slate-600">{e.course.code} · {e.kind === 'quiz' ? 'Quiz' : 'Exam'} · {e.totalMarks} marks · {e.durationMin} min</p>
                   </div>
                   <Badge tone={e.phase === 'live' ? 'green' : e.phase === 'upcoming' ? 'amber' : 'slate'}>{e.phase === 'live' ? 'Live' : e.phase === 'upcoming' ? 'Upcoming' : 'Done'}</Badge>

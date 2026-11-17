@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
-import type { OfferingLite } from '@/lib/exams';
+import { type OfferingLite, offeringLabel } from '@/lib/exams';
 import { Badge, Card, EmptyState, ErrorState, ListSkeleton, PageTitle } from '@/components/ui';
 
 /** Courses the teacher teaches (or whose section they mentor): the entry to exams, quizzes and progress. */
@@ -25,7 +25,7 @@ export default function TeacherExams() {
             <Card className="flex min-h-11 items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-lg font-semibold">{o.course.code}</p>
-                <p className="truncate text-base text-slate-600">{o.course.name} · {o.section}</p>
+                <p className="truncate text-base text-slate-600">{offeringLabel(o)}</p>
               </div>
               <Badge>{o.teaches ? 'You teach' : 'Mentor'}</Badge>
             </Card>

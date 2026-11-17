@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/queries';
-import { countdownText, fmtDateTime, pctText, useServerOffset, useTick } from '@/lib/exams';
+import { OfferingLabel } from '@/components/OfferingLabel';
+import { countdownText, fmtDateTime, pctText, type OfferingCtx, useServerOffset, useTick } from '@/lib/exams';
 import { Badge, Button, Card, ErrorState, ListSkeleton, PageTitle, cn } from '@/components/ui';
 
 interface QResult { id: string; text: string; marks: number; isCancelled: boolean; options: { id: string; text: string }[]; selectedOptionIds: string[]; isCorrect: boolean; marksAwarded: number | null; correct?: string[] }
@@ -13,7 +14,7 @@ interface Result {
   id: string; attemptNo: number; status: string; state?: string; resultPending?: boolean; totalMarks: number; score?: number; percentage?: number; grade?: string | null;
   passMarks?: number; passed?: boolean; rank?: { rank: number; of: number; sectionAverage: number }; questions?: QResult[]; deadlineAt?: string;
 }
-interface Summary {
+interface Summary extends OfferingCtx {
   id: string; kind: 'exam' | 'quiz'; title: string; instructions: string | null; startAt: string; endAt: string; durationMin: number; totalMarks: number; passMarks: number;
   maxAttempts: number; resultMode: string; serverNow: string; attemptsUsed: number; canStart: boolean; inProgressAttemptId: string | null; attempts: Result[];
 }
@@ -38,6 +39,7 @@ export default function StudentExam() {
   return (
     <>
       <PageTitle>{e.title}</PageTitle>
+      <OfferingLabel of={e} className="-mt-2" />
       <Card className="flex flex-col gap-1 text-base">
         <p>{e.kind === 'quiz' ? 'Quiz' : 'Exam'} · {e.totalMarks} marks · pass {e.passMarks} · {e.durationMin} min</p>
         <p>Window: {fmtDateTime(e.startAt)} – {fmtDateTime(e.endAt)} (Dhaka time)</p>
