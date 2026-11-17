@@ -621,6 +621,37 @@ describe('ranks and progress', () => {
 
 // ───────────────────────── permissions ─────────────────────────
 describe('permissions', () => {
+  it('[EXAM-07] (context) every exam payload names its class: course, session, group, section and class level', async () => {
+    const w = await world(1);
+    const o = await prisma.courseOffering.findUniqueOrThrow({
+      where: { id: w.offering.id },
+      include: { course: true, section: { include: { group: { include: { session: true } } } } },
+    });
+    const ctx = {
+      course: { id: o.course.id, code: o.course.code, name: o.course.name }, session: o.section.group.session.name,
+      group: o.section.group.type, section: o.section.name, classLevel: o.section.classLevel,
+    };
+    const e = await mkExam(w);
+    at(START + MIN);
+    const att = await start(w.s[0]!, e.id);
+    const paths = [
+      await w.t.get(`/api/exams/${e.id}`), await w.t.get(`/api/exams?offeringId=${w.offering.id}`), await w.t.get(`/api/exams/offerings/${w.offering.id}/progress`),
+      await w.t.get(`/api/exams/${e.id}/report`), await w.s[0]!.get(`/api/exams/${e.id}`), await w.s[0]!.get('/api/exams/me'), att,
+    ];
+    for (const r of paths) expect([200, 201]).toContain(r.status);
+    expect(paths[0]!.body).toMatchObject(ctx);
+    expect(paths[1]!.body.items[0]).toMatchObject(ctx);
+    expect(paths[2]!.body).toMatchObject(ctx);
+    expect(paths[3]!.body.exam).toMatchObject(ctx);
+    expect(paths[4]!.body).toMatchObject(ctx);
+    expect(paths[5]!.body.items[0]).toMatchObject(ctx);
+    expect(paths[6]!.body).toMatchObject(ctx);
+    const picker = await w.t.get('/api/exams/offerings');
+    expect(picker.body.items.find((i: { id: string }) => i.id === w.offering.id)).toMatchObject(ctx);
+    const submitted = await submit(w.s[0]!, att.body.id);
+    expect(submitted.body).toMatchObject(ctx);
+  });
+
   it('[EXAM-16] the Admin cannot create exams (403); another teacher gets 404; students are refused; the owner is allowed', async () => {
     const w = await world(1);
     const body = { offeringId: w.offering.id, kind: 'exam', title: 'T', startAt: iso(START), endAt: iso(END), durationMin: 30, passMarks: 1 };

@@ -11,6 +11,7 @@ import { dhakaDate, toUtc, weekdayOf } from '../../lib/time';
 import { type AuthedRequest, requireRole } from '../../middleware/session';
 import { type ExamWithOffering, examForOwner, examForViewer } from './access';
 import { type Opt, createQuestion } from './bank';
+import { type OfferingContext, offeringContext, offeringContexts } from './context';
 import { ensureRevealed, enrolledStudentIds } from './reveal';
 import { scheduleExamJobs } from './schedule';
 import { studentExamSummary } from './views';
@@ -43,8 +44,9 @@ async function sumMarks(examId: string, db: Prisma.TransactionClient | typeof pr
   return numberOf((await db.examQuestion.aggregate({ where: { examId }, _sum: { marks: true } }))._sum.marks);
 }
 
-export function examView(e: Exam, totalMarks = numberOf(e.totalMarks)) {
+export function examView(e: Exam, totalMarks = numberOf(e.totalMarks), ctx?: OfferingContext) {
   return {
+    ...ctx,
     id: e.id, offeringId: e.courseOfferingId, kind: e.kind, title: e.title, instructions: e.instructions,
     startAt: e.startAt, endAt: e.endAt, durationMin: e.durationMin, totalMarks, passMarks: numberOf(e.passMarks),
     maxAttempts: e.maxAttempts, shuffleQuestions: e.shuffleQuestions, shuffleOptions: e.shuffleOptions,
@@ -58,7 +60,7 @@ async function teacherDetail(e: Exam, hideKey = false) {
   const questions = await prisma.examQuestion.findMany({ where: { examId: e.id }, orderBy: { order: 'asc' } });
   const total = e.status === 'draft' ? questions.reduce((s, q) => s + Number(q.marks), 0) : numberOf(e.totalMarks);
   return {
-    ...examView(e, total),
+    ...examView(e, total, await offeringContext(e.courseOfferingId)),
     questions: questions.map((q) => ({
       id: q.id, order: q.order, questionId: q.questionId, type: q.type, text: q.text, options: q.options as Opt[],
       correct: hideKey ? null : (q.correct as string[]), marks: Number(q.marks), chapterId: q.chapterId, isCancelled: q.isCancelled,
@@ -81,7 +83,7 @@ lifecycleRouter.post('/', requireRole('teacher'), validate({ body: examCreateBod
       shuffleOptions: b.shuffleOptions, showAnswersAfterEnd: b.showAnswersAfterEnd, resultMode: b.resultMode,
     },
   });
-  res.status(201).json({ ...examView(e, 0), warnings: await maintenanceWarnings(e.startAt, e.endAt) });
+  res.status(201).json({ ...examView(e, 0, await offeringContext(e.courseOfferingId)), warnings: await maintenanceWarnings(e.startAt, e.endAt) });
 }));
 
 lifecycleRouter.get('/', validate({ query: examListQuery }), asyncHandler(async (req, res) => {
@@ -104,7 +106,8 @@ lifecycleRouter.get('/', validate({ query: examListQuery }), asyncHandler(async 
     take: q.limit + 1,
   });
   const { items, nextCursor } = paginate(rows, q.limit);
-  res.json({ items: items.map((e) => examView(e)), nextCursor });
+  const ctx = await offeringContexts([q.offeringId]);
+  res.json({ items: items.map((e) => examView(e, undefined, ctx.get(e.courseOfferingId))), nextCursor });
 }));
 
 lifecycleRouter.get('/:id', idParam, asyncHandler(async (req, res) => {
@@ -210,7 +213,7 @@ lifecycleRouter.post('/:id/publish', idParam, asyncHandler(async (req, res) => {
   });
   await notify(await enrolledStudentIds(exam.courseOfferingId), 'exam_published', { type: 'exam', id: exam.id }, `New ${published.kind}: "${published.title}".`);
   await scheduleExamJobs(published);
-  res.json({ ...examView(published), warnings: await maintenanceWarnings(published.startAt, published.endAt) });
+  res.json({ ...examView(published, undefined, await offeringContext(published.courseOfferingId)), warnings: await maintenanceWarnings(published.startAt, published.endAt) });
 }));
 
 // ───── patch / delete ─────
@@ -272,5 +275,5 @@ lifecycleRouter.post('/:id/publish-results', idParam, asyncHandler(async (req, r
   if (!(await ensureRevealed(exam.id))) throw new AppError('CONFLICT', 409, 'Results can be published after the exam window has ended and every attempt is finished.');
   const r = await prisma.exam.updateMany({ where: { id: exam.id, resultsPublishedAt: null }, data: { resultsPublishedAt: now() } });
   if (r.count === 1) await notify(await enrolledStudentIds(exam.courseOfferingId), 'result_published', { type: 'exam', id: exam.id }, `Results of "${exam.title}" are out.`);
-  res.json(examView(await prisma.exam.findUniqueOrThrow({ where: { id: exam.id } })));
+  res.json(examView(await prisma.exam.findUniqueOrThrow({ where: { id: exam.id } }), undefined, await offeringContext(exam.courseOfferingId)));
 }));

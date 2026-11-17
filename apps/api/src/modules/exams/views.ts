@@ -4,6 +4,7 @@ import { prisma } from '../../db';
 import { now as clockNow } from '../../lib/clock';
 import { AppError } from '../../lib/http';
 import { decodeCursor, paginate } from '../../lib/pagination';
+import { offeringContext, offeringContexts } from './context';
 import { finaliseIfExpired } from './finalise';
 import { gradeFor, percent, studentVisibility, type Visibility } from './logic';
 import { bestAttempts, gradeScale, standingsFor } from './ranks';
@@ -30,6 +31,7 @@ export async function resultView(exam: Exam, attempt: ExamAttempt) {
   const vis = visibilityOf(exam, attempt.status);
   const total = Number(exam.totalMarks);
   const base = {
+    ...(await offeringContext(exam.courseOfferingId)),
     id: attempt.id, examId: exam.id, attemptNo: attempt.attemptNo, status: attempt.status, submittedAt: attempt.submittedAt,
     state: vis.state, resultPending: vis.state === 'pending', totalMarks: total,
   };
@@ -76,6 +78,7 @@ export async function takingView(exam: Exam, attempt: ExamAttempt) {
   const answers = await prisma.answer.findMany({ where: { attemptId: attempt.id }, select: { examQuestionId: true, selectedOptionIds: true, markedForReview: true } });
   const order = attempt.questionOrder as unknown as OrderEntry[];
   return {
+    ...(await offeringContext(exam.courseOfferingId)),
     id: attempt.id, examId: exam.id, attemptNo: attempt.attemptNo, status: attempt.status, startedAt: attempt.startedAt,
     deadlineAt: attempt.deadlineAt, serverNow: clockNow(), title: exam.title, totalMarks: Number(exam.totalMarks),
     questions: order.flatMap((o) => {
@@ -114,6 +117,7 @@ export async function studentExamSummary(studentId: string, examId: string) {
   const at = clockNow();
   const live = attempts.find((a) => a.status === 'in_progress');
   return {
+    ...(await offeringContext(fresh.courseOfferingId)),
     id: fresh.id, kind: fresh.kind, title: fresh.title, instructions: fresh.instructions, startAt: fresh.startAt, endAt: fresh.endAt,
     durationMin: fresh.durationMin, totalMarks: Number(fresh.totalMarks), passMarks: Number(fresh.passMarks), maxAttempts: fresh.maxAttempts,
     resultMode: fresh.resultMode, status: fresh.status, serverNow: at,
@@ -139,12 +143,12 @@ export async function myExams(studentId: string, q: { status?: 'upcoming' | 'liv
       status: { in: ['published', 'closed'] }, courseOffering: { enrollments: { some: { studentId, status: 'active' } } }, ...phase,
       ...(cur ? { AND: [{ OR: [{ createdAt: { lt: new Date(cur.createdAt) } }, { createdAt: new Date(cur.createdAt), id: { lt: cur.id } }] }] } : {}),
     },
-    include: { courseOffering: { select: { course: { select: { id: true, code: true, name: true } } } } },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: q.limit + 1,
   });
   const { items, nextCursor } = paginate(rows, q.limit);
   await revealDue(items);
+  const ctx = await offeringContexts(items.map((e) => e.courseOfferingId));
   const mine = await prisma.examAttempt.findMany({ where: { studentId, examId: { in: items.map((e) => e.id) } }, select: { examId: true, id: true, status: true, deadlineAt: true } });
   return {
     serverNow: at,
@@ -153,7 +157,7 @@ export async function myExams(studentId: string, q: { status?: 'upcoming' | 'liv
       const a = mine.filter((m) => m.examId === e.id);
       const live = a.find((m) => m.status === 'in_progress');
       return {
-        id: e.id, offeringId: e.courseOfferingId, course: e.courseOffering.course, kind: e.kind, title: e.title, startAt: e.startAt, endAt: e.endAt,
+        ...ctx.get(e.courseOfferingId), id: e.id, offeringId: e.courseOfferingId, kind: e.kind, title: e.title, startAt: e.startAt, endAt: e.endAt,
         durationMin: e.durationMin, totalMarks: Number(e.totalMarks), maxAttempts: e.maxAttempts, status: e.status, resultMode: e.resultMode,
         phase: live || (at >= e.startAt && at < e.endAt) ? 'live' : at < e.startAt ? 'upcoming' : 'completed',
         msToStart: Math.max(0, e.startAt.getTime() - at.getTime()), msToEnd: Math.max(0, e.endAt.getTime() - at.getTime()),

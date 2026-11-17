@@ -8,6 +8,7 @@ import { requireRole } from '../../middleware/session';
 import { examForViewer, offeringForViewer } from './access';
 import { gradeFor, percent } from './logic';
 import { csvFile, simplePdf } from './pdf';
+import { contextOf, offeringContext } from './context';
 import { bestAttempts, courseStandings, gradeScale } from './ranks';
 import { ensureRevealed, revealDue } from './reveal';
 
@@ -39,7 +40,7 @@ export async function examReport(examId: string) {
   const pq = new Map(perQ.map((r) => [r.q, r]));
   const took = new Set(attempts.map((a) => a.studentId));
   return {
-    exam: { id: exam.id, title: exam.title, kind: exam.kind, totalMarks: total, passMarks: Number(exam.passMarks), status: exam.status, startAt: exam.startAt, endAt: exam.endAt, revealedAt: exam.revealedAt, resultsPublishedAt: exam.resultsPublishedAt },
+    exam: { ...(await offeringContext(exam.courseOfferingId)), id: exam.id, title: exam.title, kind: exam.kind, totalMarks: total, passMarks: Number(exam.passMarks), status: exam.status, startAt: exam.startAt, endAt: exam.endAt, revealedAt: exam.revealedAt, resultsPublishedAt: exam.resultsPublishedAt },
     summary: {
       enrolled: enrolled.length, attended: took.size,
       highest: scores.length ? Math.max(...scores) : null, lowest: scores.length ? Math.min(...scores) : null,
@@ -110,12 +111,12 @@ offeringProgressRouter.get('/', requireRole('teacher'), asyncHandler(async (req,
   const me = (req as unknown as { user: { id: string } }).user.id;
   const rows = await prisma.courseOffering.findMany({
     where: { endedAt: null, OR: [{ teacherId: me }, { section: { mentorTeacherId: me } }] },
-    include: { course: { select: { id: true, code: true, name: true } }, section: { select: { name: true, classLevel: true } } },
+    include: { course: { select: { id: true, code: true, name: true } }, section: { select: { name: true, classLevel: true, group: { select: { type: true, session: { select: { name: true } } } } } } },
     orderBy: [{ course: { code: 'asc' } }, { createdAt: 'asc' }],
   });
   res.json({
     items: rows.map((o) => ({
-      id: o.id, courseId: o.courseId, course: o.course, section: `Class ${o.section.classLevel} · Section ${o.section.name}`, teaches: o.teacherId === me,
+      id: o.id, courseId: o.courseId, ...contextOf(o), teaches: o.teacherId === me,
     })),
   });
 }));
@@ -129,7 +130,7 @@ offeringProgressRouter.get('/:id/progress', idParam, asyncHandler(async (req, re
     return failed.length ? [{ studentId: r.studentId, name: r.name, roll: r.roll, exams: failed }] : [];
   });
   res.json({
-    offeringId: o.id, courseId: o.courseId, sectionId: o.sectionId, exams,
+    ...(await offeringContext(o.id)), offeringId: o.id, courseId: o.courseId, sectionId: o.sectionId, exams,
     students: rows.map((r) => ({ ...r, grade: r.percent === null ? null : gradeFor(r.percent, scale) })),
     belowPass,
   });
