@@ -635,7 +635,7 @@ Roll  Name             Status
 
 ### 5.19 Book Shop (Digital PDF Books Only)
 - The shop sells **only digital books (PDF)**. No printed books, no cart, no stock, no delivery and no cash on delivery.
-- **Admin manages the catalog:** title, author, publisher, course/group/class, cover image, description, price (shown to students), PDF file, optional free preview pages.
+- **Admin manages the catalog:** title, author, publisher, course/group/class, cover image, description, price (shown to students), optional free preview pages and the PDF file. **The PDF is optional at creation:** the Admin may add or replace it later by editing the book. A student can press **Pay** on a book that has no PDF yet; it is saved to My Books and the reader says the PDF is not uploaded yet. Free preview pages need the PDF.
 - **Students:** browse/search/filter by group & course → book details → **Pay** button.
 - **Pay button (no payment gateway in this version):**
   - Clicking **Pay** shows a short confirmation and then **immediately unlocks the PDF**. No bKash, SSLCommerz, card or any real payment is connected, and no money is collected.

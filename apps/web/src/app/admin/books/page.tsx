@@ -41,7 +41,7 @@ function BookForm({ book, onDone }: { book?: AdminBookRow; onDone: () => void })
       <Field label="Description (optional)"><textarea name="description" rows={3} maxLength={4000} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base" /></Field>
       <Field label="Free preview pages" hint="For example 1-5,9. Leave empty for no preview." error={err.previewPages}><Input name="previewPages" maxLength={200} defaultValue={book?.previewPages.join(',') ?? ''} /></Field>
       <Field label={book ? 'Replace the cover (JPG, PNG, WebP, 5 MB)' : 'Cover (JPG, PNG, WebP, 5 MB)'}><Input name="cover" type="file" accept="image/jpeg,image/png,image/webp" /></Field>
-      <Field label={book ? 'Replace the PDF (up to 50 MB)' : 'Book PDF (up to 50 MB)'} error={err.pdf ?? err.files}><Input name="pdf" type="file" accept="application/pdf" required={!book} /></Field>
+      <Field label={book?.hasPdf ? 'Replace the PDF (up to 50 MB)' : 'Book PDF (optional, up to 50 MB)'} hint={book?.hasPdf ? undefined : 'You can add the PDF later by editing the book.'} error={err.pdf ?? err.files}><Input name="pdf" type="file" accept="application/pdf" /></Field>
       {save.isError && <p role="alert" className="text-base text-red-700">{errMsg(save.error)}</p>}
       {save.isPending && <p className="text-base text-slate-600">Uploading… {pct}%</p>}
       <Button type="submit" disabled={save.isPending}>{book ? 'Save changes' : 'Add book'}</Button>
@@ -63,7 +63,7 @@ export default function AdminBooks() {
       <PageTitle action={<Button onClick={() => setEditing('new')}>Add book</Button>}>Book shop</PageTitle>
       {list.isPending && <ListSkeleton />}
       {list.isError && <ErrorState message={errMsg(list.error)} onRetry={() => void list.refetch()} />}
-      {list.data && list.data.items.length === 0 && <EmptyState title="No books yet" hint="Add the first book with a cover and a PDF." />}
+      {list.data && list.data.items.length === 0 && <EmptyState title="No books yet" hint="Add the first book. The PDF can be added later." />}
       <div className="flex flex-col gap-3">
         {list.data?.items.map((b) => (
           <Card key={b.id} data-testid={`admin-book-${b.id}`} className="flex flex-col gap-2">
@@ -71,7 +71,7 @@ export default function AdminBooks() {
               <div className="min-w-0"><p className="text-lg font-semibold">{b.title}</p><p className="text-base text-slate-600">{b.author} · {taka(b.price)}</p></div>
               <Badge tone={STATUS_TONE[b.status]}>{b.status === 'processing' ? 'Preparing preview' : b.status}</Badge>
             </div>
-            <p className="text-base text-slate-600">{b.purchases} unlocked{b.previewPages.length ? ` · preview pages ${b.previewPages.join(', ')}` : ''}</p>
+            <p className="text-base text-slate-600">{b.purchases} unlocked · {b.hasPdf ? 'PDF uploaded' : 'No PDF yet'}{b.previewPages.length ? ` · preview pages ${b.previewPages.join(', ')}` : ''}</p>
             {b.status === 'processing' && <p className="text-sm text-slate-500">If this stays here, check that the preview pages fit the PDF.</p>}
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => setEditing(b)}>Edit</Button>

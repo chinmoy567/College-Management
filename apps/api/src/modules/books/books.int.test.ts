@@ -53,12 +53,12 @@ describe('book shop', () => {
     expect(details.unlocked).toBe(false);
     expect(details.previewUrl).toContain('book_preview');
     const book = await prisma.book.findUniqueOrThrow({ where: { id }, include: { pdf: true } });
-    expect(JSON.stringify(details)).not.toContain(book.pdf.key);
+    expect(JSON.stringify(details)).not.toContain(book.pdf!.key);
     expect(book.previewPdfId).not.toBe(book.pdfId);
     expect((await s.post(`/api/books/${id}/pay`, { confirm: true })).status).toBe(200);
     const ok = await s.get(`/api/books/${id}/pdf?download=1`);
     expect(ok.status).toBe(200);
-    expect(ok.body.url).toContain(book.pdf.key);
+    expect(ok.body.url).toContain(book.pdf!.key);
     expect(ok.body.url).toContain('exp=300');
     // another student still has no access; teachers and admin are not students
     expect((await (await kid(r, 1)).get(`/api/books/${id}/pdf`)).status).toBe(403);
@@ -138,6 +138,26 @@ describe('book shop', () => {
     expect(await prisma.book.count({ where: { id } })).toBe(1);
   });
 
+  it('a book can be created without a PDF; students can pay for it, and the PDF can be added later', async () => {
+    const rq = admin.c.req('post', '/api/books');
+    for (const [k, v] of Object.entries({ title: uniq('NoPdf '), author: 'A. Author', price: '99', previewPages: '' })) rq.field(k, v);
+    const created = await rq;
+    expect(created.status).toBe(201);
+    const id = created.body.id as string;
+    const r = await classroom(prisma, admin.c);
+    const s = await kid(r);
+    expect(((await s.get('/api/books')).body.items as { id: string; hasPdf: boolean }[]).find((b) => b.id === id)?.hasPdf).toBe(false);
+    expect((await s.post(`/api/books/${id}/pay`, { confirm: true })).status).toBe(200);
+    expect((await s.get(`/api/books/${id}/pdf`)).status).toBe(404);
+    const withPages = admin.c.req('patch', `/api/books/${id}`);
+    withPages.field('previewPages', '1-2');
+    expect((await withPages).status).toBe(400);
+    const add = admin.c.req('patch', `/api/books/${id}`);
+    add.attach('pdf', await samplePdf(3), { filename: 'later.pdf' });
+    expect((await add).status).toBe(200);
+    expect((await s.get(`/api/books/${id}/pdf`)).status).toBe(200);
+  });
+
   it('replacing the PDF stores a new object and rebuilds the preview; owners get the new file', async () => {
     const id = await published({ previewPages: '1' });
     const before = await prisma.book.findUniqueOrThrow({ where: { id } });
@@ -152,7 +172,7 @@ describe('book shop', () => {
     const after = await prisma.book.findUniqueOrThrow({ where: { id } });
     expect(after.publishedAt).not.toBeNull();
     expect(await pageWidths(after.previewPdfId!)).toEqual([102]);
-    expect((await prisma.storageObject.findUniqueOrThrow({ where: { id: before.pdfId } })).deletedAt).not.toBeNull();
+    expect((await prisma.storageObject.findUniqueOrThrow({ where: { id: before.pdfId! } })).deletedAt).not.toBeNull();
   });
 
   it('lists with filters and an unlocked flag, paginates, serves the public landing covers and admin purchases/top/CSV', async () => {

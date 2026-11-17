@@ -22,18 +22,18 @@ async function checkCourse(courseId: string | null | undefined): Promise<void> {
 type BookRow = Prisma.BookGetPayload<{ include: { course: { select: { name: true } } } }>;
 const card = (b: BookRow, covers: Map<string, string>, unlocked: boolean) => ({
   id: b.id, title: b.title, author: b.author, publisher: b.publisher, price: Number(b.price), course: b.course?.name ?? null, courseId: b.courseId,
-  groupType: b.groupType, classLevel: b.classLevel, coverUrl: b.coverId ? (covers.get(b.coverId) ?? null) : null, unlocked,
+  groupType: b.groupType, classLevel: b.classLevel, coverUrl: b.coverId ? (covers.get(b.coverId) ?? null) : null, unlocked, hasPdf: !!b.pdfId,
 });
 
 // ───── Admin catalog ─────
 export async function createBook(actor: Actor, b: BookCreateBody, cover: UploadedFile | undefined, pdf: UploadedFile | undefined): Promise<{ id: string }> {
-  if (!pdf) throw bad('pdf', 'Upload the book PDF.');
   await checkCourse(b.courseId);
   const pages = pagesOf(b.previewPages);
+  if (pages.length && !pdf) throw bad('previewPages', 'Upload the PDF first to choose preview pages.');
   const stored: string[] = [];
   try {
-    const pdfId = await storeUpload(actor.id, 'book_pdf', 'book_pdf', pdf);
-    stored.push(pdfId);
+    const pdfId = pdf ? await storeUpload(actor.id, 'book_pdf', 'book_pdf', pdf) : null;
+    if (pdfId) stored.push(pdfId);
     const coverId = cover ? await storeUpload(actor.id, 'book_cover', 'image', cover) : null;
     if (coverId) stored.push(coverId);
     const book = await prisma.$transaction(async (tx) => {
@@ -63,7 +63,7 @@ async function queuePreview(bookId: string): Promise<void> {
 export async function makePreview(bookId: string): Promise<void> {
   const book = await prisma.book.findUnique({ where: { id: bookId } });
   if (!book || book.archivedAt) return;
-  if (!book.previewPages.length) {
+  if (!book.previewPages.length || !book.pdfId) {
     if (!book.publishedAt) await prisma.book.update({ where: { id: bookId }, data: { publishedAt: new Date() } });
     return;
   }
@@ -99,6 +99,7 @@ export async function updateBook(actor: Actor, id: string, b: BookUpdateBody, co
       data.pdfId = pdfId;
     }
     const pages = previewPages !== undefined ? pagesOf(previewPages) : book.previewPages;
+    if (pages.length && !pdf && !book.pdfId) throw bad('previewPages', 'Upload the PDF first to choose preview pages.');
     const rebuild = !!pdf || (previewPages !== undefined && pages.join() !== book.previewPages.join());
     if (previewPages !== undefined) data.previewPages = pages;
     if (rebuild) {
@@ -110,7 +111,7 @@ export async function updateBook(actor: Actor, id: string, b: BookUpdateBody, co
       await audit(actor.id, 'book.update', 'book', id, { fields: Object.keys(b), pdfReplaced: !!pdf }, undefined, tx);
     });
     // Old objects are removed by the purge job after 30 days; owners already read the new file through book.pdfId.
-    if (pdf) await softDeleteObjects([book.pdfId]);
+    if (pdf && book.pdfId) await softDeleteObjects([book.pdfId]);
     if (rebuild && book.previewPdfId) await softDeleteObjects([book.previewPdfId]);
     if (cover && book.coverId) await softDeleteObjects([book.coverId]);
     if (rebuild && pages.length) await queuePreview(id);
@@ -237,6 +238,7 @@ export async function bookPdfUrl(studentId: string, id: string, download: boolea
   if (!book) throw NOT_FOUND();
   const owned = await prisma.bookPurchase.findUnique({ where: { studentId_bookId: { studentId, bookId: id } }, select: { id: true } });
   if (!owned) throw new AppError('FORBIDDEN', 403, 'Unlock this book to read it.');
+  if (!book.pdfId) throw new AppError('NOT_FOUND', 404, 'The PDF for this book has not been uploaded yet.');
   const url = (await signMany([book.pdfId], { download })).get(book.pdfId);
   if (!url) throw NOT_FOUND();
   return url;

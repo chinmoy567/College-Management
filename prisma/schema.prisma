@@ -1423,8 +1423,8 @@ model Book {
   price        Decimal        @db.Decimal(10, 2)
   coverId      String?        @map("cover_id") // public bucket
   cover        StorageObject? @relation("BookCover", fields: [coverId], references: [id], onDelete: Restrict)
-  pdfId        String         @map("pdf_id") // private bucket
-  pdf          StorageObject  @relation("BookPdf", fields: [pdfId], references: [id], onDelete: Restrict)
+  pdfId        String?        @map("pdf_id") // private bucket; optional, the Admin may upload it later
+  pdf          StorageObject? @relation("BookPdf", fields: [pdfId], references: [id], onDelete: Restrict)
   previewPages Int[]          @map("preview_pages") // 1-based page numbers
   previewPdfId String?        @map("preview_pdf_id") // private bucket
   previewPdf   StorageObject? @relation("BookPreviewPdf", fields: [previewPdfId], references: [id], onDelete: Restrict)

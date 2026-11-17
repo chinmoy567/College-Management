@@ -18,6 +18,8 @@ export default function Read() {
     window.location.assign(d.url);
   };
   if (url.isPending || book.isPending) return <ListSkeleton />;
+  if (url.isError && url.error instanceof Error && /not been uploaded/i.test(url.error.message))
+    return (<><PageTitle>{book.data?.title ?? 'Book'}</PageTitle><p className="text-base text-slate-700">This book is yours. The PDF has not been uploaded yet; it will appear here as soon as it is added.</p><Link href="/student/my-books" className="mt-4 inline-flex min-h-11 items-center text-base font-medium text-indigo-700">Back to My books</Link></>);
   if (url.isError) return <ErrorState message={errMsg(url.error)} onRetry={() => void url.refetch()} />;
   const title = book.data?.title ?? 'Book';
   return (
