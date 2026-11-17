@@ -24,6 +24,6 @@ All scripts are idempotent (fixed ids, safe to re-run) and refuse to run when `N
 | `db:seed:books` | 40 published books (price, author, group/class/course), no PDF or cover; the Admin uploads PDFs later |
 
 ## Not seeded
-- Book Shop (a book needs real PDF and cover files in Supabase Storage).
+- Book PDFs and covers (books are seeded without them; the Admin uploads real files).
 - Previous-year questions and uploaded note files (they need real files).
 - Post images, chat attachments, avatars.
