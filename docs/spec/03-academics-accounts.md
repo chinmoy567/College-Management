@@ -118,6 +118,23 @@ Transaction:
 - `GET /api/admin/students/:id/360.pdf` – full report (pdfkit), streamed, not stored.
 - Teachers and mentors get `GET /api/users/students/:id` limited view: name, photo, loginId, roll, section, their course data. **No mobile, address, DOB, guardian** (PRD §8 Privacy).
 
+## 7a. Mentor workspace "My Section" — PRD §5.2.2a, §5.4
+
+Module `apps/api/src/modules/mentor`, mounted at `/api/mentor`. All routes: role `teacher` who is `mentorTeacherId` of a non-deleted section, else `403 FORBIDDEN`. The section is always the caller's own (no section id in the URL), so a mentor can never address another section. Students are the section's `StudentProfile`s with `User.status = 'active'`. Serializer = the limited student view of §7 (no mobile, address, DOB, guardian).
+
+| Route | Returns |
+|---|---|
+| `GET /api/mentor/section` | `{ section: { id, name, classLevel, group, session }, chatConversationId \| null, thresholds: { attendance, inactiveDays }, summary: { students, attendancePct \| null, lowAttendance, belowPass, inactive } }` |
+| `GET /api/mentor/section/students` | `{ items: [{ id, name, roll, loginId, avatarUrl, attendancePct \| null, examAvgPct \| null, lastActiveAt \| null, flags: ['low_attendance','below_pass','inactive'] }] }` sorted by roll |
+| `GET /api/mentor/section/students/:id` | one student: header as above + `attendance: [{ offeringId, course, pct, present, held }]` + `exams: [{ offeringId, course, examId, title, score \| null, totalMarks, passMarks, passed }]`; `404` if the student is not in the mentor's section |
+
+Rules:
+- **Attendance %:** overall over all records of the section's active offerings (04 §7 `aggregate`/`describe`), never an average of averages. `low_attendance` = `pct !== null && pct < attendance_threshold` (Setting).
+- **Exam average %:** mean of the student's per-course overall percents (`courseStandings`, published exams only, a missed exam counts 0, quizzes excluded); `null` when no results are published. `below_pass` = at least one published exam where the student's score is below pass marks (a missed exam counts as failed).
+- **Inactive:** `lastActiveAt = max(User.lastLoginAt, latest LoginSession.lastSeenAt)`; inactive when `null` or older than `INACTIVE_DAYS = 7` (shared constant).
+- **Group chat:** `chatConversationId` is the `section` conversation of the mentor's section (07 §2.3). The mentor opens it in `/messages/[id]`; no new chat type exists. A direct message uses the existing `POST /api/chat/direct`.
+- No writes. Nothing here changes attendance, routine, teachers or classes (Admin / teacher routes stay as they are).
+
 ## 8. Acceptance
 
 - **ACAD-01** Creating a session makes exactly 3 groups, each with a default Section A; a duplicate session name is rejected.
@@ -136,3 +153,8 @@ Transaction:
 - **ACAD-14** The plain initial password is returned only once (credential slip) and is never stored or retrievable.
 - **ACAD-15** (UI) Admin adds a student at 360 px, sees the credential slip, and can create a new section from the same screen when all are full.
 - **ACAD-16** (UI) Student 360° opens from search by ID, name, roll or phone; every tab loads; the PDF export downloads; no AI chats appear.
+- **ACAD-17** The mentor workspace API works only for a teacher who mentors a section: another teacher, a student and the Admin get 403, and every response contains only the mentor's own section (a student of another section returns 404).
+- **ACAD-18** The mentor's student list carries correct attendance %, exam average %, last active date and flags (`low_attendance`, `below_pass`, `inactive`, with the 7-day rule), and the summary counts match the list.
+- **ACAD-19** The mentor workspace never returns mobile, address, DOB, guardian details or any other private student field.
+- **ACAD-20** The section summary returns the section group chat id, and the mentor and all active students of the section (and nobody from another section) are its members.
+- **ACAD-21** (UI) At 360 px a mentor sees "My Section" in the menu and on the dashboard, filters the student list, opens a student, and opens the section group chat; a teacher who mentors no section sees none of it.

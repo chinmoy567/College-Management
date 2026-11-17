@@ -21,6 +21,8 @@ Goal: the academic tree and every account lifecycle operation, with the 30-stude
 14. **Student 360° (M3 part)**: search (trigram) + overview + academic tabs + 404 for non-Admins. Remaining tabs and the PDF in **M11** once their data exists.
 15. **Screens** (`web-builder`): sessions list/detail, section page with free places, Assign Courses sheet, catalog, teachers/students lists as cards, add student form with credential slip print view + "create new section" inline when all full (ACAD-15), CSV import with dry-run table, mentors page.
 
+16. **Mentor workspace "My Section"** (spec §7a, after M11): `modules/mentor` (`/api/mentor/section`, `/students`, `/students/:id`) reusing `attendance/stats.aggregate`+`describe`, `exams/ranks.courseStandings` and the limited student serializer; `INACTIVE_DAYS = 7` in `@cms/shared`; the section chat id comes from `Conversation(type='section', refId=sectionId)`. Web: `/teacher/section`, a "My Section" menu entry and a dashboard card shown only when `me.isMentorOf` is set. Tests ACAD-17..21.
+
 ## 2. Senior notes
 
 - **Concurrency test for ACAD-02:** fire two `create student` requests in parallel for the 30th place with `Promise.all`; exactly one 201, one 409. Same for move and import.
@@ -49,6 +51,11 @@ Goal: the academic tree and every account lifecycle operation, with the 30-stude
 | ACAD-14 | `[ACAD-14] plain password returned once, not stored or retrievable` |
 | ACAD-15 | Playwright `[ACAD-15] add student at 360 px, slip, new section when full` |
 | ACAD-16 | Playwright `[ACAD-16] Student 360° search, all tabs, PDF, no AI chats` — **M11** |
+| ACAD-17 | `[ACAD-17] mentor workspace: other teacher/student/Admin 403; other section's student 404` |
+| ACAD-18 | `[ACAD-18] list and summary: attendance %, exam avg, last active, flags, 7-day inactive rule` |
+| ACAD-19 | `[ACAD-19] mentor workspace payload has no private fields (key check)` |
+| ACAD-20 | `[ACAD-20] summary returns section chat id; members are the mentor + the section's students only` |
+| ACAD-21 | Playwright `[ACAD-21] My Section at 360 px: menu, filters, student sheet, group chat; hidden for other teachers` |
 
 ## 4. Definition of done
 

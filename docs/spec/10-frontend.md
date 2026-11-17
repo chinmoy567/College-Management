@@ -58,7 +58,7 @@ src/app
 | `/teacher/exams/[id]/edit`, `/teacher/exams/[id]/report` | Exam builder, report |
 | `/teacher/bank` | Question bank |
 | `/teacher/routine` | Personal weekly routine |
-| `/teacher/section` | Mentor: overview, students, routine (view), notices, pinned posts, monitoring |
+| `/teacher/section` | Mentor only (menu entry "My Section" and a dashboard card, hidden for other teachers): summary cards, student list with search and warning filters, student detail sheet (attendance and exams per course), quick actions (Message, Open section group chat, New post/notice, routine view). API: 03 §7a. |
 
 ### 2.4 Student (`/student`)
 | Route | Screen |
