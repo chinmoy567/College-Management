@@ -4,7 +4,8 @@ import { AppError } from '../../lib/http';
 import { now } from '../../lib/clock';
 import { signMany } from '../../lib/files';
 import { aggregate, describe, getThresholds, sum } from '../attendance/stats';
-import { courseStandings } from '../exams/ranks';
+import { overallCoursePercent } from '../exams/logic';
+import { bestAttempts } from '../exams/ranks';
 
 export type Flag = 'low_attendance' | 'below_pass' | 'inactive';
 
@@ -16,6 +17,32 @@ async function mentoredSection(userId: string) {
   });
   if (!s) throw new AppError('FORBIDDEN', 403, 'You are not a Section Mentor.');
   return s;
+}
+
+/**
+ * Same numbers as `courseStandings` (published + revealed exams only, quizzes excluded, a missed exam counts 0%),
+ * but for every offering of the section in three queries instead of several per course: the dev database is remote
+ * and 15 courses × ~8 round trips took 10+ seconds.
+ */
+async function sectionStandings(offerings: { id: string; course: { code: string } }[], studentIds: string[]) {
+  const ids = offerings.map((o) => o.id);
+  const [exams, enrolled] = await Promise.all([
+    prisma.exam.findMany({
+      where: { courseOfferingId: { in: ids }, kind: 'exam', resultsPublishedAt: { not: null }, revealedAt: { not: null } },
+      select: { id: true, courseOfferingId: true, title: true, totalMarks: true, passMarks: true },
+      orderBy: { startAt: 'asc' },
+    }),
+    prisma.enrollment.findMany({ where: { courseOfferingId: { in: ids }, status: 'active', studentId: { in: studentIds } }, select: { courseOfferingId: true, studentId: true } }),
+  ]);
+  const best = await bestAttempts(exams.map((e) => e.id));
+  const scores = new Map<string, Map<string, number>>(); // studentId → examId → score
+  for (const b of best) scores.set(b.studentId, (scores.get(b.studentId) ?? new Map()).set(b.examId, b.score));
+  return offerings.map((offering) => {
+    const list = exams.filter((e) => e.courseOfferingId === offering.id).map((e) => ({ id: e.id, title: e.title, totalMarks: Number(e.totalMarks), passMarks: Number(e.passMarks) }));
+    const forPercent = list.map((e) => ({ id: e.id, totalMarks: e.totalMarks, kind: 'exam' as const }));
+    const rows = enrolled.filter((e) => e.courseOfferingId === offering.id).map((e) => ({ studentId: e.studentId, percent: overallCoursePercent(forPercent, scores.get(e.studentId) ?? new Map<string, number>()) }));
+    return { offering, s: { exams: list, rows, scores } };
+  });
 }
 
 /** One pass over the section: students, attendance, published exam results and activity. */
@@ -34,7 +61,7 @@ async function load(userId: string) {
   const [att, seen, standings, avatars, conv] = await Promise.all([
     aggregate({ studentIds, offeringIds }),
     prisma.loginSession.groupBy({ by: ['userId'], where: { userId: { in: studentIds } }, _max: { lastSeenAt: true } }),
-    Promise.all(offerings.map(async (o) => ({ offering: o, s: await courseStandings(o.id) }))),
+    sectionStandings(offerings, studentIds),
     signMany(profiles.map((p) => p.user.avatarId).filter((x): x is string => !!x)),
     prisma.conversation.findUnique({ where: { type_refId: { type: 'section', refId: section.id } }, select: { id: true } }),
   ]);
