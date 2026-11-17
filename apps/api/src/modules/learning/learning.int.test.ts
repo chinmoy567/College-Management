@@ -223,7 +223,8 @@ describe('materials', () => {
     const r = await classroom(prisma, admin.c);
     const t = await asTeacher(r);
     const f = { scope: 'offering', courseOfferingId: r.offering.id, title: 'Bad' };
-    const before = await prisma.material.count();
+    const mine = { courseOfferingId: r.offering.id };
+    const before = await prisma.material.count({ where: mine });
     const exe = await upload(t, f, [{ name: 'notes.pdf', buf: EXE }]);
     expect(exe.status).toBe(400);
     const exeDoc = await upload(t, f, [{ name: 'slides.pptx', buf: EXE }]);
@@ -232,7 +233,7 @@ describe('materials', () => {
     expect((await upload(t, f, [{ name: 'scan.pdf', buf: png }])).status).toBe(400);
     // one good file then a bad one: nothing is saved
     expect((await upload(t, f, [{ name: 'a.pdf', buf: PDF }, { name: 'b.pdf', buf: EXE }])).status).toBe(400);
-    expect(await prisma.material.count()).toBe(before);
+    expect(await prisma.material.count({ where: mine })).toBe(before);
     // images are accepted and re-encoded; too large an image is refused
     expect((await upload(t, f, [{ name: 'pic.png', buf: png }])).status).toBe(201);
     const big = await sharp({ create: { width: 3000, height: 3000, channels: 3, background: '#808080', noise: { type: 'gaussian', mean: 128, sigma: 60 } } }).png().toBuffer();

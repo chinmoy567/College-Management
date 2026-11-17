@@ -8,6 +8,9 @@ const shared = fileURLToPath(new URL('./packages/shared/src/index.ts', import.me
 export default defineConfig({
   resolve: { alias: { '@cms/shared': shared } },
   test: {
+    // Integration files share one database (and background generators), so they must not run side by side.
+    // Vitest 3 only honours this at the root, not per project.
+    fileParallelism: !process.env.TEST_DATABASE_URL,
     sequence: { sequencer: DbFirstSequencer },
     // `unit` needs no DB. `integration` (files named *.int.test.ts) runs only when TEST_DATABASE_URL is set,
     // so `npm test` still passes without a database; CI and `/spec-check` always set it.
@@ -30,7 +33,6 @@ export default defineConfig({
           include: ['apps/**/*.int.test.ts'],
           exclude: ['**/node_modules/**', '**/dist/**'],
           globalSetup: ['./test/globalSetup.ts'],
-          fileParallelism: false,
           env: { NODE_ENV: 'test' },
         },
       }] : []),
