@@ -66,7 +66,9 @@ function Thread({ id, me }: { id: string; me: Me }) {
     api<{ items: { id: string; title: string }[] }>('/chat/conversations?limit=50').then((r) => setOther(r.items.find((c) => c.id === id)?.title ?? null)).catch(() => {});
   }, [id]);
 
-  useEffect(() => bottom.current?.scrollIntoView({ block: 'end' }), [msgs.length]);
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ block: 'end' });
+  }, [msgs.length]);
 
   const markRead = useCallback(() => {
     const m = [...msgsRef.current].reverse().find((x) => !x.pending && !x.failed);
