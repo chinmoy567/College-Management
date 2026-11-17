@@ -47,12 +47,21 @@ export async function seedAttendanceHistory(prisma: PrismaClient): Promise<{ mee
   const links: { classMeetingId: string; courseOfferingId: string }[] = [];
   const records: { classMeetingId: string; studentId: string; sectionId: string; courseOfferingId: string; status: AttendanceStatus; markedBy: string; markedAt: Date }[] = [];
 
+  // A meeting may already exist for a slot and day (unique on slot + original date), e.g. from the routine seed
+  // under another id. Reuse it so links and records point at a real meeting.
+  const existing = await prisma.classMeeting.findMany({
+    where: { routineSlotId: { in: slots.map((s) => s.id) }, OR: [{ date: { in: dates } }, { originalDate: { in: dates } }] },
+    select: { id: true, routineSlotId: true, date: true, originalDate: true },
+  });
+  const existingId = new Map(existing.map((m) => [`${m.routineSlotId}|${iso(m.originalDate ?? m.date)}`, m.id]));
+
   for (const slot of slots) {
     for (const d of dates) {
       if (DAYS[d.getUTCDay()] !== slot.day) continue;
-      const id = `demo-hist-${slot.id}-${iso(d)}`;
+      const found = existingId.get(`${slot.id}|${iso(d)}`);
+      const id = found ?? `demo-hist-${slot.id}-${iso(d)}`;
       const off = slot.offerings[0]!.courseOffering;
-      meetings.push({
+      if (!found) meetings.push({
         id, routineSlotId: slot.id, date: d, periodId: slot.periodId, roomId: slot.roomId,
         startTime: slot.period.startTime, endTime: slot.period.endTime, teacherId: off.teacherId,
         status: 'held', attendanceTakenAt: new Date(d.getTime() + 9 * 3600000),
