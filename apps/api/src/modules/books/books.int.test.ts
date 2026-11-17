@@ -153,6 +153,7 @@ describe('book shop', () => {
     withPages.field('previewPages', '1-2');
     expect((await withPages).status).toBe(400);
     const add = admin.c.req('patch', `/api/books/${id}`);
+    add.field('title', uniq('NoPdf '));
     add.attach('pdf', await samplePdf(3), { filename: 'later.pdf' });
     expect((await add).status).toBe(200);
     expect((await s.get(`/api/books/${id}/pdf`)).status).toBe(200);
