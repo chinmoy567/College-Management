@@ -22,6 +22,7 @@ import { publicCollegeRouter } from './modules/public/routes';
 import { noticesRouter, publicNoticesRouter } from './modules/notices/routes';
 import { notificationPrefsRouter, notificationsRouter } from './modules/notifications/routes';
 import { materialsRouter, onlineClassesRouter } from './modules/learning/routes';
+import { mentorRouter } from './modules/mentor/routes';
 import { adminBooksRouter, booksRouter, publicBooksRouter } from './modules/books/routes';
 import { E2E_FILES_PATH, E2E_STORAGE, e2eMemory } from './lib/files';
 import { adminAiRouter, aiRouter } from './modules/ai/routes';
@@ -130,6 +131,7 @@ export function createApp(opts: AppOptions = {}): Express {
   app.use('/api/exams', ...authChain, examsRouter);
   app.use('/api/classes/online', ...authChain, onlineClassesRouter);
   app.use('/api/materials', ...authChain, materialsRouter);
+  app.use('/api/mentor', ...authChain, mentorRouter);
   app.use('/api/books', ...authChain, booksRouter);
   app.use('/api/ai', ...authChain, aiRouter);
   if (E2E_STORAGE)

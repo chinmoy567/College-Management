@@ -1,6 +1,8 @@
 export const SECTION_MAX = 30;
 export const PIN_DAYS_DEFAULT = 7;
 export const MAX_IMAGES = 10;
+/** A student with no login or app use for this many days is shown to the Section Mentor as inactive (PRD 5.2.2a). */
+export const INACTIVE_DAYS = 7;
 export const EXAM_DURATIONS = [15, 30, 45, 60, 90, 120] as const;
 
 export const UPLOAD_LIMITS = {
