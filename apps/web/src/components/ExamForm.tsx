@@ -55,8 +55,12 @@ export function ExamForm({ offeringId, initial, submitLabel, onSubmit, formId }:
   };
 
   const check = (k: 'shuffleQuestions' | 'shuffleOptions' | 'showAnswersAfterEnd', label: string) => (
-    <label className="flex min-h-11 items-center gap-3 text-base">
-      <input type="checkbox" className="size-5" checked={v[k]} onChange={(e) => set(k, e.target.checked)} />
+    <label className="relative flex min-h-11 items-center gap-3 text-base">
+      {/* the real input covers the whole row (44 px tap target); the box beside the text is only its picture */}
+      <input type="checkbox" className="peer absolute inset-0 size-full cursor-pointer opacity-0" checked={v[k]} onChange={(e) => set(k, e.target.checked)} />
+      <span aria-hidden className="grid size-5 shrink-0 place-items-center rounded border-2 border-slate-400 text-white peer-checked:border-emerald-600 peer-checked:bg-emerald-600 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-600 peer-focus-visible:ring-offset-2 peer-checked:[&>span]:inline">
+        <span className="hidden text-sm leading-none">✓</span>
+      </span>
       {label}
     </label>
   );
