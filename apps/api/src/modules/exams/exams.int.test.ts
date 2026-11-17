@@ -652,6 +652,19 @@ describe('permissions', () => {
     expect(submitted.body).toMatchObject(ctx);
   });
 
+  it('[EXAM-07] (context) a draft with no questions shows 0 total marks in the list, as in the detail (pass marks do not inflate it)', async () => {
+    const w = await world(1);
+    const body = { offeringId: w.offering.id, kind: 'exam', title: 'Empty draft', startAt: iso(START), endAt: iso(END), durationMin: 30, passMarks: 5 };
+    const created = await w.t.post('/api/exams', body);
+    expect(created.status).toBe(201);
+    const detail = await w.t.get(`/api/exams/${created.body.id}`);
+    const list = await w.t.get(`/api/exams?offeringId=${w.offering.id}`);
+    const row = list.body.items.find((i: { id: string }) => i.id === created.body.id);
+    expect(detail.body.totalMarks).toBe(0);
+    expect(row.totalMarks).toBe(0);
+    expect(row.passMarks).toBe(5);
+  });
+
   it('[EXAM-16] the Admin cannot create exams (403); another teacher gets 404; students are refused; the owner is allowed', async () => {
     const w = await world(1);
     const body = { offeringId: w.offering.id, kind: 'exam', title: 'T', startAt: iso(START), endAt: iso(END), durationMin: 30, passMarks: 1 };

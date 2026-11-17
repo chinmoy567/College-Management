@@ -107,7 +107,10 @@ lifecycleRouter.get('/', validate({ query: examListQuery }), asyncHandler(async 
   });
   const { items, nextCursor } = paginate(rows, q.limit);
   const ctx = await offeringContexts([q.offeringId]);
-  res.json({ items: items.map((e) => examView(e, undefined, ctx.get(e.courseOfferingId))), nextCursor });
+  // a draft's stored total is max(Σ marks, pass marks); show the real sum, as the detail does
+  const draftIds = items.filter((e) => e.status === 'draft').map((e) => e.id);
+  const sums = new Map((draftIds.length ? await prisma.examQuestion.groupBy({ by: ['examId'], where: { examId: { in: draftIds } }, _sum: { marks: true } }) : []).map((g) => [g.examId, Number(g._sum.marks ?? 0)]));
+  res.json({ items: items.map((e) => examView(e, e.status === 'draft' ? sums.get(e.id) ?? 0 : undefined, ctx.get(e.courseOfferingId))), nextCursor });
 }));
 
 lifecycleRouter.get('/:id', idParam, asyncHandler(async (req, res) => {
