@@ -6,7 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { HOME, type MeUser, type Role } from '@/lib/auth';
-import { MORE, TABS, isActive } from '@/lib/nav';
+import { TABS, isActive, moreFor } from '@/lib/nav';
 import { useSocketEvent } from '@/lib/socket';
 import { Button, ListSkeleton, Sheet, cn } from '@/components/ui';
 import { UrgentBanner } from '@/components/chat/UrgentBanner';
@@ -68,6 +68,7 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
 
   const r = user.role;
   const tabs = TABS[r];
+  const more = moreFor(r, !!user.isMentorOf);
   const root = HOME[r];
   const body = typeof children === 'function' ? children(user) : children;
   const tabClass = (on: boolean) =>
@@ -78,7 +79,7 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:border-r lg:border-slate-200 lg:bg-white lg:p-4">
         <Link href={root} className="mb-3 min-h-11 text-lg font-semibold">College</Link>
         <nav aria-label={`${r} sidebar`} className="flex flex-col gap-1">
-          {[...tabs, ...MORE[r]].map((t) => (
+          {[...tabs, ...more].map((t) => (
             <Link key={t.href} href={t.href} aria-current={isActive(path, t.href, root) ? 'page' : undefined} className={tabClass(isActive(path, t.href, root))}>
               <span aria-hidden>{t.icon}</span>
               {t.label}
@@ -122,7 +123,7 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
 
       <Sheet open={more} title="More" onClose={() => setMore(false)}>
         <ul className="flex flex-col">
-          {MORE[r].map((m) => (
+          {more.map((m) => (
             <li key={m.href}>
               <Link href={m.href} className="flex min-h-12 items-center gap-3 rounded-lg px-2 text-lg hover:bg-slate-100">
                 <span aria-hidden>{m.icon}</span>

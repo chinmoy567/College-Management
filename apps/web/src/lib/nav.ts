@@ -62,4 +62,8 @@ export const MORE: Record<Role, NavItem[]> = {
   ],
 };
 
+/** Shown only to a teacher who mentors a section (`me.isMentorOf`), first in the menu (PRD 5.2.2a). */
+export const MENTOR_ITEM: NavItem = { href: '/teacher/section', label: 'My Section', icon: '🧭' };
+export const moreFor = (role: Role, isMentor: boolean): NavItem[] => (role === 'teacher' && isMentor ? [MENTOR_ITEM, ...MORE.teacher] : MORE[role]);
+
 export const isActive = (path: string, href: string, root: string) => (href === root ? path === href : path === href || path.startsWith(href + '/'));

@@ -18,6 +18,7 @@ export default function TeacherHome() {
             { href: '/teacher/content', label: 'My courses', icon: '📚', hint: 'Classes, recordings, notes' },
             { href: '/teacher/exams', label: 'Exams', icon: '📝' },
             { href: '/notices/new', label: 'New notice', icon: '📢' },
+            ...(me?.isMentorOf ? [{ href: '/teacher/section', label: 'My Section', icon: '🧭', hint: 'Students, attendance, results' }] : []),
           ]}
         />
       </Section>
