@@ -293,6 +293,14 @@ A Section Mentor is a teacher in charge of exactly one section. They get the ful
 - Message any student; post announcements in the section chat.
 - Cannot assign teachers or substitutes, cancel classes or change the routine (Admin only).
 
+**"My Section" page** (menu entry and dashboard card shown only to a Section Mentor; a teacher who mentors no section never sees it):
+- **Summary cards:** number of students, the section's attendance %, students with low attendance (below the Admin's attendance threshold), students below the pass mark in at least one published exam, and inactive students.
+- **Student list** of the mentor's own section only (never another section): photo, name, roll, attendance %, exam average %, last active date and warning badges (*Low attendance*, *Below pass mark*, *Inactive*). Search by name or roll and filter by each warning.
+- **Student detail** (tap a student): attendance per course, exam results per course (score, total, pass mark, passed or not) and last active date. It shows only the limited student view of Section 8 (no mobile, address, DOB or guardian details).
+- **Quick actions:** *Message* the student (direct chat), *Open section group chat* and *New section post / notice*.
+- **Inactive student:** an active student who has not logged in or used the app for 7 days or more (or never has). It is a warning for the mentor and has nothing to do with account status.
+- **Group chat:** the section chat of Section 5.8 is the mentor's group chat with all students of the section. The mentor and all active students of that section are members automatically (the section's course teachers are members too), and no student of another section is ever in it.
+
 #### 5.2.3 Student Dashboard
 - **Top:** pinned posts from the Admin or Section Mentor (Section 5.7.2), shown until the student has seen each one once (max 7 days), then quick widgets:
   - Today's routine and next class; live class **Join** button when a class is live.
@@ -342,8 +350,8 @@ A Section Mentor is a teacher in charge of exactly one section. They get the ful
 - View the **class routine** of the section (only the Admin can change it).
 - Publish **section notices** (to all students of the section).
 - Create posts for students of their section, **pinned by default** ("Pin this post" switch; shown at the top until each student has seen it, max 7 days). Can switch it off for a normal post.
-- Monitor the section: exam results, attendance summaries, inactive students.
-- Message any student individually; post announcements in the section chat.
+- Monitor the section on the **My Section** page (Section 5.2.2a): exam results, attendance summaries, inactive students, per-student detail.
+- Message any student individually; chat with all students of the section in the section group chat and post announcements there.
 - Cannot assign teachers, substitutes, cancel classes or change the routine; these are decided by the Admin only.
 
 ### 5.5 Course Teacher Functions
