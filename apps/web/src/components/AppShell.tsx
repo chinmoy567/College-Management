@@ -102,7 +102,7 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
       <UrgentBanner />
       <main className="mx-auto max-w-3xl p-4 pb-24 lg:pb-6">{body}</main>
 
-      {r === 'student' && !path.startsWith('/student/ai') && (
+      {r === 'student' && !path.startsWith('/student/ai') && !path.startsWith('/messages/') && (
         <Link href="/student/ai" aria-label="AI study helper" className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white shadow-lg lg:bottom-6">
           AI
         </Link>
