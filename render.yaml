@@ -42,5 +42,13 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      - key: TOTP_ENC_KEY # generate a NEW random 32-byte base64 key for production
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
       - key: APP_URL # the public https URL Render gives the service
         sync: false
