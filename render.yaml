@@ -3,7 +3,9 @@ services:
     name: cms-demo
     runtime: node
     plan: free
-    buildCommand: npm ci && npx prisma migrate deploy && npm run build
+    # Closest Render region to Supabase ap-south-1 (Mumbai); Render has no Mumbai region.
+    region: singapore
+    buildCommand: npm ci --include=dev && npx prisma migrate deploy && npm run build
     startCommand: node apps/api/dist/server.js
     healthCheckPath: /api/health
     envVars:
@@ -11,3 +13,34 @@ services:
         value: production
       - key: NODE_VERSION
         value: 20
+      - key: TZ_DISPLAY
+        value: Asia/Dhaka
+      - key: SESSION_COOKIE_NAME
+        value: cms_session
+      - key: SUPABASE_PUBLIC_BUCKET
+        value: public
+      - key: SUPABASE_PRIVATE_BUCKET
+        value: private
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 465
+      # Secrets: paste these in the Render dashboard (never commit them).
+      - key: DATABASE_URL # Supabase SESSION pooler (port 5432); pg-boss needs session mode
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: APP_URL # the public https URL Render gives the service
+        sync: false
