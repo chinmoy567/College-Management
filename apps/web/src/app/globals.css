@@ -1,9 +1,105 @@
 @import 'tailwindcss';
 @source '../';
 
+/* Palette: ink #003135, deep #024950, rust #964734, teal #0FA4AF, mist #AFDDE5.
+   The old indigo/slate utility names are remapped so every existing page picks up the new look. */
+@theme {
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, serif;
+
+  --color-indigo-50: #eaf6f7;
+  --color-indigo-100: #d3eef1;
+  --color-indigo-200: #afdde5;
+  --color-indigo-300: #6cc6cf;
+  --color-indigo-400: #35b3bd;
+  --color-indigo-500: #0fa4af;
+  --color-indigo-600: #0b8791;
+  --color-indigo-700: #024950;
+  --color-indigo-800: #013d42;
+  --color-indigo-900: #003135;
+
+  --color-slate-50: #f4f9f9;
+  --color-slate-100: #e8f1f2;
+  --color-slate-200: #d5e3e5;
+  --color-slate-300: #b8ced1;
+  --color-slate-400: #8aa6aa;
+  --color-slate-500: #628084;
+  --color-slate-600: #476266;
+  --color-slate-700: #2f4a4e;
+  --color-slate-800: #17353a;
+  --color-slate-900: #0a2427;
+
+  --color-rust: #964734;
+  --color-rust-dark: #7a3829;
+  --color-ink: #003135;
+  --color-deep: #024950;
+  --color-teal: #0fa4af;
+  --color-mist: #afdde5;
+  --color-paper: #f4f9f9;
+
+  --animate-rise: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-drift: drift 22s ease-in-out infinite alternate;
+  --animate-drift-slow: drift 34s ease-in-out infinite alternate-reverse;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-ripple: ripple 6s ease-out infinite;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes drift {
+    from { transform: translateX(-2.5%) scale(1.04); }
+    to { transform: translateX(2.5%) scale(1.04); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes ripple {
+    0% { transform: scale(0.6); opacity: 0.55; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+}
+
 html {
   font-size: 16px;
+  scroll-behavior: smooth;
 }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-paper);
+  color: var(--color-slate-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background: var(--color-rust);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
+/* Scroll reveal: hidden until the Reveal component adds .in (see components/Reveal.tsx). */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--d, 0ms);
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+.no-js .reveal { opacity: 1; transform: none; }
 
 @media print {
   body * {
@@ -22,6 +118,9 @@ html {
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+  .reveal { opacity: 1; transform: none; }
 }

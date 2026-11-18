@@ -9,6 +9,7 @@ import { HOME, type MeUser, type Role } from '@/lib/auth';
 import { TABS, isActive, moreFor } from '@/lib/nav';
 import { useSocketEvent } from '@/lib/socket';
 import { Button, ListSkeleton, Sheet, cn } from '@/components/ui';
+import { Icon } from '@/components/Icon';
 import { UrgentBanner } from '@/components/chat/UrgentBanner';
 
 export const useMeUser = () =>
@@ -26,10 +27,10 @@ function Bell() {
   useSocketEvent<{ unread: number }>('notif:count', (p) => qc.setQueryData(['unread-count'], { unread: p.unread }));
   const n = count.data?.unread ?? 0;
   return (
-    <Link href="/notifications" aria-label={n ? `Notifications, ${n} unread` : 'Notifications'} className="relative flex h-11 w-11 items-center justify-center rounded-full text-xl hover:bg-slate-100">
-      <span aria-hidden>🔔</span>
+    <Link href="/notifications" aria-label={n ? `Notifications, ${n} unread` : 'Notifications'} className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-mist/50">
+      <Icon name="bell" className="h-6 w-6" />
       {n > 0 && (
-        <span data-testid="bell-count" className="absolute right-0 top-0 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs font-semibold text-white">
+        <span data-testid="bell-count" className="absolute right-0 top-0 min-w-5 rounded-full bg-rust px-1 text-center text-xs font-bold text-white">
           {n > 99 ? '99+' : n}
         </span>
       )}
@@ -72,51 +73,51 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
   const root = HOME[r];
   const body = typeof children === 'function' ? children(user) : children;
   const tabClass = (on: boolean) =>
-    cn('flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium lg:min-h-11 lg:flex-none lg:flex-row lg:justify-start lg:gap-3 lg:rounded-lg lg:px-4 lg:text-base', on ? 'text-indigo-700 lg:bg-indigo-50' : 'text-slate-600 lg:hover:bg-slate-100');
+    cn('relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-[11px] font-semibold transition-colors lg:min-h-11 lg:flex-none lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-4 lg:text-base', on ? 'bg-deep text-white lg:bg-white/10' : 'text-mist/60 lg:hover:bg-white/5 lg:hover:text-white');
 
   return (
     <div className="min-h-screen lg:pl-64">
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:border-r lg:border-slate-200 lg:bg-white lg:p-4">
-        <Link href={root} className="mb-3 min-h-11 text-lg font-semibold">College</Link>
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:bg-ink lg:p-5">
+        <Link href={root} className="font-display mb-6 flex min-h-11 items-center gap-2 text-2xl font-medium text-white"><span aria-hidden className="h-2.5 w-2.5 rounded-full bg-rust" />College</Link>
         <nav aria-label={`${r} sidebar`} className="flex flex-col gap-1">
           {[...tabs, ...menu].map((t) => (
             <Link key={t.href} href={t.href} aria-current={isActive(path, t.href, root) ? 'page' : undefined} className={tabClass(isActive(path, t.href, root))}>
-              <span aria-hidden>{t.icon}</span>
+              <Icon name={t.icon} className="h-5 w-5" />
               {t.label}
             </Link>
           ))}
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-30 flex min-h-14 items-center justify-between border-b border-slate-200 bg-white px-3">
-        <Link href={root} className="flex min-h-11 min-w-11 items-center text-lg font-semibold lg:hidden">College</Link>
+      <header className="sticky top-0 z-30 flex min-h-14 items-center justify-between border-b border-slate-200/70 bg-paper/85 px-3 backdrop-blur-md">
+        <Link href={root} className="font-display flex min-h-11 min-w-11 items-center gap-2 text-xl font-medium text-ink lg:hidden"><span aria-hidden className="h-2 w-2 rounded-full bg-rust" />College</Link>
         <span className="hidden lg:block" />
         <div className="flex items-center gap-1">
           <Bell />
-          <Link href="/profile" aria-label="My profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-100 text-base font-semibold text-indigo-700">
+          <Link href="/profile" aria-label="My profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-base font-semibold text-mist">
             {user.name.trim().charAt(0).toUpperCase() || '?'}
           </Link>
         </div>
       </header>
 
       <UrgentBanner />
-      <main className="mx-auto max-w-3xl p-4 pb-24 lg:pb-6">{body}</main>
+      <main className="mx-auto max-w-4xl p-4 pb-28 lg:p-8">{body}</main>
 
       {r === 'student' && !path.startsWith('/student/ai') && !path.startsWith('/messages/') && (
-        <Link href="/student/ai" aria-label="AI study helper" className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white shadow-lg lg:bottom-6">
+        <Link href="/student/ai" aria-label="AI study helper" className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-rust text-lg font-bold text-white shadow-[0_12px_30px_-8px_rgba(150,71,52,0.7)] transition-transform hover:scale-105 lg:bottom-6">
           AI
         </Link>
       )}
 
-      <nav aria-label={`${r} tabs`} className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <nav aria-label={`${r} tabs`} className="fixed inset-x-3 bottom-3 z-40 flex gap-0.5 rounded-full bg-ink p-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] shadow-[0_18px_40px_-12px_rgba(0,49,53,0.7)] lg:hidden">
         {tabs.map((t) => (
           <Link key={t.href} href={t.href} aria-current={isActive(path, t.href, root) ? 'page' : undefined} className={tabClass(isActive(path, t.href, root))}>
-            <span aria-hidden className="text-xl">{t.icon}</span>
+            <Icon name={t.icon} className="h-5 w-5" />
             {t.label}
           </Link>
         ))}
         <button type="button" aria-haspopup="dialog" onClick={() => setMore(true)} className={tabClass(false)}>
-          <span aria-hidden className="text-xl">☰</span>
+          <Icon name="menu" className="h-5 w-5" />
           More
         </button>
       </nav>
@@ -125,8 +126,8 @@ export function AppShell({ role, children }: { role?: Role; children: ReactNode 
         <ul className="flex flex-col">
           {menu.map((m) => (
             <li key={m.href}>
-              <Link href={m.href} className="flex min-h-12 items-center gap-3 rounded-lg px-2 text-lg hover:bg-slate-100">
-                <span aria-hidden>{m.icon}</span>
+              <Link href={m.href} className="flex min-h-12 items-center gap-3 rounded-xl px-2 text-lg text-ink hover:bg-mist/40">
+                <Icon name={m.icon} className="h-5 w-5 text-teal" />
                 {m.label}
               </Link>
             </li>

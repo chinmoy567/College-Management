@@ -5,10 +5,10 @@ import { useEffect, type ButtonHTMLAttributes, type HTMLAttributes, type InputHT
 export const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
 
 const variants = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300',
-  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 disabled:opacity-50',
-  danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
-  ghost: 'text-indigo-700 hover:bg-indigo-50 disabled:opacity-50',
+  primary: 'bg-ink text-white hover:bg-deep disabled:bg-slate-300',
+  secondary: 'bg-white text-ink ring-1 ring-inset ring-slate-300 hover:bg-mist/40 disabled:opacity-50',
+  danger: 'bg-rust text-white hover:bg-rust-dark disabled:opacity-50',
+  ghost: 'text-deep hover:bg-mist/40 disabled:opacity-50',
 } as const;
 
 export function Button({ variant = 'primary', className, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: keyof typeof variants }) {
@@ -16,24 +16,24 @@ export function Button({ variant = 'primary', className, ...p }: ButtonHTMLAttri
     <button
       type="button"
       {...p}
-      className={cn('inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-base font-medium transition-colors', variants[variant], className)}
+      className={cn('inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-base font-semibold transition-all duration-200 active:scale-[0.97]', variants[variant], className)}
     />
   );
 }
 
 export const Card = ({ className, ...p }: HTMLAttributes<HTMLDivElement> & { 'data-testid'?: string }) => (
-  <div {...p} className={cn('rounded-xl border border-slate-200 bg-white p-4 shadow-sm', className)} />
+  <div {...p} className={cn('rounded-2xl border border-slate-200/80 bg-white p-4 transition-shadow hover:shadow-[0_10px_30px_-18px_rgba(0,49,53,0.45)]', className)} />
 );
 
-const tones = { green: 'bg-emerald-100 text-emerald-800', slate: 'bg-slate-200 text-slate-700', amber: 'bg-amber-100 text-amber-800', red: 'bg-red-100 text-red-800' };
+const tones = { green: 'bg-teal/15 text-deep', slate: 'bg-slate-200 text-slate-700', amber: 'bg-amber-100 text-amber-900', red: 'bg-rust/15 text-rust-dark' };
 export const Badge = ({ tone = 'slate', children }: { tone?: keyof typeof tones; children: ReactNode }) => (
-  <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium', tones[tone])}>{children}</span>
+  <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide', tones[tone])}>{children}</span>
 );
 
 export function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-base font-medium text-slate-800">{label}</span>
+      <span className="text-sm font-semibold uppercase tracking-wide text-slate-600">{label}</span>
       {children}
       {hint && !error && <span className="text-sm text-slate-500">{hint}</span>}
       {error && (
@@ -44,11 +44,11 @@ export function Field({ label, error, hint, children }: { label: string; error?:
     </label>
   );
 }
-const control = 'min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-900 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-slate-100';
+const control = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-base text-slate-900 transition-shadow focus:border-teal focus:outline-none focus:ring-4 focus:ring-mist/60 disabled:bg-slate-100';
 export const Input = ({ className, ...p }: InputHTMLAttributes<HTMLInputElement>) => <input {...p} className={cn(control, className)} />;
 export const Select = ({ className, ...p }: SelectHTMLAttributes<HTMLSelectElement>) => <select {...p} className={cn(control, className)} />;
 
-export const Skeleton = ({ className }: { className?: string }) => <div aria-hidden className={cn('animate-pulse rounded-lg bg-slate-200', className)} />;
+export const Skeleton = ({ className }: { className?: string }) => <div aria-hidden className={cn('animate-pulse rounded-2xl bg-slate-200/70', className)} />;
 export const ListSkeleton = ({ rows = 3 }: { rows?: number }) => (
   <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading">
     {Array.from({ length: rows }, (_, i) => (
@@ -82,8 +82,8 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-slate-900/40 sm:items-center sm:p-6">
-      <div role="dialog" aria-modal="true" aria-label={title} className="flex w-full flex-col bg-white sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl">
+    <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-ink/60 backdrop-blur-sm sm:items-center sm:p-6">
+      <div role="dialog" aria-modal="true" aria-label={title} className="flex w-full flex-col bg-white sm:max-h-[90vh] sm:max-w-lg sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
           <h2 className="text-lg font-semibold">{title}</h2>
           <Button variant="ghost" aria-label="Close" onClick={onClose}>Close</Button>
@@ -96,7 +96,7 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
 
 export const PageTitle = ({ children, action }: { children: ReactNode; action?: ReactNode }) => (
   <div className="mb-4 flex items-center justify-between gap-3">
-    <h1 className="text-2xl font-semibold">{children}</h1>
+    <h1 className="text-3xl font-semibold text-ink">{children}</h1>
     {action}
   </div>
 );
