@@ -12,9 +12,9 @@ export function DashboardCta({ children }: { children: ReactNode }) {
   const user = me.data?.user;
   if (user)
     return (
-      <Link href={user.firstLogin ? '/complete-profile' : user.mustChangePassword ? '/admin/setup' : HOME[user.role]} className="flex min-h-12 items-center justify-center rounded-xl bg-white px-4 text-lg font-semibold text-indigo-700">
+      <Link href={user.firstLogin ? '/complete-profile' : user.mustChangePassword ? '/admin/setup' : HOME[user.role]} className="flex min-h-12 items-center justify-center rounded-full bg-rust px-7 text-lg font-semibold text-white transition-transform hover:scale-[1.03]">
         Open my dashboard
       </Link>
     );
-  return <div className="flex flex-col gap-3">{children}</div>;
+  return <div className="flex flex-col divide-y divide-white/15 border-y border-white/15">{children}</div>;
 }

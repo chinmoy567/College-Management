@@ -44,10 +44,18 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 p-4">
-      <Link href="/" className="min-h-11 text-base text-indigo-700">← Back to home</Link>
-      <Card className="flex flex-col gap-4 p-5">
-        <h1 className="text-2xl font-semibold">{LABEL[roleHint] ? `${LABEL[roleHint]} login` : 'Login'}</h1>
+    <main className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+      <aside aria-hidden className="relative hidden overflow-hidden bg-ink lg:block">
+        <div className="absolute inset-0 bg-[linear-gradient(160deg,#003135,#024950_55%,#0b8791)]" />
+        <div className="absolute -bottom-24 -left-16 h-[28rem] w-[28rem] animate-drift rounded-full border border-mist/30" />
+        <div className="absolute -bottom-10 left-24 h-72 w-72 animate-drift-slow rounded-full border border-mist/20" />
+        <div className="absolute right-20 top-24 h-24 w-24 rounded-full bg-mist/90 shadow-[0_0_100px_30px_rgba(175,221,229,0.4)]" />
+        <p className="font-display absolute bottom-14 left-12 max-w-sm text-5xl font-light leading-tight text-white">Welcome <span className="text-rust">back</span> to class.</p>
+      </aside>
+      <div className="mx-auto flex w-full max-w-md flex-col justify-center gap-5 p-5">
+      <Link href="/" className="flex min-h-11 items-center text-sm font-semibold uppercase tracking-widest text-deep">← Back to home</Link>
+      <Card className="flex flex-col gap-5 border-0 bg-transparent p-0 shadow-none hover:shadow-none">
+        <h1 className="text-4xl font-light text-ink">{LABEL[roleHint] ? `${LABEL[roleHint]} login` : 'Login'}</h1>
         {notice && <p role="status" className="rounded-lg bg-amber-50 p-3 text-base text-amber-900">{notice}</p>}
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <Field label="User ID or Email">
@@ -59,11 +67,12 @@ function LoginForm() {
               <Button variant="secondary" aria-pressed={show} onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</Button>
             </div>
           </Field>
-          {error && <p role="alert" className="text-base text-red-700">{error}</p>}
+          {error && <p role="alert" className="text-base font-medium text-rust">{error}</p>}
           <Button type="submit" disabled={busy || !identifier}>{busy ? 'Please wait…' : 'Log in'}</Button>
         </form>
-        <Link href="/forgot-password" className="flex min-h-11 items-center text-base text-indigo-700">Forgot password?</Link>
+        <Link href="/forgot-password" className="flex min-h-11 items-center text-base text-deep underline-offset-4 hover:underline">Forgot password?</Link>
       </Card>
+      </div>
     </main>
   );
 }

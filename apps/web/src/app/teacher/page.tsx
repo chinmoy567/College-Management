@@ -1,14 +1,13 @@
 'use client';
 
-import { PageTitle } from '@/components/ui';
-import { Section, TodayWidget, Tiles } from '@/components/Dashboard';
+import { DashHero, Section, TodayWidget, Tiles } from '@/components/Dashboard';
 import { useMeUser } from '@/components/AppShell';
 
 export default function TeacherHome() {
   const me = useMeUser().data?.user;
   return (
     <>
-      <PageTitle>Hello{me ? `, ${me.name.split(' ')[0]}` : ''}</PageTitle>
+      <DashHero title={`Hello${me ? `, ${me.name.split(' ')[0]}` : ''}`} sub="Your classes and work for today." />
       <TodayWidget href="/teacher/attendance" />
       <Section title="Work">
         <Tiles

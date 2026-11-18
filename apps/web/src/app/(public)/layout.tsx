@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
-  return <div className="min-h-screen bg-slate-50">{children}</div>;
+  return <div className="min-h-screen bg-paper">{children}</div>;
 }

@@ -1,12 +1,11 @@
 'use client';
 
-import { PageTitle } from '@/components/ui';
-import { Section, Tiles } from '@/components/Dashboard';
+import { DashHero, Section, Tiles } from '@/components/Dashboard';
 
 export default function AdminHome() {
   return (
     <>
-      <PageTitle>Dashboard</PageTitle>
+      <DashHero title="Dashboard" sub="Run the college from here." />
       <Section title="Quick actions">
         <Tiles
           items={[
