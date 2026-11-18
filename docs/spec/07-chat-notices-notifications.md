@@ -43,7 +43,7 @@ Group and section conversations are created with the section/session.
 | Route | Rules |
 |---|---|
 | `GET /api/chat/conversations?cursor` | Member conversations with last message, unread count (`messages after lastReadMessageId` not sent by me), other user for direct. |
-| `GET /api/chat/people?q&role&sessionId&group&sectionId&page` | People search (PRD §5.8): active students and teachers, name/session/group/section filters, `role` all\|student\|teacher. `q` (2+ letters) or a filter is required (else `400`). 20 per page, `hasMore`. Returns `{id,name,avatarUrl,role,line}` only; the caller and anyone blocked either way are excluded. A class filter matches the class's students and its Section Mentor. |
+| `GET /api/chat/people?q&role&sessionId&group&sectionId&page` | People search (PRD §5.8, 120 requests per minute): active students and teachers, name/session/group/section filters, `role` all\|student\|teacher. `q` (2+ letters) or a filter is required (else `400`). 20 per page, `hasMore`. Returns `{id,name,avatarUrl,role,line}` only; the caller and anyone blocked either way are excluded. A class filter matches the class's students and its Section Mentor. |
 | `GET /api/chat/people/filters` | Active sessions → groups → sections (ids and names) for the filter dropdowns. |
 | `POST /api/chat/direct` `{ userId }` | Returns existing or creates (pair rule; target active; neither blocked the other → `403 BLOCKED`). |
 | `GET /api/chat/conversations/:id/messages?before|after&limit` | Member only (left members see history up to `leftAt`). Messages from users the viewer blocked are hidden. |

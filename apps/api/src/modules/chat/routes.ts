@@ -6,7 +6,7 @@ import { prisma } from '../../db';
 import { loadAuthors, authorOf } from '../../lib/authorLine';
 import { storeUpload } from '../../lib/files';
 import { AppError, asyncHandler, validate } from '../../lib/http';
-import { consume, HOUR } from '../../lib/rateLimit';
+import { consume, HOUR, MIN } from '../../lib/rateLimit';
 import { actorOf } from '../feed/common';
 import { addBlock, deleteMessage, getOrCreateDirect, history, listConversations, removeBlock, sendMessage, memberOf } from './service';
 
@@ -58,6 +58,7 @@ chatRouter.get(
     const filtered = Boolean(f.sessionId || f.group || f.sectionId);
     if (!q && !filtered) throw new AppError('VALIDATION_ERROR', 400, 'Type a name or pick a filter.', { q: 'Required' });
     const me = actorOf(req).id;
+    await consume(`people:${me}`, 120, MIN);
     const sectionWhere = {
       deletedAt: null,
       ...(f.sectionId ? { id: f.sectionId } : {}),
