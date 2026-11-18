@@ -43,6 +43,8 @@ Group and section conversations are created with the section/session.
 | Route | Rules |
 |---|---|
 | `GET /api/chat/conversations?cursor` | Member conversations with last message, unread count (`messages after lastReadMessageId` not sent by me), other user for direct. |
+| `GET /api/chat/people?q&role&sessionId&group&sectionId&page` | People search (PRD §5.8): active students and teachers, name/session/group/section filters, `role` all\|student\|teacher. `q` (2+ letters) or a filter is required (else `400`). 20 per page, `hasMore`. Returns `{id,name,avatarUrl,role,line}` only; the caller and anyone blocked either way are excluded. A class filter matches the class's students and its Section Mentor. |
+| `GET /api/chat/people/filters` | Active sessions → groups → sections (ids and names) for the filter dropdowns. |
 | `POST /api/chat/direct` `{ userId }` | Returns existing or creates (pair rule; target active; neither blocked the other → `403 BLOCKED`). |
 | `GET /api/chat/conversations/:id/messages?before|after&limit` | Member only (left members see history up to `leftAt`). Messages from users the viewer blocked are hidden. |
 | `POST /api/chat/conversations/:id/messages` | Member with `leftAt` null; not muted (`403 MUTED`); direct: not blocked; rate limit 30/min; text ≤ 4,000 or attachment (image 5 MB / PDF 20 MB uploaded first via `POST /api/files/chat`). **Banned word → `422 BLOCKED_WORD` "This message contains a blocked word."** (not held). Persist, update `lastMessageAt`, emit, push/notify offline members (`new_message`, one per conversation per 5 min). |
@@ -131,3 +133,5 @@ At `publishAt` (immediately if now): resolve audience → insert `NoticeRecipien
 - **CHAT-14** Push payloads never contain message or post text; a 404/410 from the push service deletes the subscription.
 - **CHAT-15** (UI) Two browsers at 360 px: a message arrives in under 1 s, typing indicator and "Seen" show.
 - **CHAT-16** (UI) An urgent notice shows a dashboard banner until read; the Notices page filters Central / My Classes with unread markers.
+- **CHAT-17** People search filters by name, session, group and section, excludes the caller, inactive and blocked people (both ways), returns no private fields, and needs a name or a filter.
+- **CHAT-18** (UI) At 360 px the People page filters by session, group, section and name, and the Message button opens the chat.

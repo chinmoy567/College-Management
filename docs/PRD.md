@@ -410,6 +410,7 @@ All of these work only within the teacher's assigned course offerings:
 - **Group chat** per session-group (all students of the group + the Section Mentors of its sections, auto-joined).
 - **Section chat** per section (students + the Section Mentor + course teachers of that section, auto-joined).
 - Text, emoji, images, links, PDF attachments.
+- **People search:** students and teachers can search every active student and teacher by **name, session, group (department) and section** from Messages → *New chat* (and the *People* page). Each result shows only name, photo and class line (no email, mobile, DOB or ID) and has a **Message** button that opens the one-to-one chat. A search needs a name of 2+ letters or at least one filter, results are paged, and people who blocked you or whom you blocked never appear. Teachers have no class, so a session/group/section filter lists the students of that class and its Section Mentor.
 - Real-time delivery (WebSockets), typing indicator, unread counts, seen status.
 - Block / report a user from every chat, and report a single message. Admin can review reported conversations only (the reported message with the messages around it).
 - **Banned words in chat:** a message containing a banned word is **not sent**; the sender sees "This message contains a blocked word." (Chat is real-time, so messages are never held for review like posts.)
