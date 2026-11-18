@@ -147,6 +147,6 @@ describe('database constraints', () => {
 
   it('[DB-03] foreign keys restrict deleting a referenced row', async () => {
     const code = await sqlState(pool, `DELETE FROM sections WHERE id = $1`, [a.section.id]);
-    expect(code).toBe('23503');
+    expect(['23503', '23001']).toContain(code); // 23001 = RESTRICT, 23503 = NO ACTION
   });
 });
