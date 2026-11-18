@@ -73,7 +73,7 @@ function Inbox() {
   const items = q.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <>
-      <PageTitle action={<Button onClick={() => setOpen(true)}>New chat</Button>}>Messages</PageTitle>
+      <PageTitle action={<span className="flex gap-2"><Link href="/people" className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 text-base font-medium">Find people</Link><Button onClick={() => setOpen(true)}>New chat</Button></span>}>Messages</PageTitle>
       <NewChat open={open} onClose={() => setOpen(false)} />
       {q.isPending && <ListSkeleton />}
       {q.isError && <ErrorState onRetry={() => void q.refetch()} />}

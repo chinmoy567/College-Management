@@ -25,6 +25,7 @@ export const TABS: Record<Role, NavItem[]> = {
 };
 
 const common: NavItem[] = [
+  { href: '/people', label: 'Find people', icon: '🔎' },
   { href: '/notices', label: 'Notices', icon: '📢' },
   { href: '/notifications', label: 'Notifications', icon: '🔔' },
   { href: '/profile', label: 'My profile', icon: '👤' },
