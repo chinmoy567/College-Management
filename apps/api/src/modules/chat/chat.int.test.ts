@@ -130,6 +130,37 @@ describe('messaging (spec 07)', () => {
     }
   });
 
+  it('[CHAT-17] people search filters by name, session, group and section, hides blocked and inactive people, and needs a name or a filter', async () => {
+    const w = await world();
+    const c = await api(w.a1);
+    const ids = (r: { body: { items: { id: string }[] } }) => r.body.items.map((i) => i.id);
+    expect((await c.get('/api/chat/people')).status).toBe(400); // nothing to search for
+    expect((await c.get('/api/chat/people?q=a')).status).toBe(400); // one letter, no filter
+    const sec = await c.get(`/api/chat/people?sectionId=${w.secA}`);
+    expect(sec.status).toBe(200);
+    expect(ids(sec)).toEqual(expect.arrayContaining([w.a2.id, w.a3.id, w.mentorA.id]));
+    expect(ids(sec)).not.toContain(w.a1.id); // not me
+    expect(ids(sec)).not.toContain(w.b1.id); // other section
+    expect(ids(sec)).not.toContain(w.mentorB.id);
+    const students = await c.get(`/api/chat/people?sectionId=${w.secA}&role=student`);
+    expect(ids(students)).not.toContain(w.mentorA.id);
+    const byGroup = await c.get(`/api/chat/people?sessionId=${w.tree.sessionId}&group=commerce`);
+    expect(ids(byGroup)).toEqual(expect.arrayContaining([w.b1.id, w.mentorB.id]));
+    expect(ids(byGroup)).not.toContain(w.a2.id);
+    const prof = await prisma.studentProfile.findUniqueOrThrow({ where: { userId: w.a2.id }, select: { name: true } });
+    const byName = await c.get(`/api/chat/people?q=${encodeURIComponent(prof.name)}&sectionId=${w.secA}`);
+    expect(ids(byName)).toContain(w.a2.id);
+    expect(JSON.stringify(byName.body)).not.toMatch(/email|mobile|dob|guardian/i); // names and class line only
+    expect((await c.post('/api/chat/blocks', { userId: w.a2.id })).status).toBe(201);
+    expect(ids(await c.get(`/api/chat/people?sectionId=${w.secA}`))).not.toContain(w.a2.id);
+    expect(ids(await (await api(w.a2)).get(`/api/chat/people?sectionId=${w.secA}`))).not.toContain(w.a1.id); // hidden both ways
+    await prisma.user.update({ where: { id: w.a3.id }, data: { status: 'inactive' } });
+    expect(ids(await c.get(`/api/chat/people?sectionId=${w.secA}`))).not.toContain(w.a3.id);
+    const f = await c.get('/api/chat/people/filters');
+    expect(f.status).toBe(200);
+    expect(JSON.stringify(f.body)).toContain(w.secA);
+  });
+
   it('[CHAT-02] direct chat pair rules: student↔student, teacher↔student, teacher↔teacher, Admin↔anyone', async () => {
     const w = await world();
     const t = await makeTeacher(prisma);

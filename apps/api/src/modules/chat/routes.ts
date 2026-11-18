@@ -31,22 +31,69 @@ chatRouter.get(
   }),
 );
 
-/** People to start a direct chat with (07 §2.1: every pair is allowed). Names only, active accounts. */
+const peopleQuery = z.object({
+  q: z.string().trim().max(60).optional(),
+  role: z.enum(['all', 'student', 'teacher']).default('all'),
+  sessionId: z.string().min(1).max(40).optional(),
+  group: z.enum(['science', 'commerce', 'arts']).optional(),
+  sectionId: z.string().min(1).max(40).optional(),
+  page: z.coerce.number().int().min(0).max(500).default(0),
+});
+const PEOPLE_PAGE = 20;
+
+/**
+ * People search (PRD §5.8a): every active student and teacher, by name, session, group and section,
+ * each result can start a direct chat. Needs a name of 2+ letters or at least one filter, so the whole
+ * college cannot be dumped. Names, photo and class line only; people blocked either way are hidden.
+ */
 chatRouter.get(
   '/people',
-  validate({ query: z.object({ q: z.string().trim().min(2).max(60) }) }),
+  validate({ query: peopleQuery }),
   asyncHandler(async (req, res) => {
-    const { q } = req.query as { q: string };
+    const f = req.query as unknown as z.infer<typeof peopleQuery>;
+    const q = f.q && f.q.length >= 2 ? f.q : undefined;
+    if (f.q && !q && !f.sessionId && !f.group && !f.sectionId) {
+      throw new AppError('VALIDATION_ERROR', 400, 'Type at least 2 letters or pick a filter.', { q: 'Too short' });
+    }
+    const filtered = Boolean(f.sessionId || f.group || f.sectionId);
+    if (!q && !filtered) throw new AppError('VALIDATION_ERROR', 400, 'Type a name or pick a filter.', { q: 'Required' });
     const me = actorOf(req).id;
+    const sectionWhere = {
+      deletedAt: null,
+      ...(f.sectionId ? { id: f.sectionId } : {}),
+      ...((f.sessionId || f.group) ? { group: { ...(f.sessionId ? { sessionId: f.sessionId } : {}), ...(f.group ? { type: f.group } : {}) } } : {}),
+    };
+    const nameFilter = q ? { contains: q, mode: 'insensitive' as const } : undefined;
+    const studentCond = { student: { is: { ...(nameFilter ? { name: nameFilter } : {}), ...(filtered ? { section: { is: sectionWhere } } : {}) } } };
+    // Teachers have no class, so a class filter matches only the Section Mentor of that class.
+    const teacherCond = { teacher: { is: { ...(nameFilter ? { name: nameFilter } : {}), ...(filtered ? { mentoredSection: { is: sectionWhere } } : {}) } } };
+    const or = f.role === 'student' ? [studentCond] : f.role === 'teacher' ? [teacherCond] : [studentCond, teacherCond];
+    const blocks = await prisma.block.findMany({ where: { OR: [{ blockerId: me }, { blockedId: me }] }, select: { blockerId: true, blockedId: true } });
+    const hidden = blocks.map((b) => (b.blockerId === me ? b.blockedId : b.blockerId));
     const rows = await prisma.user.findMany({
-      where: {
-        status: 'active', id: { not: me },
-        OR: [{ student: { is: { name: { contains: q, mode: 'insensitive' } } } }, { teacher: { is: { name: { contains: q, mode: 'insensitive' } } } }],
-      },
-      select: { id: true }, take: 20,
+      where: { status: 'active', id: { notIn: [me, ...hidden] }, OR: or },
+      select: { id: true, student: { select: { name: true } }, teacher: { select: { name: true } } },
+      orderBy: [{ id: 'asc' }],
+      skip: f.page * PEOPLE_PAGE,
+      take: PEOPLE_PAGE + 1,
     });
-    const authors = await loadAuthors(rows.map((r) => r.id));
-    res.json({ items: rows.map((r) => authorOf(authors, r.id)) });
+    const pageRows = rows.slice(0, PEOPLE_PAGE);
+    const authors = await loadAuthors(pageRows.map((r) => r.id));
+    const items = pageRows.map((r) => authorOf(authors, r.id)).sort((x, y) => x.name.localeCompare(y.name));
+    res.json({ items, hasMore: rows.length > PEOPLE_PAGE });
+  }),
+);
+
+/** Filter choices for the people search: open sessions with their groups and sections (names only). */
+chatRouter.get(
+  '/people/filters',
+  asyncHandler(async (_req, res) => {
+    const sessions = await prisma.session.findMany({
+      where: { status: 'active' },
+      orderBy: { name: 'desc' },
+      select: { id: true, name: true, groups: { select: { id: true, type: true, sections: { where: { deletedAt: null }, orderBy: [{ classLevel: 'asc' }, { name: 'asc' }], select: { id: true, name: true, classLevel: true } } } } },
+    });
+    res.json({ sessions });
   }),
 );
 
